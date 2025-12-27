@@ -1,0 +1,35 @@
+/* Dynamic theme variables - controlled by ThemeContext */
+:root {
+  --church-green: #10b981;
+  --church-green-dark: #059669;
+}
+
+/* Green theme */
+[data-theme="green"] {
+  --church-green: #16a34a;
+  --church-green-dark: #15803d;
+}
+
+/* Blue theme */
+[data-theme="blue"] {
+  --church-green: #3b82f6;
+  --church-green-dark: #2563eb;
+}
+
+/* Purple theme */
+[data-theme="purple"] {
+  --church-green: #a855f7;
+  --church-green-dark: #9333ea;
+}
+
+/* Orange theme */
+[data-theme="orange"] {
+  --church-green: #fb923c;
+  --church-green-dark: #ea580c;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --church-green: #6b7280;
+  --church-green-dark: #4b5563;
+}

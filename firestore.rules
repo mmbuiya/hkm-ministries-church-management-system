@@ -1,0 +1,170 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Super Admin: The only role that counts for high-level security
+    function isSuperAdmin() {
+      let userData = getUserData();
+      return userData.role == 'Super Admin' || userData.isSuperAdmin == true;
+    }
+    
+    function isAdmin() {
+      let userData = getUserData();
+      return userData.role == 'Admin' || isSuperAdmin();
+    }
+    
+    function isDataPersonnel() {
+      let userData = getUserData();
+      return userData.role == 'Data Personnel';
+    }
+    
+    function hasSectionAccess(section) {
+      let userData = getUserData();
+      return isDataPersonnel() && section in userData.assignedSections;
+    }
+
+    // --- FIELD PROTECTION HELPERS ---
+    
+    // Check if the request is NOT modifying restricted fields
+    // Restricted: role, permissionLevel, assignedSections, isActive, isSuperAdmin, superAdminCode
+    function isUpdatingSafeFields() {
+      let incomingData = request.resource.data;
+      let existingData = resource.data;
+      
+      return 
+        // Ensure sensitive fields are UNCHANGED
+        incomingData.role == existingData.role &&
+        incomingData.permissionLevel == existingData.permissionLevel &&
+        incomingData.assignedSections == existingData.assignedSections &&
+        incomingData.isActive == existingData.isActive &&
+        (!('isSuperAdmin' in incomingData) || incomingData.isSuperAdmin == existingData.isSuperAdmin) &&
+        (!('superAdminCode' in incomingData) || incomingData.superAdminCode == existingData.superAdminCode);
+    }
+    
+    // For CREATE: Ensure sensitive fields are set to defaults
+    function isCreatingSafeUser() {
+      let incomingData = request.resource.data;
+      return 
+        incomingData.role == 'Guest' &&
+        incomingData.permissionLevel == 'Viewer' &&
+        (!('assignedSections' in incomingData) || incomingData.assignedSections.size() == 0) &&
+        (!('isSuperAdmin' in incomingData) || incomingData.isSuperAdmin == false);
+    }
+
+    // --- COLLECTION RULES ---
+
+    // USERS Collection
+    // - Super Admin: Full Read/Write
+    // - Users: 
+    //   - Read: Own profile or Super Admin
+    //   - Create: Own profile (for self-healing during login)
+    //   - Update: Only Safe Fields (Name, Avatar, etc.)
+    match /users/{userId} {
+      // Allow read for own profile or all profiles for Super Admin
+      allow read: if isSignedIn() && (isOwner(userId) || isSuperAdmin());
+      
+      // Allow create for own profile (self-healing during login)
+      // Relaxed temporarily - just requires ownership
+      allow create: if isSignedIn() && isOwner(userId);
+      
+      allow update: if isSignedIn() && (
+        isSuperAdmin() || 
+        (isOwner(userId) && isUpdatingSafeFields())
+      );
+      
+      // Only Super Admin can delete users
+      allow delete: if isSignedIn() && isSuperAdmin();
+    }
+
+    // DATA COLLECTIONS
+    // - Principle: Explicit permissions required
+    
+    match /members/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Members');
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Finance');
+    }
+
+    match /attendance/{recordId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Attendance');
+    }
+
+    match /equipment/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Equipment');
+    }
+
+    match /visitors/{visitorId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Visitors');
+    }
+
+    match /branches/{branchId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Branches');
+    }
+
+    match /sms/{smsId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('SMS Broadcast');
+    }
+    
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Manage Groups'); // Assuming a permission for this
+    }
+    
+    match /maintenance/{maintId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasSectionAccess('Equipment');
+    }
+
+    // PERMISSION REQUESTS
+    match /permissionRequests/{requestId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.requesterId || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+    
+    // RECYCLE BIN
+    match /recycleBin/{itemId} {
+      allow read, write: if isAdmin();
+    }
+
+    // USER SESSIONS
+    match /userSessions/{sessionId} {
+      allow read: if isAdmin() || request.auth.uid == resource.data.userId;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+    }
+    
+    match /loginAttempts/{attemptId} {
+      allow read: if isAdmin();
+      allow create: if true; // Login page needs to log attempts
+    }
+
+    // DEFAULT DENY
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

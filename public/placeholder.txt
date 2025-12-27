@@ -1,0 +1,9 @@
+This folder contains app icons for desktop builds.
+
+Add the following files for proper desktop app icons:
+- icon.ico (Windows)
+- icon.icns (macOS)
+- icon.png (Linux, 512x512 recommended)
+
+You can use the HKM logo from: https://i.ibb.co/5xzH9bWR/HKM-LOGO.png
+Convert it using online tools like https://convertio.co/

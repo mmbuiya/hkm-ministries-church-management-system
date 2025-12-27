@@ -1,0 +1,5 @@
+{
+  "name": "HKM Ministries Church Management",
+  "description": "A comprehensive church management system for HKM Ministries, designed to manage members, finances, attendance, and more. The system provides a centralized dashboard for an at-a-glance overview of church activities and statistics.",
+  "requestFramePermissions": []
+}
