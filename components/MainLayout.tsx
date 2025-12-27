@@ -73,6 +73,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const [activePage, setActivePage] = useState(() => {
     return sessionStorage.getItem('hkm_active_page') || 'Dashboard';
   });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Real-time data hooks
   const { data: members, setData: setMembers, loading: membersLoading, addMember, updateMember, deleteMember } = useMembers();
@@ -690,11 +691,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
   return (
     <div className={`flex h-screen ${modeColors.bg} ${modeColors.text}`}>
-      <Sidebar activePage={activePage} setActivePage={setActivePage} currentUser={currentUser} />
-      <div className="flex-1 flex flex-col overflow-hidden pt-20">
-        <Header activePage={activePage} user={currentUser} onLogout={onLogout} onNavigate={setActivePage} />
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar - Hidden on mobile, slide-in overlay */}
+      <div className={`${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        lg:translate-x-0 fixed lg:relative z-50 lg:z-auto transition-transform duration-300 ease-in-out`}>
+        <Sidebar 
+          activePage={activePage} 
+          setActivePage={setActivePage} 
+          currentUser={currentUser}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
+        />
+      </div>
+      
+      <div className="flex-1 flex flex-col overflow-hidden pt-20 lg:pt-20">
+        <Header 
+          activePage={activePage} 
+          user={currentUser} 
+          onLogout={onLogout} 
+          onNavigate={setActivePage}
+          onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        />
         <QuickNav activePage={activePage} onNavigate={setActivePage} />
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto ${modeColors.bgSecondary} p-6`}>
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto ${modeColors.bgSecondary} p-3 sm:p-4 lg:p-6`}>
           {renderPage()}
         </main>
       </div>

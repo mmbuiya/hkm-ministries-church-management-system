@@ -21,19 +21,19 @@ const QuickNav: React.FC<QuickNavProps> = ({ activePage, onNavigate }) => {
   const { modeColors } = useTheme();
 
   return (
-    <div className={`${modeColors.card} border-b ${modeColors.border} px-6 py-2`}>
-      <div className="flex items-center space-x-1 overflow-x-auto">
+    <div className={`${modeColors.card} border-b ${modeColors.border} px-3 sm:px-4 lg:px-6 py-2`}>
+      <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
         {quickNavItems.map((item) => (
           <button
             key={item.page}
             onClick={() => onNavigate(item.page)}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+            className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
               activePage === item.page
                 ? 'bg-blue-100 text-blue-700 border border-blue-200'
                 : `${modeColors.textSecondary} hover:${modeColors.hover} hover:${modeColors.text}`
             }`}
           >
-            <span>{item.icon}</span>
+            <span className="text-sm sm:text-base">{item.icon}</span>
             <span className="hidden sm:inline">{item.label}</span>
           </button>
         ))}

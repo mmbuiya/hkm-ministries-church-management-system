@@ -14,6 +14,7 @@ interface SidebarProps {
   activePage: string;
   setActivePage: (page: string) => void;
   currentUser?: User | null;
+  onMobileClose?: () => void;
 }
 
 interface NavItem {
@@ -90,12 +91,34 @@ const canAccessItem = (item: NavItem, user: User | null | undefined): boolean =>
   return false;
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, currentUser }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, currentUser, onMobileClose }) => {
   const { colors } = useTheme();
   const filteredNavItems = navItems.filter(item => canAccessItem(item, currentUser));
+  
+  const handleNavClick = (itemName: string) => {
+    setActivePage(itemName);
+    // Close mobile sidebar when item is clicked
+    if (onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   return (
     <div className={`w-64 ${colors.sidebar} text-white flex flex-col flex-shrink-0 h-screen`}>
-      <nav className="flex-1 overflow-y-auto px-4 py-4 mt-20">
+      {/* Mobile Close Button */}
+      <div className="lg:hidden flex justify-end p-4 mt-20">
+        <button
+          onClick={onMobileClose}
+          className="text-white hover:text-gray-300 p-2"
+          aria-label="Close menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <nav className="flex-1 overflow-y-auto px-4 py-4 mt-20 lg:mt-20">
         <div className="space-y-1">
           {filteredNavItems.map((item) => {
               const isActive = activePage === item.name;
@@ -105,9 +128,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, currentUse
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setActivePage(item.name);
+                    handleNavClick(item.name);
                   }}
-                  className={`flex items-center px-4 py-2.5 rounded-md transition-all duration-200 relative ${
+                  className={`flex items-center px-4 py-3 lg:py-2.5 rounded-md transition-all duration-200 relative text-sm lg:text-base ${
                     isActive
                       ? 'bg-gray-50 text-gray-900 shadow-inner'
                       : 'text-white hover:bg-white/20'
@@ -116,8 +139,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, currentUse
                    {isActive && (
                       <span className="absolute -left-2 top-[calc(50%-12px)] h-6 w-1 bg-yellow-400 rounded-full"></span>
                   )}
-                  <item.icon className="h-5 w-5 mr-3" />
-                  <span className="font-medium">{item.name}</span>
+                  <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span className="font-medium truncate">{item.name}</span>
                 </a>
               )
           })}
