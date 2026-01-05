@@ -74,16 +74,16 @@ export function useMembers() {
                 first_name: firstName || '',
                 last_name: lastName || '',
                 title: member.title || '',
-                email: member.email || '',
-                phone: member.phone || '',
+                email: member.email || null,
+                phone: member.phone || null,
                 department: member.department || '',
                 status: member.status || 'Active',
                 dob: member.dob || null,
                 gender: member.gender || 'Male',
                 avatar_transform: member.avatarTransform ? JSON.stringify(member.avatarTransform) : null,
                 address: member.location || '',
-                occupation: member.occupation || '',
-                marital_status: member.maritalStatus || '',
+                occupation: member.occupation || null,
+                marital_status: member.maritalStatus || null,
                 joined_at: member.dateAdded || new Date().toISOString().split('T')[0]
             };
 
@@ -92,7 +92,7 @@ export function useMembers() {
                     object: memberData
                 }
             });
-            
+
             // Refetch data to update UI immediately
             await refetch();
         } catch (error) {
@@ -111,16 +111,16 @@ export function useMembers() {
         }
 
         if (updates.title !== undefined) hasuraUpdates.title = updates.title;
-        if (updates.email !== undefined) hasuraUpdates.email = updates.email;
-        if (updates.phone !== undefined) hasuraUpdates.phone = updates.phone;
+        if (updates.email !== undefined) hasuraUpdates.email = updates.email || null;
+        if (updates.phone !== undefined) hasuraUpdates.phone = updates.phone || null;
         if (updates.department !== undefined) hasuraUpdates.department = updates.department;
         if (updates.status !== undefined) hasuraUpdates.status = updates.status;
         if (updates.dob !== undefined) hasuraUpdates.dob = updates.dob;
         if (updates.gender !== undefined) hasuraUpdates.gender = updates.gender;
         if (updates.avatarTransform !== undefined) hasuraUpdates.avatar_transform = JSON.stringify(updates.avatarTransform);
         if (updates.location !== undefined) hasuraUpdates.address = updates.location;
-        if (updates.occupation !== undefined) hasuraUpdates.occupation = updates.occupation;
-        if (updates.maritalStatus !== undefined) hasuraUpdates.marital_status = updates.maritalStatus;
+        if (updates.occupation !== undefined) hasuraUpdates.occupation = updates.occupation || null;
+        if (updates.maritalStatus !== undefined) hasuraUpdates.marital_status = updates.maritalStatus || null;
 
         await updateMemberMutation({
             variables: {
@@ -128,7 +128,7 @@ export function useMembers() {
                 updates: hasuraUpdates
             }
         });
-        
+
         // Refetch data to update UI immediately
         await refetch();
     };
@@ -137,7 +137,7 @@ export function useMembers() {
         await deleteMemberMutation({
             variables: { id }
         });
-        
+
         // Refetch data to update UI immediately
         await refetch();
     };

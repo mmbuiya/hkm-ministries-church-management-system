@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeftIcon, CollectionIcon } from './Icons';
 import { InputField, SelectField, TextAreaField } from './FormControls';
-import { Member } from './memberData';
+import { Member, AgeGroup } from './memberData';
 import { Group } from './GroupsManagementPage';
 
 interface AddGroupPageProps {
@@ -15,6 +15,7 @@ const AddGroupPage: React.FC<AddGroupPageProps> = ({ onBack, members, onSave, gr
     const isEditMode = !!groupToEdit;
     const [groupName, setGroupName] = useState('');
     const [leaderName, setLeaderName] = useState('');
+    const [category, setCategory] = useState<AgeGroup | 'General'>('General');
 
     useEffect(() => {
         if (isEditMode && groupToEdit) {
@@ -23,10 +24,12 @@ const AddGroupPage: React.FC<AddGroupPageProps> = ({ onBack, members, onSave, gr
             if (leader) {
                 setLeaderName(leader.name);
             }
+            setCategory(groupToEdit.category || 'General');
         }
     }, [isEditMode, groupToEdit, members]);
 
     const memberNames = members.map(m => m.name);
+    const categoryOptions: (AgeGroup | 'General')[] = ['Children/Sunday School', 'Junior Youth', 'Youth', 'General'];
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,6 +46,7 @@ const AddGroupPage: React.FC<AddGroupPageProps> = ({ onBack, members, onSave, gr
         const dataToSave: Partial<Group> = {
             name: groupName,
             leader: leader.email,
+            category: category,
         };
 
         if (isEditMode && groupToEdit) {
@@ -70,7 +74,8 @@ const AddGroupPage: React.FC<AddGroupPageProps> = ({ onBack, members, onSave, gr
                     </p>
                 </div>
                  <form className="space-y-6" onSubmit={handleSubmit}>
-                    <InputField name="groupName" label="Group Name" type="text" placeholder="e.g., Choir, Ushering Team" required value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                    <InputField name="groupName" label="Group Name" type="text" placeholder="e.g., Sunday School Class A, Junior Youth Group 1" required value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                    <SelectField name="groupCategory" label="Group Category" options={categoryOptions} required value={category} onChange={(e) => setCategory(e.target.value as AgeGroup | 'General')} />
                     <SelectField name="groupLeader" label="Group Leader" options={memberNames} required value={leaderName} onChange={(e) => setLeaderName(e.target.value)} />
                     <TextAreaField label="Group Description" placeholder="Briefly describe the purpose of this group." />
 

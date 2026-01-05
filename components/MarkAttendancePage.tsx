@@ -13,14 +13,16 @@ interface MarkAttendancePageProps {
 }
 
 
-const departments = ["Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Traffic", "Administration", "Instrumentalist", "Deacon"];
+const departments = ["Choir", "Media", "Ushering", "Protocol", "Welfare", "Intercessors", "Junior Youth", "Youth", "Traffic", "Administration", "Instrumentalist", "Deacon", "Sunday School", "Pastoral Care", "Evangelism", "Technical"];
 const statuses = ["Active", "Inactive", "Transferred"];
+const ageGroups = ["Children/Sunday School", "Junior Youth", "Youth", "Adult"];
 const serviceTypes = ['Sunday Morning Service', 'Sunday Second Service', 'Mid-week Service', 'Other'];
 
 const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave, editContext, allAttendanceRecords, members }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [department, setDepartment] = useState('All Departments');
     const [status, setStatus] = useState('All Statuses');
+    const [ageGroup, setAgeGroup] = useState('All Age Groups');
     const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [serviceDate, setServiceDate] = useState(new Date().toISOString().split('T')[0]);
@@ -45,7 +47,9 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
             const initialAttendance = recordsForService.reduce((acc, record) => {
                 const member = members.find(m => m.name.toLowerCase() === record.memberName.toLowerCase());
                 if (member) {
-                    acc[member.email] = record.status;
+                    // Use member.id as key, fallback to email if id not available, or generate a key from name
+                    const key = member.id || member.email || member.name.toLowerCase().replace(/\s+/g, '_');
+                    acc[key] = record.status;
                 }
                 return acc;
             }, {} as Record<string, AttendanceStatus>);
@@ -58,32 +62,37 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
         const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDept = department === 'All Departments' || member.department === department;
         const matchesStatus = status === 'All Statuses' || member.status === status;
-        return matchesSearch && matchesDept && matchesStatus;
+        const matchesAgeGroup = ageGroup === 'All Age Groups' || (member.ageGroup || 'Adult') === ageGroup;
+        return matchesSearch && matchesDept && matchesStatus && matchesAgeGroup;
     });
 
     const getInitial = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
-    
-    const handleSetStatus = (email: string, newStatus: AttendanceStatus) => {
-        setAttendance(prev => ({ ...prev, [email]: newStatus }));
+
+    const getMemberKey = (member: Member): string => {
+        return member.id || member.email || member.name.toLowerCase().replace(/\s+/g, '_');
     };
 
-    const handleSelect = (email: string) => {
+    const handleSetStatus = (memberKey: string, newStatus: AttendanceStatus) => {
+        setAttendance(prev => ({ ...prev, [memberKey]: newStatus }));
+    };
+
+    const handleSelect = (memberKey: string) => {
         setSelected(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(email)) newSet.delete(email);
-            else newSet.add(email);
+            if (newSet.has(memberKey)) newSet.delete(memberKey);
+            else newSet.add(memberKey);
             return newSet;
         });
     }
 
     const handleSelectAll = () => {
-        if(selected.size === filteredMembers.length) {
+        if (selected.size === filteredMembers.length) {
             setSelected(new Set()); // Deselect all
         } else {
-            setSelected(new Set(filteredMembers.map(m => m.email))); // Select all
+            setSelected(new Set(filteredMembers.map(m => getMemberKey(m)))); // Select all
         }
     }
-    
+
     const handleSave = () => {
         const finalServiceName = serviceName === 'Other' ? customServiceName : serviceName;
         if (Object.keys(attendance).length > 0 && finalServiceName && serviceDate) {
@@ -108,7 +117,7 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
                     </button>
                 </div>
                 <p className="mt-1 text-gray-600">{editContext ? `Editing attendance for ${editContext.service} on ${new Date(editContext.date).toDateString()}` : 'Select a service and date, then search, filter, and mark member attendance.'}</p>
-                 <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="text-sm font-medium text-gray-700">Service Date</label>
                         <input type="date" value={serviceDate} onChange={e => setServiceDate(e.target.value)} className="w-full mt-1 border-gray-300 rounded-md shadow-sm" />
@@ -120,14 +129,14 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
                         </select>
                     </div>
                     {serviceName === 'Other' && (
-                         <div>
+                        <div>
                             <label className="text-sm font-medium text-gray-700">Custom Service Name</label>
                             <input type="text" value={customServiceName} onChange={e => setCustomServiceName(e.target.value)} placeholder="e.g., Revival Night" className="w-full mt-1 border-gray-300 rounded-md shadow-sm" />
                         </div>
                     )}
                 </div>
             </div>
-            
+
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left Filter Panel */}
                 <div className="w-full lg:w-1/4">
@@ -137,28 +146,35 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
                             <label className="text-sm font-medium text-gray-700">Search by Name</label>
                             <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Enter member name..." className="w-full mt-1 border-gray-300 rounded-md shadow-sm" />
                         </div>
-                         <div>
+                        <div>
                             <label className="text-sm font-medium text-gray-700">Department</label>
                             <select value={department} onChange={e => setDepartment(e.target.value)} className="w-full mt-1 border-gray-300 rounded-md shadow-sm capitalize">
                                 <option>All Departments</option>
                                 {departments.map(d => <option key={d} value={d} className="capitalize">{d}</option>)}
                             </select>
                         </div>
-                         <div>
+                        <div>
                             <label className="text-sm font-medium text-gray-700">Member Status</label>
                             <select value={status} onChange={e => setStatus(e.target.value)} className="w-full mt-1 border-gray-300 rounded-md shadow-sm">
                                 <option>All Statuses</option>
                                 {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
-                         <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800">
-                             <p className="font-bold mb-1">Quick Tips</p>
-                             <ul className="list-disc list-inside space-y-1 text-xs">
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Age Group</label>
+                            <select value={ageGroup} onChange={e => setAgeGroup(e.target.value)} className="w-full mt-1 border-gray-300 rounded-md shadow-sm">
+                                <option>All Age Groups</option>
+                                {ageGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800">
+                            <p className="font-bold mb-1">Quick Tips</p>
+                            <ul className="list-disc list-inside space-y-1 text-xs">
                                 <li>First, select the service date and type above.</li>
                                 <li>Use filters to find members quickly.</li>
                                 <li>Click a row to select/deselect members.</li>
-                             </ul>
-                         </div>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -194,35 +210,38 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredMembers.map(member => (
-                                        <tr key={member.email} className={`border-b hover:bg-gray-50 cursor-pointer ${selected.has(member.email) ? 'bg-blue-50' : ''}`} onClick={() => handleSelect(member.email)}>
-                                            <td className="py-2 px-4 text-center">
-                                                <input type="checkbox" checked={selected.has(member.email)} onChange={() => {}} className="rounded"/>
-                                            </td>
-                                            <td className="py-2 px-4">
-                                                <div className="flex items-center">
-                                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xs mr-3">{getInitial(member.name)}</div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-800 capitalize">{member.name}</p>
-                                                        <p className="text-xs text-gray-500">{member.phone}</p>
+                                    {filteredMembers.map(member => {
+                                        const memberKey = getMemberKey(member);
+                                        return (
+                                            <tr key={memberKey} className={`border-b hover:bg-gray-50 cursor-pointer ${selected.has(memberKey) ? 'bg-blue-50' : ''}`} onClick={() => handleSelect(memberKey)}>
+                                                <td className="py-2 px-4 text-center">
+                                                    <input type="checkbox" checked={selected.has(memberKey)} onChange={() => { }} className="rounded" />
+                                                </td>
+                                                <td className="py-2 px-4">
+                                                    <div className="flex items-center">
+                                                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xs mr-3">{getInitial(member.name)}</div>
+                                                        <div>
+                                                            <p className="font-medium text-gray-800 capitalize">{member.name}</p>
+                                                            {member.phone && <p className="text-xs text-gray-500">{member.phone}</p>}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-2 px-4"><span className="bg-gray-200 py-0.5 px-2 rounded-full text-xs font-medium">{member.department}</span></td>
-                                            <td className="py-2 px-4">
-                                                <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
-                                                    <button onClick={() => handleSetStatus(member.email, 'Present')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[member.email] === 'Present' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'}`}><CheckCircleIcon className="w-4 h-4 mr-1"/>Present</button>
-                                                    <button onClick={() => handleSetStatus(member.email, 'Absent')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[member.email] === 'Absent' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700'}`}><XCircleIcon className="w-4 h-4 mr-1"/>Absent</button>
-                                                    <button onClick={() => handleSetStatus(member.email, 'Late')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[member.email] === 'Late' ? 'bg-yellow-400 text-white' : 'bg-yellow-100 text-yellow-700'}`}><ClockIcon className="w-4 h-4 mr-1"/>Late</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                                <td className="py-2 px-4"><span className="bg-gray-200 py-0.5 px-2 rounded-full text-xs font-medium">{member.department}</span></td>
+                                                <td className="py-2 px-4">
+                                                    <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
+                                                        <button onClick={() => handleSetStatus(memberKey, 'Present')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[memberKey] === 'Present' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700'}`}><CheckCircleIcon className="w-4 h-4 mr-1" />Present</button>
+                                                        <button onClick={() => handleSetStatus(memberKey, 'Absent')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[memberKey] === 'Absent' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700'}`}><XCircleIcon className="w-4 h-4 mr-1" />Absent</button>
+                                                        <button onClick={() => handleSetStatus(memberKey, 'Late')} className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center ${attendance[memberKey] === 'Late' ? 'bg-yellow-400 text-white' : 'bg-yellow-100 text-yellow-700'}`}><ClockIcon className="w-4 h-4 mr-1" />Late</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
                         <div className="p-4 border-t flex justify-end">
-                            <button 
+                            <button
                                 onClick={handleSave}
                                 className="bg-church-green-dark hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg flex items-center"
                             >

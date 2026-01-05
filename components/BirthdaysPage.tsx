@@ -35,12 +35,16 @@ const BirthdayCard: React.FC<{ member: Member }> = ({ member }) => {
             </div>
             <p className="text-sm text-gray-500 mb-4">Turns {calculateAge(member.dob) + 1}</p>
             <div className="flex space-x-3">
-                <a href={`tel:${member.phone}`} className="p-2 bg-gray-100 rounded-full hover:bg-green-100 text-gray-600 hover:text-green-600">
-                    <PhoneIcon className="w-5 h-5" />
-                </a>
-                <a href={`mailto:${member.email}`} className="p-2 bg-gray-100 rounded-full hover:bg-green-100 text-gray-600 hover:text-green-600">
-                    <MailIcon className="w-5 h-5" />
-                </a>
+                {member.phone && (
+                    <a href={`tel:${member.phone}`} className="p-2 bg-gray-100 rounded-full hover:bg-green-100 text-gray-600 hover:text-green-600">
+                        <PhoneIcon className="w-5 h-5" />
+                    </a>
+                )}
+                {member.email && (
+                    <a href={`mailto:${member.email}`} className="p-2 bg-gray-100 rounded-full hover:bg-green-100 text-gray-600 hover:text-green-600">
+                        <MailIcon className="w-5 h-5" />
+                    </a>
+                )}
             </div>
         </div>
     );
@@ -105,7 +109,7 @@ const BirthdaysPage: React.FC<{ members: Member[] }> = ({ members }) => {
                 {displayedBirthdays.length > 0 ? (
                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                         {displayedBirthdays.map(member => (
-                            <BirthdayCard key={member.email} member={member} />
+                            <BirthdayCard key={member.id} member={member} />
                         ))}
                     </div>
                 ) : (

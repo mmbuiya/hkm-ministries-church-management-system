@@ -38,24 +38,27 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
         if (!searchTerm) return members;
         return members.filter(m =>
             m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            m.phone.includes(searchTerm)
+            (m.phone && m.phone.includes(searchTerm)) ||
+            (m.email && m.email.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [members, searchTerm]);
 
-    const handleSelectMember = (email: string) => {
+    const handleSelectMember = (memberId: string) => {
         setSelectedMembers(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(email)) newSet.delete(email);
-            else newSet.add(email);
+            if (newSet.has(memberId)) newSet.delete(memberId);
+            else newSet.add(memberId);
             return newSet;
         });
     };
 
     const handleSelectAll = () => {
-        if (selectedMembers.size === filteredMembers.length) {
+        // Only select members with phone numbers
+        const membersWithPhone = filteredMembers.filter(m => m.phone);
+        if (selectedMembers.size === membersWithPhone.length) {
             setSelectedMembers(new Set());
         } else {
-            setSelectedMembers(new Set(filteredMembers.map(m => m.email)));
+            setSelectedMembers(new Set(membersWithPhone.map(m => m.id)));
         }
     };
 
@@ -125,12 +128,20 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
         setIsSending(true);
 
         try {
-            // Collect recipient phone numbers (mock logic)
+            // Collect recipient phone numbers (only members with phone numbers)
             const recipients = activeTab === 'all'
-                ? members.map(m => m.phone)
-                : Array.from(selectedMembers).map(email => members.find(m => m.email === email)?.phone || '');
+                ? members.filter(m => m.phone).map(m => m.phone!)
+                : Array.from(selectedMembers)
+                    .map(id => members.find(m => m.id === id)?.phone)
+                    .filter((phone): phone is string => Boolean(phone));
 
-            const result = await smsService.sendSms(recipients.filter(Boolean), message);
+            if (recipients.length === 0) {
+                alert("No members with phone numbers selected. Please select members who have phone numbers.");
+                setIsSending(false);
+                return;
+            }
+
+            const result = await smsService.sendSms(recipients, message);
 
             if (result.success) {
                 // Log to Hasura
@@ -193,9 +204,11 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
                                 <span>{filteredMembers.length} members found</span>
                             </div>
                             <div className="max-h-60 overflow-y-auto border rounded-lg p-2 space-y-2">
-                                {filteredMembers.map(member => (
-                                    <label key={member.email} className={`flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer ${selectedMembers.has(member.email) ? 'bg-green-50' : ''}`}>
-                                        <input type="checkbox" checked={selectedMembers.has(member.email)} onChange={() => handleSelectMember(member.email)} className="h-4 w-4 rounded border-gray-300 text-green-600" />
+                                {filteredMembers
+                                    .filter(member => member.phone) // Only show members with phone numbers
+                                    .map(member => (
+                                    <label key={member.id} className={`flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer ${selectedMembers.has(member.id) ? 'bg-green-50' : ''}`}>
+                                        <input type="checkbox" checked={selectedMembers.has(member.id)} onChange={() => handleSelectMember(member.id)} className="h-4 w-4 rounded border-gray-300 text-green-600" />
                                         <div className="ml-3 flex-1">
                                             <p className="font-medium text-gray-800 capitalize">{member.name}</p>
                                             <p className="text-xs text-gray-500">{member.phone}</p>
@@ -203,6 +216,9 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
                                         <span className="text-xs text-gray-400 capitalize">{getMemberDetails(member)}</span>
                                     </label>
                                 ))}
+                                {filteredMembers.filter(m => m.phone).length === 0 && (
+                                    <p className="text-sm text-gray-500 text-center p-4">No members with phone numbers found</p>
+                                )}
                             </div>
                         </div>
                     )}

@@ -16,14 +16,14 @@ interface AddMemberPageProps {
     memberToEdit: Member | null;
 }
 
-const departments = [ "Head Pastor", "Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Traffic", "Administration", "Instrumentalist", "Deacon", "Pastor's Wife", "None"];
+const departments = ["Head Pastor", "Choir", "Media", "Ushering", "Protocol", "Welfare", "Intercessors", "Junior Youth", "Youth", "Traffic", "Administration", "Instrumentalist", "Deacon", "Pastor's Wife", "Sunday School", "Pastoral Care", "Evangelism", "Technical", "None"];
 const roles = ["Member", "Leader"];
 const statuses: Member['status'][] = ["Active", "Inactive", "Transferred"];
 
 const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToEdit }) => {
     const { colors } = useTheme();
     const isEditMode = !!memberToEdit;
-    
+
     const [formState, setFormState] = useState({
         name: '',
         email: '',
@@ -84,8 +84,8 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const { name, gender, ...rest } = formState;
-        if (!name || !formState.email || !formState.phone || !gender) {
-            alert('Please fill in Name, Email, Phone, and Gender.');
+        if (!name || !gender) {
+            alert('Please fill in Name and Gender.');
             return;
         }
 
@@ -132,8 +132,8 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center"><UserIcon className="h-5 w-5 mr-2 text-gray-500" />Personal Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <InputField name="name" label="Full Name" type="text" value={formState.name} onChange={handleChange} required />
-                            <InputField name="email" label="Email Address" type="email" value={formState.email} onChange={handleChange} icon={MailIcon} required />
-                            <InputField name="phone" label="Phone Number" type="tel" value={formState.phone} onChange={handleChange} icon={PhoneIcon} required />
+                            <InputField name="email" label="Email Address" type="email" value={formState.email} onChange={handleChange} icon={MailIcon} />
+                            <InputField name="phone" label="Phone Number" type="tel" value={formState.phone} onChange={handleChange} icon={PhoneIcon} />
                             <InputField name="dob" label="Date of Birth" type="date" value={formState.dob} onChange={handleChange} icon={CalendarIcon} />
                             <SelectField name="gender" label="Gender" options={['Male', 'Female']} value={formState.gender} onChange={handleChange} required />
                             <SelectField name="maritalStatus" label="Marital Status" options={['Single', 'Married', 'Divorced', 'Widowed']} value={formState.maritalStatus} onChange={handleChange} />
@@ -143,24 +143,24 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                     </div>
 
                     {/* Church Information */}
-                     <div>
+                    <div>
                         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center"><CollectionIcon className="h-5 w-5 mr-2 text-gray-500" />Church Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                           <InputField name="title" label="Title" type="text" placeholder="e.g., Elder, Deaconess" value={formState.title} onChange={handleChange} />
-                           <SelectField name="department" label="Department" options={departments} value={formState.department} onChange={handleChange} />
-                           <SelectField name="role" label="Role" options={roles} value={formState.role} onChange={handleChange} />
-                           <SelectField name="status" label="Membership Status" options={statuses} value={formState.status} onChange={handleChange} />
+                            <InputField name="title" label="Title" type="text" placeholder="e.g., Elder, Deaconess" value={formState.title} onChange={handleChange} />
+                            <SelectField name="department" label="Department" options={departments} value={formState.department} onChange={handleChange} />
+                            <SelectField name="role" label="Role" options={roles} value={formState.role} onChange={handleChange} />
+                            <SelectField name="status" label="Membership Status" options={statuses} value={formState.status} onChange={handleChange} />
                         </div>
                     </div>
 
                     {/* Profile Picture */}
-                     <div>
+                    <div>
                         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center"><CameraIcon className="h-5 w-5 mr-2 text-gray-500" />Profile Picture</h3>
                         <div className="flex items-center space-x-4">
                             {formState.avatar ? (
                                 <div className="relative">
-                                    <TransformedAvatar 
-                                        src={formState.avatar} 
+                                    <TransformedAvatar
+                                        src={formState.avatar}
                                         transform={formState.avatarTransform}
                                         className="w-24 h-24 rounded-full border-2 border-gray-200"
                                         alt="Profile Preview"
@@ -180,7 +180,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                                 </div>
                             )}
                             <div className="flex-1">
-                                <input type="file" id="file-upload" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                                <input type="file" id="file-upload" accept="image/*" onChange={handleImageChange} className="hidden" />
                                 <label htmlFor="file-upload" className="cursor-pointer bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-50">Choose file</label>
                                 <p className="text-xs text-gray-500 mt-1">Upload a profile picture for this member.</p>
                                 {formState.avatar && (
@@ -213,7 +213,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                     <div className="flex justify-end pt-6 border-t">
                         <button type="button" onClick={onBack} className="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg mr-4 hover:bg-gray-300">Cancel</button>
                         <button type="submit" className={`${colors.primary} ${colors.primaryHover} text-white font-semibold py-2 px-6 rounded-lg flex items-center`}>
-                            <CheckCircleIcon className="w-5 h-5 mr-2"/>
+                            <CheckCircleIcon className="w-5 h-5 mr-2" />
                             {isEditMode ? 'Update Member' : 'Save Member'}
                         </button>
                     </div>
@@ -248,8 +248,8 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                                         </p>
                                         <div className="space-y-1 text-sm text-blue-700">
                                             <p><strong>Name:</strong> {pendingMemberData.name}</p>
-                                            <p><strong>Email:</strong> {pendingMemberData.email}</p>
-                                            <p><strong>Phone:</strong> {pendingMemberData.phone}</p>
+                                            {pendingMemberData.email && <p><strong>Email:</strong> {pendingMemberData.email}</p>}
+                                            {pendingMemberData.phone && <p><strong>Phone:</strong> {pendingMemberData.phone}</p>}
                                             <p><strong>Gender:</strong> {pendingMemberData.gender}</p>
                                             {pendingMemberData.dob && (
                                                 <p><strong>Date of Birth:</strong> {new Date(pendingMemberData.dob).toLocaleDateString()}</p>
@@ -272,7 +272,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                                 <div className="flex items-center gap-2">
                                     <AlertTriangle className="w-4 h-4 text-green-600" />
                                     <p className="text-sm text-green-700">
-                                        {isEditMode 
+                                        {isEditMode
                                             ? 'This will update the existing member record.'
                                             : 'This will add a new member to your church database.'
                                         }

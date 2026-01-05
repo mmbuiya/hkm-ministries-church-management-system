@@ -12,12 +12,13 @@ let mainWindow;
 // Content Security Policy for production
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://*.clerk.accounts.dev https://clerk.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https: blob:",
-  "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com",
-  "frame-src 'self' https://*.firebaseapp.com",
+  "img-src 'self' data: https: blob: https://img.clerk.com",
+  "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://challenges.clerk.com",
+  "frame-src 'self' https://*.firebaseapp.com https://*.clerk.accounts.dev https://challenges.clerk.com",
+  "worker-src 'self' blob:",
 ].join('; ');
 
 const createWindow = () => {

@@ -23,7 +23,8 @@ export function useGroups(members: Member[] = []) {
             name: g.name,
             leader: g.leader?.email || g.leader_id || '', // Maintain email-based leader for UI compatibility
             members: g.member_count || 0,
-            created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : ''
+            created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
+            category: g.category || 'General'
         }));
     }, [data]);
 
@@ -36,7 +37,8 @@ export function useGroups(members: Member[] = []) {
                 object: {
                     name: groupData.name || '',
                     leader_id: leaderMember?.id || null,
-                    member_count: groupData.members || 0
+                    member_count: groupData.members || 0,
+                    category: groupData.category || 'General'
                 }
             }
         });
@@ -50,6 +52,7 @@ export function useGroups(members: Member[] = []) {
             set.leader_id = leaderMember?.id || null;
         }
         if (updates.members !== undefined) set.member_count = updates.members;
+        if (updates.category) set.category = updates.category;
 
         await updateGroupMutation({
             variables: { id, _set: set }

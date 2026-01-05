@@ -145,10 +145,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   // --- Member Handlers ---
   const handleSaveOrUpdateMember = async (memberData: Partial<Member>) => {
     try {
-      const existingMember = members.find(m => m.email === memberData.email);
-      if (existingMember && existingMember.id !== memberToEdit?.id) {
-        showToast("A member with this email already exists.", 'warning');
-        return;
+      // Only check for duplicate email if email is provided
+      if (memberData.email) {
+        const existingMember = members.find(m => m.email === memberData.email);
+        if (existingMember && existingMember.id !== memberToEdit?.id) {
+          showToast("A member with this email already exists.", 'warning');
+          return;
+        }
       }
 
       if (memberToEdit) { // Update
@@ -167,8 +170,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           name: memberData.name!,
           title: memberData.title || '',
           avatar: memberData.avatar || `https://ui-avatars.com/api/?name=${memberData.name}`,
-          phone: memberData.phone!,
-          email: memberData.email!,
+          phone: memberData.phone || '',
+          email: memberData.email || '',
           department: memberData.department || 'None',
           role: memberData.role || 'Member',
           status: memberData.status || 'Active',

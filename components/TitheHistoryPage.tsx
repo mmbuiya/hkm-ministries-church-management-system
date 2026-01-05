@@ -67,8 +67,8 @@ const TitheHistoryPage: React.FC<TitheHistoryPageProps> = ({ currentUser, member
                         <div>
                             <p className="text-sm text-gray-500">Contact Information</p>
                             <div className="font-semibold text-gray-800 capitalize">{member.name}</div>
-                            <div className="text-xs text-gray-600 flex items-center justify-center md:justify-start mt-1"><PhoneIcon className="w-3 h-3 mr-1"/>{member.phone}</div>
-                            <div className="text-xs text-gray-600 flex items-center justify-center md:justify-start"><MailIcon className="w-3 h-3 mr-1"/>{member.email}</div>
+                            {member.phone && <div className="text-xs text-gray-600 flex items-center justify-center md:justify-start mt-1"><PhoneIcon className="w-3 h-3 mr-1"/>{member.phone}</div>}
+                            {member.email && <div className="text-xs text-gray-600 flex items-center justify-center md:justify-start"><MailIcon className="w-3 h-3 mr-1"/>{member.email}</div>}
                         </div>
                          <div>
                             <p className="text-sm text-gray-500">Membership Details</p>
