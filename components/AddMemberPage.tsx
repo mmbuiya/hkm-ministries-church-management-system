@@ -134,7 +134,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
                             <InputField name="name" label="Full Name" type="text" value={formState.name} onChange={handleChange} required />
                             <InputField name="email" label="Email Address" type="email" value={formState.email} onChange={handleChange} icon={MailIcon} />
                             <InputField name="phone" label="Phone Number" type="tel" value={formState.phone} onChange={handleChange} icon={PhoneIcon} />
-                            <InputField name="dob" label="Date of Birth" type="date" value={formState.dob} onChange={handleChange} icon={CalendarIcon} />
+                            <InputField name="dob" label="Date of Birth" type="date" value={formState.dob} onChange={handleChange} icon={CalendarIcon} placeholder="YYYY-MM-DD" />
                             <SelectField name="gender" label="Gender" options={['Male', 'Female']} value={formState.gender} onChange={handleChange} required />
                             <SelectField name="maritalStatus" label="Marital Status" options={['Single', 'Married', 'Divorced', 'Widowed']} value={formState.maritalStatus} onChange={handleChange} />
                             <InputField name="occupation" label="Occupation" type="text" value={formState.occupation} onChange={handleChange} />
