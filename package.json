@@ -23,8 +23,29 @@
       "electron/**/*"
     ],
     "win": {
-      "target": "portable",
-      "icon": "public/icon.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.ico",
+      "sign": null,
+      "signingHashAlgorithms": []
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HKM Ministries CMS"
+    },
+    "portable": {
+      "artifactName": "HKM-Ministries-CMS-Portable.exe"
     },
     "mac": {
       "target": "dmg",
@@ -33,9 +54,6 @@
     "linux": {
       "target": "AppImage",
       "icon": "public/icon.png"
-    },
-    "portable": {
-      "artifactName": "HKM-Ministries-CMS-Portable.exe"
     }
   },
   "dependencies": {

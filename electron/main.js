@@ -12,13 +12,14 @@ let mainWindow;
 // Content Security Policy for production
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://*.clerk.accounts.dev https://clerk.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://esm.sh",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https: blob: https://img.clerk.com",
-  "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://challenges.clerk.com",
-  "frame-src 'self' https://*.firebaseapp.com https://*.clerk.accounts.dev https://challenges.clerk.com",
+  "img-src 'self' data: https: blob: https://img.clerk.com https://*.clerk.com",
+  "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://challenges.clerk.com https://sunny-zebra-57.hasura.app wss://sunny-zebra-57.hasura.app",
+  "frame-src 'self' https://*.firebaseapp.com https://*.clerk.accounts.dev https://challenges.clerk.com https://*.clerk.com",
   "worker-src 'self' blob:",
+  "child-src 'self' blob:",
 ].join('; ');
 
 const createWindow = () => {
