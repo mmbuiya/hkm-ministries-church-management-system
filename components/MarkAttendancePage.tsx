@@ -47,13 +47,19 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
             const initialAttendance = recordsForService.reduce((acc, record) => {
                 const member = members.find(m => m.name.toLowerCase() === record.memberName.toLowerCase());
                 if (member) {
-                    // Use member.id as key, fallback to email if id not available, or generate a key from name
                     const key = member.id || member.email || member.name.toLowerCase().replace(/\s+/g, '_');
                     acc[key] = record.status;
                 }
                 return acc;
             }, {} as Record<string, AttendanceStatus>);
             setAttendance(initialAttendance);
+        } else {
+            const defaultAttendance = members.reduce((acc, member) => {
+                const key = getMemberKey(member);
+                acc[key] = 'Absent';
+                return acc;
+            }, {} as Record<string, AttendanceStatus>);
+            setAttendance(defaultAttendance);
         }
     }, [editContext, allAttendanceRecords, members]);
 
@@ -95,12 +101,10 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
 
     const handleSave = () => {
         const finalServiceName = serviceName === 'Other' ? customServiceName : serviceName;
-        if (Object.keys(attendance).length > 0 && finalServiceName && serviceDate) {
+        if (finalServiceName && serviceDate) {
             onSave(attendance, finalServiceName, serviceDate);
-        } else if (!finalServiceName || !serviceDate) {
-            alert('Please select a service and date before saving.');
         } else {
-            onBack();
+            alert('Please select a service and date before saving.');
         }
     };
 
@@ -193,7 +197,6 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({ onBack, onSave,
                                 </div>
                             </div>
                             <div className="flex items-center space-x-4 text-sm">
-                                <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-gray-300 mr-1.5"></div>Not Marked</span>
                                 <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-green-500 mr-1.5"></div>Present</span>
                                 <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-red-500 mr-1.5"></div>Absent</span>
                                 <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-yellow-400 mr-1.5"></div>Late</span>
