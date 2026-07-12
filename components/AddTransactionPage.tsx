@@ -42,6 +42,10 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
             setDescription(transactionToEdit.description);
             setIsNonMember(!!transactionToEdit.nonMemberName);
             setNonMemberName(transactionToEdit.nonMemberName || '');
+        } else {
+            // Reset form when not in edit mode
+            console.log('Form reset - clearing memberId');
+            setMemberId('');
         }
     }, [transactionToEdit, isEditMode]);
 
@@ -116,27 +120,27 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         return hasName;
     });
     
-    // Show only member names in the dropdown
-    const memberOptions = validMembers.map(m => m.name);
+    // Check for duplicate names and handle them
+    const memberCounts = validMembers.reduce((acc, member) => {
+        acc[member.name] = (acc[member.name] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    // Add ID suffix for members with duplicate names to make them unique
+    const memberOptions = validMembers.map(m => {
+        if (memberCounts[m.name] > 1) {
+            return `${m.name} (${m.id})`;
+        }
+        return m.name;
+    });
 
     // Debug logging to see what's happening with member data
     console.log('=== Member Data Debug ===');
     console.log('Total members from DB:', members.length);
     console.log('Valid members after filtering:', validMembers.length);
-    console.log('First 10 raw members:', members.slice(0, 10).map(m => ({ 
-        id: m.id, 
-        name: m.name, 
-        email: m.email, 
-        status: m.status,
-        first_name: (m as any).first_name,
-        last_name: (m as any).last_name
-    })));
-    console.log('First 10 valid members:', validMembers.slice(0, 10).map(m => ({ 
-        id: m.id, 
-        name: m.name, 
-        email: m.email 
-    })));
-    console.log('Member options for dropdown:', memberOptions.slice(0, 10));
+    console.log('Duplicate names found:', Object.entries(memberCounts).filter(([name, count]) => count > 1));
+    console.log('Current selected memberId:', memberId);
+    console.log('Current selected member:', validMembers.find(m => m.email === memberId));
 
     return (
         <div>
@@ -193,11 +197,30 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                 options={memberOptions} 
                                                 value={(() => {
                                                     const member = validMembers.find(m => m.email === memberId);
-                                                    return member ? member.name : '';
+                                                    if (!member) return '';
+                                                    
+                                                    // Check if this member name has duplicates
+                                                    if (memberCounts[member.name] > 1) {
+                                                        return `${member.name} (${member.id})`;
+                                                    }
+                                                    return member.name;
                                                 })()} 
                                                 onChange={e => {
-                                                    // Find the selected member by name and store their email
-                                                    const selectedMember = validMembers.find(m => m.name === e.target.value);
+                                                    console.log('Member selection changed to:', e.target.value);
+                                                    
+                                                    // Handle both regular names and names with ID suffix
+                                                    let selectedMember;
+                                                    if (e.target.value.includes(' (') && e.target.value.endsWith(')')) {
+                                                        // Extract ID from "Name (ID)" format
+                                                        const idMatch = e.target.value.match(/\(([^)]+)\)$/);
+                                                        const id = idMatch ? idMatch[1] : '';
+                                                        selectedMember = validMembers.find(m => m.id === id);
+                                                    } else {
+                                                        // Find by exact name match
+                                                        selectedMember = validMembers.find(m => m.name === e.target.value);
+                                                    }
+                                                    
+                                                    console.log('Selected member object:', selectedMember);
                                                     setMemberId(selectedMember ? selectedMember.email : '');
                                                 }} 
                                                 required={memberRequiredCategories.includes(category as IncomeCategory)} 
