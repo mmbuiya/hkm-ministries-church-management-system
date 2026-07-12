@@ -19,6 +19,7 @@ export const InputField: React.FC<{ name: string; label: string; type: string; p
                     value={value}
                     onChange={onChange}
                     required={required}
+                    pattern={type === 'date' ? '\\d{4}-\\d{2}-\\d{2}' : undefined}
                     className={`w-full py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${Icon ? 'pl-10' : 'px-3'}`}
                 />
             </div>

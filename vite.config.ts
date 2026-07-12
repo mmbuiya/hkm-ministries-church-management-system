@@ -6,8 +6,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   // Only apply strict CSP in production, allow inline scripts in development for Vite/React
   const isDev = mode === 'development';
+  
+  // GitHub Pages deployment configuration
+  const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
+  const base = isGitHubPages ? '/hkm-ministries-church-management-system/' : './';
+  
   return {
-    base: './',
+    base: base,
     server: {
       port: 5173,
       strictPort: true,

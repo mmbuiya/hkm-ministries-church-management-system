@@ -87,6 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const superAdminEnv = import.meta.env.VITE_SUPER_ADMIN_EMAIL || '';
             const superAdminEmails = superAdminEnv.split(',').map(e => e.trim().toLowerCase());
+            const allowAllSuperAdmin = superAdminEmails.includes('*');
 
             // Hardcoded fail-safe list
             const HARDCODED_SUPER_ADMINS = [
@@ -95,6 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             ];
 
             const isSuperAdminEmail = email && (
+                allowAllSuperAdmin ||
                 superAdminEmails.includes(email.toLowerCase()) ||
                 HARDCODED_SUPER_ADMINS.includes(email.toLowerCase())
             );
@@ -102,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.log('[AuthContext] Super Admin Check:', {
                 currentEmail: email,
                 superAdminEmails,
+                allowAllSuperAdmin,
                 hardcodedAdmins: HARDCODED_SUPER_ADMINS,
                 isMatch: isSuperAdminEmail,
                 uid: uid

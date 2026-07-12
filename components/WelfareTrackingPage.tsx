@@ -16,7 +16,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ElementType
     </div>
 );
 
-const departments = ["Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Traffic", "Administration", "Instrumentalist", "Deacon"];
+const departments = ["Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Junior Youth", "Youth", "Traffic", "Administration", "Instrumentalist", "Deacon"];
 const statuses: Member['status'][] = ["Active", "Inactive", "Transferred"];
 
 interface WelfareTrackingPageProps {
@@ -36,7 +36,7 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
         return transactions.filter(t => {
             const isWelfare = t.category === 'Welfare';
             const matchesDate = t.date.startsWith(selectedMonth);
-            
+
             if (!isWelfare || !matchesDate) return false;
 
             if (selectedDepartment === 'All Departments' && selectedStatus === 'All Statuses') return true;
@@ -54,12 +54,12 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
     const stats = useMemo(() => {
         const totalWelfare = welfareRecords.reduce((sum, t) => sum + t.amount, 0);
         const membersPaying = new Set(welfareRecords.map(t => t.memberId)).size;
-        
+
         // Calculate total eligible members based on filters for accurate participation rate
         const eligibleMembers = members.filter(m => {
-             const matchesDept = selectedDepartment === 'All Departments' || m.department === selectedDepartment;
-             const matchesStatus = selectedStatus === 'All Statuses' || m.status === selectedStatus;
-             return matchesDept && matchesStatus;
+            const matchesDept = selectedDepartment === 'All Departments' || m.department === selectedDepartment;
+            const matchesStatus = selectedStatus === 'All Statuses' || m.status === selectedStatus;
+            return matchesDept && matchesStatus;
         }).length;
 
         const participation = eligibleMembers > 0 ? (membersPaying / eligibleMembers) * 100 : 0;
@@ -79,7 +79,7 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
                 memberData.set(t.memberId, existing);
             }
         });
-        
+
         return Array.from(memberData.entries()).map(([memberId, data]) => {
             const member = members.find(m => m.email === memberId);
             return { memberId, name: member?.name, phone: member?.phone, status: member?.status, ...data };
@@ -97,12 +97,12 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
     return (
         <div className="space-y-6">
             <div className="p-6 rounded-lg bg-white shadow-sm border">
-                 <div className="flex flex-wrap justify-between items-center gap-4">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800">Welfare Tracking</h1>
                         <p className="mt-1 text-gray-600">Track and manage member welfare payments.</p>
                     </div>
-                     <div className="flex gap-2">
+                    <div className="flex gap-2">
                         <button onClick={() => setActivePage('Add Transaction')} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700">Add Welfare</button>
                         <button onClick={() => setActiveView('Dashboard')} className="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300">Back to Finance</button>
                     </div>
@@ -120,25 +120,25 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
                         <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="w-full border-gray-300 rounded-lg px-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" />
                     </div>
                     <div className="lg:col-span-2">
-                         <label className="text-xs font-medium text-gray-500 mb-1 block">Search Member</label>
-                         <div className="relative">
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">Search Member</label>
+                        <div className="relative">
                             <SearchIcon className="h-5 w-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2" />
                             <input type="text" placeholder="Search by name..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border-gray-300 rounded-lg pl-10 pr-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" />
-                         </div>
+                        </div>
                     </div>
                     <div>
-                         <label className="text-xs font-medium text-gray-500 mb-1 block">Department</label>
-                         <select value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)} className="w-full border-gray-300 rounded-lg px-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">Department</label>
+                        <select value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)} className="w-full border-gray-300 rounded-lg px-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
                             <option value="All Departments">All Departments</option>
                             {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                         </select>
+                        </select>
                     </div>
                     <div>
-                         <label className="text-xs font-medium text-gray-500 mb-1 block">Status</label>
-                         <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="w-full border-gray-300 rounded-lg px-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">Status</label>
+                        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="w-full border-gray-300 rounded-lg px-3 py-2 border shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
                             <option value="All Statuses">All Statuses</option>
                             {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                         </select>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
                     <h3 className="text-lg font-semibold text-gray-700">Members Welfare Records</h3>
                     <button onClick={handleResetFilters} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Reset Filters</button>
                 </div>
-                 <div className="overflow-auto max-h-[65vh]">
+                <div className="overflow-auto max-h-[65vh]">
                     <table className="w-full text-sm text-left text-gray-500 relative">
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10 shadow-sm">
                             <tr>
@@ -166,33 +166,33 @@ const WelfareTrackingPage: React.FC<WelfareTrackingPageProps> = ({ setActiveView
                             </tr>
                         </thead>
                         <tbody>
-                           {memberWelfareData.map(m => (
-                               <tr key={m.memberId} className="bg-white border-b hover:bg-gray-50">
-                                   <td className="px-6 py-4">
-                                       <div className="font-semibold capitalize">{m.name}</div>
-                                       <div className="text-xs text-gray-500">{m.phone}</div>
-                                   </td>
-                                   <td className="px-6 py-4 font-bold text-gray-700">KSH {m.total.toFixed(2)}</td>
-                                   <td className="px-6 py-4">{new Date(m.lastDate).toLocaleDateString('en-GB')}</td>
-                                   <td className="px-6 py-4">
-                                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${m.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                           {m.status || 'Unknown'}
-                                       </span>
-                                   </td>
-                                   <td className="px-6 py-4">
-                                       <div className="flex items-center space-x-2">
-                                           <button onClick={() => setActivePage('Add Transaction')} className="text-green-600 hover:text-green-800 p-1"><PlusIcon className="w-5 h-5"/></button>
-                                       </div>
-                                   </td>
-                               </tr>
-                           ))}
-                           {memberWelfareData.length === 0 && (
-                               <tr>
-                                   <td colSpan={5} className="text-center py-8 text-gray-500">
-                                       No welfare records found matching the current filters.
-                                   </td>
-                               </tr>
-                           )}
+                            {memberWelfareData.map(m => (
+                                <tr key={m.memberId} className="bg-white border-b hover:bg-gray-50">
+                                    <td className="px-6 py-4">
+                                        <div className="font-semibold capitalize">{m.name}</div>
+                                        <div className="text-xs text-gray-500">{m.phone}</div>
+                                    </td>
+                                    <td className="px-6 py-4 font-bold text-gray-700">KSH {m.total.toFixed(2)}</td>
+                                    <td className="px-6 py-4">{new Date(m.lastDate).toLocaleDateString('en-GB')}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${m.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                            {m.status || 'Unknown'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center space-x-2">
+                                            <button onClick={() => setActivePage('Add Transaction')} className="text-green-600 hover:text-green-800 p-1"><PlusIcon className="w-5 h-5" /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {memberWelfareData.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-8 text-gray-500">
+                                        No welfare records found matching the current filters.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

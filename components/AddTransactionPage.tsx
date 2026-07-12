@@ -108,7 +108,37 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setPendingTransactionData(null);
     };
     
-    const memberOptions = members.map(m => m.name);
+    // Create member options with proper formatting - filter out members without valid names or emails
+    const validMembers = members.filter(m => {
+        // Check if member has a valid name (not empty after trimming)
+        const hasValidName = m.name && m.name.trim().length > 0;
+        // Check if member has a valid email 
+        const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
+        // Check if member is active
+        const isActive = m.status === 'Active';
+        
+        return hasValidName && hasValidEmail && isActive;
+    });
+    
+    const memberOptions = validMembers.map(m => `${m.name} (${m.email})`);
+
+    // Debug logging to help identify problematic members
+    if (process.env.NODE_ENV === 'development') {
+        const invalidMembers = members.filter(m => {
+            const hasValidName = m.name && m.name.trim().length > 0;
+            const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
+            return !hasValidName || !hasValidEmail;
+        });
+        
+        if (invalidMembers.length > 0) {
+            console.warn('Found members with invalid data:', invalidMembers.map(m => ({
+                id: m.id,
+                name: m.name,
+                email: m.email,
+                status: m.status
+            })));
+        }
+    }
 
     return (
         <div>
@@ -146,17 +176,37 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                 {isNonMember ? (
                                     <InputField name="nonMemberName" label="Non-Member Name" type="text" value={nonMemberName} onChange={e => setNonMemberName(e.target.value)} required />
                                 ) : (
-                                    <SelectField 
-                                        name="member" 
-                                        label="Member" 
-                                        options={memberOptions} 
-                                        value={members.find(m => m.email === memberId)?.name || ''} 
-                                        onChange={e => {
-                                            const selectedMember = members.find(m => m.name === e.target.value);
-                                            setMemberId(selectedMember ? selectedMember.email : '');
-                                        }} 
-                                        required={memberRequiredCategories.includes(category as IncomeCategory)} 
-                                    />
+                                    <>
+                                        {validMembers.length === 0 ? (
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-medium text-gray-700">
+                                                    Member <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="p-3 border border-orange-300 rounded-lg bg-orange-50">
+                                                    <p className="text-sm text-orange-700">
+                                                        No active members with valid data found. Please ensure members have both names and email addresses, or use the "From Non-Member" option above.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <SelectField 
+                                                name="member" 
+                                                label="Member" 
+                                                options={memberOptions} 
+                                                value={(() => {
+                                                    const member = validMembers.find(m => m.email === memberId);
+                                                    return member ? `${member.name} (${member.email})` : '';
+                                                })()} 
+                                                onChange={e => {
+                                                    // Extract email from the selected option format "Name (email)"
+                                                    const match = e.target.value.match(/\(([^)]+)\)$/);
+                                                    const selectedEmail = match ? match[1] : '';
+                                                    setMemberId(selectedEmail);
+                                                }} 
+                                                required={memberRequiredCategories.includes(category as IncomeCategory)} 
+                                            />
+                                        )}
+                                    </>
                                 )}
                             </div>
                         ) : <div />}
@@ -226,7 +276,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                             <p><strong>Amount:</strong> KSH {pendingTransactionData.amount.toLocaleString()}</p>
                                             <p><strong>Date:</strong> {new Date(pendingTransactionData.date).toLocaleDateString()}</p>
                                             {pendingTransactionData.memberId && (
-                                                <p><strong>Member:</strong> {members.find(m => m.email === pendingTransactionData.memberId)?.name}</p>
+                                                <p><strong>Member:</strong> {validMembers.find(m => m.email === pendingTransactionData.memberId)?.name}</p>
                                             )}
                                             {pendingTransactionData.nonMemberName && (
                                                 <p><strong>Non-Member:</strong> {pendingTransactionData.nonMemberName}</p>

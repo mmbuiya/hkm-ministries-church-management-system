@@ -39,6 +39,7 @@ const MemberDetailsPage: React.FC<MemberDetailsPageProps> = ({ member, onBack, o
 
     // --- Financial Stats ---
     const memberTransactions = useMemo(() => {
+        if (!member.email) return [];
         return transactions
             .filter(t => t.memberId === member.email)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -93,8 +94,8 @@ const MemberDetailsPage: React.FC<MemberDetailsPageProps> = ({ member, onBack, o
                         itemName={member.name}
                         itemType="Member"
                         itemDetails={{
-                            'Email': member.email,
-                            'Phone': member.phone,
+                            'Email': member.email || 'Not provided',
+                            'Phone': member.phone || 'Not provided',
                             'Department': member.department,
                             'Title': member.title,
                             'Status': member.status,
@@ -120,8 +121,9 @@ const MemberDetailsPage: React.FC<MemberDetailsPageProps> = ({ member, onBack, o
                     <h2 className="text-2xl font-bold text-gray-800 capitalize">{member.name}</h2>
                     <p className="text-md text-gray-600 capitalize">{member.title} - {member.department}</p>
                     <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-500">
-                        <span className="flex items-center"><MailIcon className="h-4 w-4 mr-1.5" />{member.email}</span>
-                        <span className="flex items-center"><PhoneIcon className="h-4 w-4 mr-1.5" />{member.phone}</span>
+                        {member.email && <span className="flex items-center"><MailIcon className="h-4 w-4 mr-1.5" />{member.email}</span>}
+                        {member.phone && <span className="flex items-center"><PhoneIcon className="h-4 w-4 mr-1.5" />{member.phone}</span>}
+                        {!member.email && !member.phone && <span className="text-gray-400">No contact information</span>}
                     </div>
                 </div>
                 <div className="flex gap-4">

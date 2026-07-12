@@ -158,7 +158,7 @@ class LocalStore<T extends { id: any }> {
 
 // Initial Groups Logic
 const getInitialGroups = (): Group[] => {
-    const departments = ["Head Pastor", "Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Traffic", "Administration", "Instrumentalist", "Deacon", "Pastor's Wife"];
+    const departments = ["Head Pastor", "Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Junior Youth", "Youth", "Traffic", "Administration", "Instrumentalist", "Deacon", "Pastor's Wife"];
     return departments.map((dept, index) => ({
         id: index + 1,
         name: dept,

@@ -45,10 +45,22 @@ export function useAttendance(members: Member[] = []) {
             });
 
             // 2. Prepare new records
-            const objects = Object.entries(newAttendance).map(([memberEmail, status]) => {
-                const member = members.find(m => m.email === memberEmail);
+            // The key can be member.id, member.email, or a generated key from name
+            const objects = Object.entries(newAttendance).map(([memberKey, status]) => {
+                // Try to find member by id first, then email, then by matching name-based key
+                let member = members.find(m => m.id === memberKey);
                 if (!member) {
-                    console.warn(`Member with email ${memberEmail} not found during attendance save.`);
+                    member = members.find(m => m.email === memberKey);
+                }
+                if (!member) {
+                    // Try to match by name-based key (name.toLowerCase().replace(/\s+/g, '_'))
+                    member = members.find(m => {
+                        const nameKey = m.name.toLowerCase().replace(/\s+/g, '_');
+                        return nameKey === memberKey;
+                    });
+                }
+                if (!member) {
+                    console.warn(`Member with key ${memberKey} not found during attendance save.`);
                 }
                 return {
                     date: serviceDate,

@@ -15,6 +15,7 @@ import { useUserSessions } from './hooks/useUserSessions';
 import { useLoginAttempts } from './hooks/useLoginAttempts';
 import { UPSERT_USER_MUTATION } from './services/graphql/users_hasura';
 import ClerkAuthPage from './components/ClerkAuthPage';
+import OfflineIndicator from './components/OfflineIndicator';
 
 const App: React.FC = () => {
     // Auth context and Clerk hooks
@@ -180,13 +181,16 @@ const App: React.FC = () => {
                 {!isSignedIn ? (
                     <ClerkAuthPage />
                 ) : (
-                    <MainLayout
-                        currentUser={currentUser}
-                        users={users}
-                        onSaveOrUpdateUser={handleSaveOrUpdateUser}
-                        onDeleteUser={handleDeleteUser}
-                        onLogout={handleLogout}
-                    />
+                    <>
+                        <MainLayout
+                            currentUser={currentUser}
+                            users={users}
+                            onSaveOrUpdateUser={handleSaveOrUpdateUser}
+                            onDeleteUser={handleDeleteUser}
+                            onLogout={handleLogout}
+                        />
+                        <OfflineIndicator />
+                    </>
                 )}
             </ToastProvider>
         </ThemeProvider>
