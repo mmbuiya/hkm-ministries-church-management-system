@@ -65,9 +65,14 @@ export function useTransactions() {
     const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
 
     const transactions: Transaction[] = useMemo(() => {
-        if (!data?.transactions) return [];
+        console.log('[useTransactions] Query data:', data, 'Error:', error);
+        if (!data?.transactions) {
+            console.warn('[useTransactions] No transactions in data', { data, loading, error });
+            return [];
+        }
+        console.log('[useTransactions] Transactions count:', data.transactions.length);
         return data.transactions.map(transformTransaction);
-    }, [data]);
+    }, [data, error, loading]);
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'> | Transaction) => {
         console.log('[useTransactions] addTransaction called', { date: transaction.date, category: transaction.category, type: transaction.type, amount: transaction.amount, memberId: transaction.memberId });

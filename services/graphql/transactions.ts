@@ -13,15 +13,6 @@ export const GET_TRANSACTIONS_QUERY = gql`
       non_member_name
       created_at
       updated_at
-      member {
-        id
-        first_name
-        last_name
-        department
-        phone
-        email
-        status
-      }
     }
   }
 `;
@@ -39,15 +30,6 @@ export const GET_TRANSACTIONS_SUBSCRIPTION = gql`
       non_member_name
       created_at
       updated_at
-      member {
-        id
-        first_name
-        last_name
-        department
-        phone
-        email
-        status
-      }
     }
   }
 `;
