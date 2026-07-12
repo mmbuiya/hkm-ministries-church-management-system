@@ -85,14 +85,20 @@ export function useTransactions() {
                 }
             });
 
+            if (result.errors && result.errors.length > 0) {
+                const errorMessages = result.errors.map(e => e.message).join('; ');
+                throw new Error(`Database error: ${errorMessages}`);
+            }
+
             if (!result.data?.insert_transactions_one) {
-                throw new Error('Failed to create transaction - no data returned');
+                throw new Error('Transaction could not be saved. The database rejected the operation.');
             }
 
             await refetch();
         } catch (error: any) {
             console.error('Error adding transaction:', error);
-            throw new Error(error.message || 'Failed to save transaction. Please check your connection and try again.');
+            const message = error.graphQLErrors?.[0]?.message || error.message || 'Failed to save transaction. Please check your connection and try again.';
+            throw new Error(message);
         }
     };
 
@@ -115,14 +121,20 @@ export function useTransactions() {
                 }
             });
 
+            if (result.errors && result.errors.length > 0) {
+                const errorMessages = result.errors.map(e => e.message).join('; ');
+                throw new Error(`Database error: ${errorMessages}`);
+            }
+
             if (!result.data?.update_transactions_by_pk) {
-                throw new Error('Failed to update transaction - no data returned');
+                throw new Error('Transaction could not be updated. The database rejected the operation.');
             }
 
             await refetch();
         } catch (error: any) {
             console.error('Error updating transaction:', error);
-            throw new Error(error.message || 'Failed to update transaction. Please check your connection and try again.');
+            const message = error.graphQLErrors?.[0]?.message || error.message || 'Failed to update transaction. Please check your connection and try again.';
+            throw new Error(message);
         }
     };
 

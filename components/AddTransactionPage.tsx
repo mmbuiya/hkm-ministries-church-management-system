@@ -76,21 +76,27 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const isMemberRequired = type === 'Income' && !isNonMember && memberRequiredCategories.includes(category as IncomeCategory);
-        if (isMemberRequired && !memberId) {
-            alert('Please select a member for this transaction category.');
+        if (!category || !amount || !date) {
+            alert('Please fill in all required fields.');
             return;
         }
 
-        if (!category || !amount || !date) {
-            alert('Please fill in all required fields.');
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            alert('Please enter a valid positive amount.');
+            return;
+        }
+
+        const isMemberRequired = type === 'Income' && !isNonMember && memberRequiredCategories.includes(category as IncomeCategory);
+        if (isMemberRequired && !memberId) {
+            alert('Please select a member for this transaction category.');
             return;
         }
         
         const transactionData = {
             type,
             category,
-            amount: parseFloat(amount),
+            amount: parsedAmount,
             date,
             description,
             memberId: type === 'Income' && !isNonMember && memberId ? memberId : undefined,
@@ -106,11 +112,14 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setShowConfirmation(true);
     };
 
-    const handleConfirmSave = () => {
+    const handleConfirmSave = async () => {
         if (pendingTransactionData) {
-            onSave(pendingTransactionData);
-            setShowConfirmation(false);
-            setPendingTransactionData(null);
+            try {
+                await onSave(pendingTransactionData);
+            } finally {
+                setShowConfirmation(false);
+                setPendingTransactionData(null);
+            }
         }
     };
 
