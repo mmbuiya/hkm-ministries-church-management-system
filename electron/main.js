@@ -9,29 +9,21 @@ const __dirname = path.dirname(__filename);
 // Note: squirrel-startup check is skipped for ES modules - handle separately if needed
 let mainWindow;
 
-// Content Security Policy for production
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://esm.sh",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https: blob: https://img.clerk.com https://*.clerk.com",
-  "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://challenges.clerk.com https://sunny-zebra-57.hasura.app wss://sunny-zebra-57.hasura.app",
-  "frame-src 'self' https://*.firebaseapp.com https://*.clerk.accounts.dev https://challenges.clerk.com https://*.clerk.com",
-  "worker-src 'self' blob:",
-  "child-src 'self' blob:",
-].join('; ');
+// Disable CSP for Electron to allow Clerk authentication
+const CSP = "";
 
 const createWindow = () => {
-  // Set CSP headers for all requests
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [CSP]
-      }
+  // Set CSP headers for all requests - disabled for Clerk compatibility
+  if (CSP) {
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [CSP]
+        }
+      });
     });
-  });
+  }
 
   mainWindow = new BrowserWindow({
     width: 1400,

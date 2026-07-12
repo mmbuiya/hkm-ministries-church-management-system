@@ -29,7 +29,26 @@ interface HasuraMember {
 
 // Transform Hasura data to frontend Member format
 function transformMember(hasuraMember: HasuraMember): Member {
-    const fullName = `${hasuraMember.first_name || ''} ${hasuraMember.last_name || ''}`.trim();
+    const firstName = hasuraMember.first_name || '';
+    const lastName = hasuraMember.last_name || '';
+    let fullName = `${firstName} ${lastName}`.trim();
+    
+    // Fallback to email or ID if name is empty
+    if (!fullName || fullName.length === 0) {
+        if (hasuraMember.email) {
+            fullName = hasuraMember.email.split('@')[0]; // Use email username part
+        } else {
+            fullName = `Member ${hasuraMember.id}`; // Fallback to ID
+        }
+        console.warn('Member with empty name found, using fallback:', {
+            id: hasuraMember.id,
+            firstName,
+            lastName,
+            email: hasuraMember.email,
+            fallbackName: fullName
+        });
+    }
+    
     return {
         id: hasuraMember.id,
         name: fullName,

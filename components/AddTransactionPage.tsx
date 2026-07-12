@@ -108,16 +108,35 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setPendingTransactionData(null);
     };
     
-    // Create member options with proper formatting - only filter out members without names
+    // Create member options - include all members from database
+    // The useMembers hook should now provide fallback names for members without proper names
     const validMembers = members.filter(m => {
-        // Check if member has a valid name (not empty after trimming)
-        const hasValidName = m.name && m.name.trim().length > 0;
-        // Only filter by name - include all members regardless of email or status
-        return hasValidName;
+        // Very minimal filtering - just ensure we have some kind of name
+        const hasName = m.name && typeof m.name === 'string' && m.name.trim().length > 0;
+        return hasName;
     });
     
     // Show only member names in the dropdown
     const memberOptions = validMembers.map(m => m.name);
+
+    // Debug logging to see what's happening with member data
+    console.log('=== Member Data Debug ===');
+    console.log('Total members from DB:', members.length);
+    console.log('Valid members after filtering:', validMembers.length);
+    console.log('First 10 raw members:', members.slice(0, 10).map(m => ({ 
+        id: m.id, 
+        name: m.name, 
+        email: m.email, 
+        status: m.status,
+        first_name: (m as any).first_name,
+        last_name: (m as any).last_name
+    })));
+    console.log('First 10 valid members:', validMembers.slice(0, 10).map(m => ({ 
+        id: m.id, 
+        name: m.name, 
+        email: m.email 
+    })));
+    console.log('Member options for dropdown:', memberOptions.slice(0, 10));
 
     return (
         <div>
