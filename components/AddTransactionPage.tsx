@@ -24,6 +24,11 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
     const [type, setType] = useState<'Income' | 'Expense'>('Income');
     const [category, setCategory] = useState<IncomeCategory | ExpenseCategory>('Tithe');
     const [memberId, setMemberId] = useState<string>('');
+    
+    // Debug memberId changes
+    useEffect(() => {
+        console.log('memberId state changed to:', memberId);
+    }, [memberId]);
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
@@ -196,13 +201,29 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                 label="Member" 
                                                 options={memberOptions} 
                                                 value={(() => {
+                                                    console.log('Calculating dropdown value. memberId:', memberId);
+                                                    
+                                                    if (!memberId) {
+                                                        console.log('No memberId set, returning empty string');
+                                                        return '';
+                                                    }
+                                                    
                                                     const member = validMembers.find(m => m.email === memberId);
-                                                    if (!member) return '';
+                                                    console.log('Found member for dropdown:', member);
+                                                    
+                                                    if (!member) {
+                                                        console.log('No member found with email:', memberId);
+                                                        return '';
+                                                    }
                                                     
                                                     // Check if this member name has duplicates
                                                     if (memberCounts[member.name] > 1) {
-                                                        return `${member.name} (${member.id})`;
+                                                        const displayValue = `${member.name} (${member.id})`;
+                                                        console.log('Member has duplicates, showing:', displayValue);
+                                                        return displayValue;
                                                     }
+                                                    
+                                                    console.log('Showing member name:', member.name);
                                                     return member.name;
                                                 })()} 
                                                 onChange={e => {
@@ -221,7 +242,9 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                     }
                                                     
                                                     console.log('Selected member object:', selectedMember);
-                                                    setMemberId(selectedMember ? selectedMember.email : '');
+                                                    const newMemberId = selectedMember ? selectedMember.email : '';
+                                                    console.log('Setting memberId to:', newMemberId);
+                                                    setMemberId(newMemberId);
                                                 }} 
                                                 required={memberRequiredCategories.includes(category as IncomeCategory)} 
                                             />
