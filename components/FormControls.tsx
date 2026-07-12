@@ -26,14 +26,21 @@ export const InputField: React.FC<{ name: string; label: string; type: string; p
         </div>
     );
 
-export const SelectField: React.FC<{ name: string; label: string; options: string[]; required?: boolean; value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }> = ({ name, label, options, required, value, onChange }) => (
+export const SelectField: React.FC<{ name: string; label: string; options: string[]; required?: boolean; value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void; placeholder?: string }> = ({ name, label, options, required, value, onChange, placeholder }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
             {label} {required && <span className="text-red-500">*</span>}
         </label>
         <div className="relative">
-            <select name={name} value={value} onChange={onChange} required={required} className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white capitalize">
-                <option value="">Select {label}</option>
+            <select
+                name={name}
+                value={value}
+                onChange={onChange}
+                required={required}
+                aria-label={label}
+                className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-white capitalize"
+            >
+                <option value="" disabled hidden>{placeholder || `Select ${label}`}</option>
                 {options.map(opt => <option key={opt} value={opt} className="capitalize">{opt}</option>)}
             </select>
             <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

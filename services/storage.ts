@@ -1,5 +1,5 @@
 
-import { Member, initialMembers } from '../components/memberData';
+import { Member } from '../components/memberData';
 import { User, initialUsers } from '../components/userData';
 import {
     hashPassword,
@@ -13,12 +13,12 @@ import {
     AuditActions,
     sanitizeInput
 } from './security';
-import { Transaction, initialTransactions } from '../components/financeData';
-import { AttendanceRecord, attendanceData } from '../components/attendanceData';
-import { Equipment, initialEquipment } from '../components/equipmentData';
-import { MaintenanceRecord, initialMaintenanceData } from '../components/maintenanceData';
-import { SmsRecord, initialSmsData } from '../components/smsData';
-import { Visitor, initialVisitors } from '../components/visitorData';
+import { Transaction } from '../components/financeData';
+import { AttendanceRecord } from '../components/attendanceData';
+import { Equipment } from '../components/equipmentData';
+import { MaintenanceRecord } from '../components/maintenanceData';
+import { SmsRecord } from '../components/smsData';
+import { Visitor } from '../components/visitorData';
 import { Group } from '../components/GroupsManagementPage';
 import { Branch, initialBranches } from '../components/branchData';
 
@@ -158,14 +158,7 @@ class LocalStore<T extends { id: any }> {
 
 // Initial Groups Logic
 const getInitialGroups = (): Group[] => {
-    const departments = ["Head Pastor", "Choir", "Media", "Ushering", "Children", "New Breed", "Protocol", "Welfare", "Intercessors", "Junior Youth", "Youth", "Traffic", "Administration", "Instrumentalist", "Deacon", "Pastor's Wife"];
-    return departments.map((dept, index) => ({
-        id: index + 1,
-        name: dept,
-        leader: 'unassigned@hkm.org',
-        members: 0,
-        created: '2023-01-10',
-    }));
+    return [];
 };
 
 // Simple Store for Settings (not an array)
@@ -217,14 +210,14 @@ class SettingsStore {
 
 // Create Instances
 const usersStore = new LocalStore<User>('hkm_users', initialUsers);
-const membersStore = new LocalStore<Member>('hkm_members', initialMembers);
+const membersStore = new LocalStore<Member>('hkm_members', []);
 const groupsStore = new LocalStore<Group>('hkm_groups', getInitialGroups());
-const attendanceStore = new LocalStore<AttendanceRecord>('hkm_attendance_records', attendanceData);
-const transactionsStore = new LocalStore<Transaction>('hkm_transactions', initialTransactions);
-const equipmentStore = new LocalStore<Equipment>('hkm_equipment', initialEquipment);
-const maintenanceStore = new LocalStore<MaintenanceRecord>('hkm_maintenance', initialMaintenanceData);
-const smsStore = new LocalStore<SmsRecord>('hkm_sms_records', initialSmsData);
-const visitorsStore = new LocalStore<Visitor>('hkm_visitors', initialVisitors);
+const attendanceStore = new LocalStore<AttendanceRecord>('hkm_attendance_records', []);
+const transactionsStore = new LocalStore<Transaction>('hkm_transactions', []);
+const equipmentStore = new LocalStore<Equipment>('hkm_equipment', []);
+const maintenanceStore = new LocalStore<MaintenanceRecord>('hkm_maintenance', []);
+const smsStore = new LocalStore<SmsRecord>('hkm_sms_records', []);
+const visitorsStore = new LocalStore<Visitor>('hkm_visitors', []);
 const branchesStore = new LocalStore<Branch>('hkm_branches', initialBranches);
 const settingsStore = new SettingsStore('hkm_app_settings', initialSettings);
 

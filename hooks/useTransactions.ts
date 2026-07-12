@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { Transaction } from '../components/financeData';
@@ -9,6 +8,16 @@ import {
     DELETE_TRANSACTION_MUTATION
 } from '../services/graphql/transactions';
 
+interface HasuraMember {
+    id: string;
+    first_name: string;
+    last_name: string;
+    department?: string;
+    phone?: string;
+    email?: string;
+    status?: string;
+}
+
 interface HasuraTransaction {
     id: number;
     date: string;
@@ -18,9 +27,20 @@ interface HasuraTransaction {
     description?: string;
     member_id?: string;
     non_member_name?: string;
+    member?: HasuraMember | null;
 }
 
 function transformTransaction(hasuraTx: HasuraTransaction): Transaction {
+    let contributorName: string | undefined;
+    let contributorPhone: string | undefined;
+
+    if (hasuraTx.member) {
+        contributorName = `${hasuraTx.member.first_name} ${hasuraTx.member.last_name}`.trim();
+        contributorPhone = hasuraTx.member.phone;
+    } else if (hasuraTx.non_member_name) {
+        contributorName = hasuraTx.non_member_name;
+    }
+
     return {
         id: hasuraTx.id,
         date: hasuraTx.date,
@@ -29,13 +49,15 @@ function transformTransaction(hasuraTx: HasuraTransaction): Transaction {
         amount: parseFloat(hasuraTx.amount.toString()),
         description: hasuraTx.description || '',
         memberId: hasuraTx.member_id,
-        nonMemberName: hasuraTx.non_member_name
+        nonMemberName: hasuraTx.non_member_name,
+        contributorName,
+        contributorPhone,
     };
 }
 
 export function useTransactions() {
     const { data, loading, error, refetch } = useQuery(GET_TRANSACTIONS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+        pollInterval: 5000,
         errorPolicy: 'all'
     });
     const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
@@ -48,54 +70,83 @@ export function useTransactions() {
     }, [data]);
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'> | Transaction) => {
-        await addTransactionMutation({
-            variables: {
-                object: {
-                    date: transaction.date,
-                    category: transaction.category,
-                    type: transaction.type,
-                    amount: transaction.amount,
-                    description: transaction.description || '',
-                    member_id: transaction.memberId || null,
-                    non_member_name: transaction.nonMemberName || null
+        try {
+            const result = await addTransactionMutation({
+                variables: {
+                    object: {
+                        date: transaction.date,
+                        category: transaction.category,
+                        type: transaction.type,
+                        amount: transaction.amount,
+                        description: transaction.description || '',
+                        member_id: transaction.memberId || null,
+                        non_member_name: transaction.nonMemberName || null
+                    }
                 }
+            });
+
+            if (!result.data?.insert_transactions_one) {
+                throw new Error('Failed to create transaction - no data returned');
             }
-        });
-        
-        // Refetch data to update UI immediately
-        await refetch();
+
+            await refetch();
+        } catch (error: any) {
+            console.error('Error adding transaction:', error);
+            throw new Error(error.message || 'Failed to save transaction. Please check your connection and try again.');
+        }
     };
 
     const updateTransaction = async (id: number, updates: Partial<Transaction>) => {
-        const hasuraUpdates: any = {};
+        try {
+            const hasuraUpdates: any = {};
 
-        if (updates.date !== undefined) hasuraUpdates.date = updates.date;
-        if (updates.category !== undefined) hasuraUpdates.category = updates.category;
-        if (updates.type !== undefined) hasuraUpdates.type = updates.type;
-        if (updates.amount !== undefined) hasuraUpdates.amount = updates.amount;
-        if (updates.description !== undefined) hasuraUpdates.description = updates.description;
-        if (updates.memberId !== undefined) hasuraUpdates.member_id = updates.memberId;
-        if (updates.nonMemberName !== undefined) hasuraUpdates.non_member_name = updates.nonMemberName;
+            if (updates.date !== undefined) hasuraUpdates.date = updates.date;
+            if (updates.category !== undefined) hasuraUpdates.category = updates.category;
+            if (updates.type !== undefined) hasuraUpdates.type = updates.type;
+            if (updates.amount !== undefined) hasuraUpdates.amount = updates.amount;
+            if (updates.description !== undefined) hasuraUpdates.description = updates.description;
+            if (updates.memberId !== undefined) hasuraUpdates.member_id = updates.memberId;
+            if (updates.nonMemberName !== undefined) hasuraUpdates.non_member_name = updates.nonMemberName;
 
-        await updateTransactionMutation({
-            variables: {
-                id,
-                updates: hasuraUpdates
+            const result = await updateTransactionMutation({
+                variables: {
+                    id,
+                    updates: hasuraUpdates
+                }
+            });
+
+            if (!result.data?.update_transactions_by_pk) {
+                throw new Error('Failed to update transaction - no data returned');
             }
-        });
-        
-        // Refetch data to update UI immediately
-        await refetch();
+
+            await refetch();
+        } catch (error: any) {
+            console.error('Error updating transaction:', error);
+            throw new Error(error.message || 'Failed to update transaction. Please check your connection and try again.');
+        }
     };
 
     const deleteTransaction = async (id: number) => {
-        await deleteTransactionMutation({
-            variables: { id }
-        });
-        
-        // Refetch data to update UI immediately
-        await refetch();
+        try {
+            const result = await deleteTransactionMutation({
+                variables: { id }
+            });
+
+            if (!result.data?.delete_transactions_by_pk) {
+                throw new Error('Failed to delete transaction - no data returned');
+            }
+
+            await refetch();
+        } catch (error: any) {
+            console.error('Error deleting transaction:', error);
+            throw new Error(error.message || 'Failed to delete transaction. Please check your connection and try again.');
+        }
     };
+
+    // Check if there's a connection error
+    const connectionError = error
+        ? 'Database connection failed. Please check your network connection and ensure the database server is running.'
+        : null;
 
     return {
         data: transactions,
@@ -103,7 +154,7 @@ export function useTransactions() {
             console.warn('setData called on Hasura subscription - data is managed by GraphQL');
         },
         loading,
-        error,
+        error: error || connectionError,
         addTransaction,
         updateTransaction,
         deleteTransaction

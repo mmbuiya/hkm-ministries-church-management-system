@@ -41,7 +41,7 @@ const MemberDetailsPage: React.FC<MemberDetailsPageProps> = ({ member, onBack, o
     const memberTransactions = useMemo(() => {
         if (!member.email) return [];
         return transactions
-            .filter(t => t.memberId === member.email)
+            .filter(t => t.memberId === member.id)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [transactions, member.email]);
 

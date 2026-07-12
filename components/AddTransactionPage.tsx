@@ -13,9 +13,9 @@ interface AddTransactionPageProps {
     members: Member[];
 }
 
-const incomeCategories: IncomeCategory[] = ['Tithe', 'Offering', 'Project Offering', 'Pledge', 'Seed', "Pastor's Appreciation", 'Welfare', 'Children Service Offering', 'Donation', 'Others'];
+const incomeCategories: IncomeCategory[] = ['Tithe', 'Offering', 'Project Offering', 'Pledge', 'Seed', "Pastor's Appreciation", 'Welfare', 'Children Service Offering', 'Donation', 'Church Bills Contribution', 'Others'];
 const expenseCategories: ExpenseCategory[] = ['Utilities', 'Rent', 'Salaries', 'Supplies', 'Events', 'Maintenance', 'Outreach', 'Honorarium', 'Others'];
-const memberRequiredCategories: IncomeCategory[] = ['Tithe', 'Welfare', 'Pledge', 'Seed', "Pastor's Appreciation"];
+const memberRequiredCategories: IncomeCategory[] = ['Tithe', 'Welfare', 'Pledge', 'Seed', "Pastor's Appreciation", 'Church Bills Contribution'];
 
 
 const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave, transactionToEdit, members }) => {

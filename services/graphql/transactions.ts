@@ -1,4 +1,3 @@
-
 import { gql } from '@apollo/client';
 
 export const GET_TRANSACTIONS_QUERY = gql`
@@ -14,6 +13,15 @@ export const GET_TRANSACTIONS_QUERY = gql`
       non_member_name
       created_at
       updated_at
+      member {
+        id
+        first_name
+        last_name
+        department
+        phone
+        email
+        status
+      }
     }
   }
 `;
@@ -31,6 +39,15 @@ export const GET_TRANSACTIONS_SUBSCRIPTION = gql`
       non_member_name
       created_at
       updated_at
+      member {
+        id
+        first_name
+        last_name
+        department
+        phone
+        email
+        status
+      }
     }
   }
 `;
@@ -39,6 +56,7 @@ export const ADD_TRANSACTION_MUTATION = gql`
   mutation AddTransaction($object: transactions_insert_input!) {
     insert_transactions_one(object: $object) {
       id
+      member_id
     }
   }
 `;
@@ -47,6 +65,7 @@ export const UPDATE_TRANSACTION_MUTATION = gql`
   mutation UpdateTransaction($id: Int!, $updates: transactions_set_input!) {
     update_transactions_by_pk(pk_columns: {id: $id}, _set: $updates) {
       id
+      member_id
     }
   }
 `;
