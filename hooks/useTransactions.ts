@@ -70,7 +70,9 @@ export function useTransactions() {
     }, [data]);
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'> | Transaction) => {
+        console.log('[useTransactions] addTransaction called', { date: transaction.date, category: transaction.category, type: transaction.type, amount: transaction.amount, memberId: transaction.memberId });
         try {
+            console.log('[useTransactions] Sending GraphQL mutation...');
             const result = await addTransactionMutation({
                 variables: {
                     object: {
@@ -85,19 +87,26 @@ export function useTransactions() {
                 }
             });
 
+            console.log('[useTransactions] Mutation result:', result);
+
             if (result.errors && result.errors.length > 0) {
                 const errorMessages = result.errors.map(e => e.message).join('; ');
+                console.error('[useTransactions] GraphQL errors:', result.errors);
                 throw new Error(`Database error: ${errorMessages}`);
             }
 
             if (!result.data?.insert_transactions_one) {
+                console.error('[useTransactions] No insert_transactions_one in result', { data: result.data });
                 throw new Error('Transaction could not be saved. The database rejected the operation.');
             }
 
+            console.log('[useTransactions] Mutation succeeded, refetching...');
             await refetch();
+            console.log('[useTransactions] Refetch complete');
         } catch (error: any) {
-            console.error('Error adding transaction:', error);
+            console.error('[useTransactions] Error adding transaction:', error);
             const message = error.graphQLErrors?.[0]?.message || error.message || 'Failed to save transaction. Please check your connection and try again.';
+            console.error('[useTransactions] Throwing error:', message);
             throw new Error(message);
         }
     };

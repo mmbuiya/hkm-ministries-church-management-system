@@ -297,19 +297,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
   // --- Transaction Handlers ---
   const handleSaveOrUpdateTransaction = async (transactionData: Omit<Transaction, 'id'> | Transaction) => {
+    console.log('[MainLayout] handleSaveOrUpdateTransaction called', { data: transactionData, hasId: 'id' in transactionData });
     try {
       if ('id' in transactionData) { // Update
         const updated = transactionData as Transaction;
+        console.log('[MainLayout] Updating transaction', { id: updated.id });
         await updateTransaction(updated.id, transactionData);
         showToast("Transaction updated.", 'success');
       } else { // Add
+        console.log('[MainLayout] Adding new transaction');
         await addTransaction(transactionData);
         showToast("Transaction recorded.", 'success');
       }
+      console.log('[MainLayout] Save succeeded, navigating to Finance');
       setTransactionToEdit(null);
       setActivePage('Finance');
     } catch (error) {
-      console.error("Error saving transaction:", error);
+      console.error("[MainLayout] Error saving transaction:", error);
       showToast("Failed to save transaction", 'error');
     }
   };

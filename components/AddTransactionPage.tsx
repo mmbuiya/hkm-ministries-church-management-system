@@ -114,8 +114,12 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
 
     const handleConfirmSave = async () => {
         if (pendingTransactionData) {
+            console.log('[Save] handleConfirmSave called', { type: pendingTransactionData.type, category: pendingTransactionData.category, amount: pendingTransactionData.amount, memberId: pendingTransactionData.memberId });
             try {
                 await onSave(pendingTransactionData);
+                console.log('[Save] onSave completed successfully');
+            } catch (err) {
+                console.error('[Save] onSave failed:', err);
             } finally {
                 setShowConfirmation(false);
                 setPendingTransactionData(null);
