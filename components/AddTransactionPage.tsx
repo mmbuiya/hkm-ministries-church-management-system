@@ -47,6 +47,8 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
             setDescription(transactionToEdit.description);
             setIsNonMember(!!transactionToEdit.nonMemberName);
             setNonMemberName(transactionToEdit.nonMemberName || '');
+            
+            console.log('Edit mode - loaded transaction with memberId:', transactionToEdit.memberId);
         } else {
             // Reset form when not in edit mode
             console.log('Form reset - clearing memberId');
@@ -208,11 +210,12 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                         return '';
                                                     }
                                                     
-                                                    const member = validMembers.find(m => m.email === memberId);
+                                                    // Find member by ID instead of email
+                                                    const member = validMembers.find(m => m.id === memberId);
                                                     console.log('Found member for dropdown:', member);
                                                     
                                                     if (!member) {
-                                                        console.log('No member found with email:', memberId);
+                                                        console.log('No member found with id:', memberId);
                                                         return '';
                                                     }
                                                     
@@ -242,7 +245,8 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                     }
                                                     
                                                     console.log('Selected member object:', selectedMember);
-                                                    const newMemberId = selectedMember ? selectedMember.email : '';
+                                                    // Use member ID instead of email since many members don't have emails
+                                                    const newMemberId = selectedMember ? selectedMember.id : '';
                                                     console.log('Setting memberId to:', newMemberId);
                                                     setMemberId(newMemberId);
                                                 }} 
@@ -319,7 +323,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                             <p><strong>Amount:</strong> KSH {pendingTransactionData.amount.toLocaleString()}</p>
                                             <p><strong>Date:</strong> {new Date(pendingTransactionData.date).toLocaleDateString()}</p>
                                             {pendingTransactionData.memberId && (
-                                                <p><strong>Member:</strong> {validMembers.find(m => m.email === pendingTransactionData.memberId)?.name}</p>
+                                                <p><strong>Member:</strong> {validMembers.find(m => m.id === pendingTransactionData.memberId)?.name}</p>
                                             )}
                                             {pendingTransactionData.nonMemberName && (
                                                 <p><strong>Non-Member:</strong> {pendingTransactionData.nonMemberName}</p>
