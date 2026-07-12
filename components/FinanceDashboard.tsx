@@ -51,6 +51,10 @@ const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ setActiveView, setA
     const { income, expenses, balance } = useMemo(() => {
         const income = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
         const expenses = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+        console.log('[Metrics] transactions count:', transactions.length, 'income:', income, 'expenses:', expenses, 'balance:', income - expenses);
+        if (transactions.length > 0) {
+            console.log('[Metrics] first 3 transaction amounts:', transactions.slice(0, 3).map(t => ({ id: t.id, amount: t.amount, type: t.type })));
+        }
         return { income, expenses, balance: income - expenses };
     }, [transactions]);
 
