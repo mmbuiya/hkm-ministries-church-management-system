@@ -108,37 +108,16 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setPendingTransactionData(null);
     };
     
-    // Create member options with proper formatting - filter out members without valid names or emails
+    // Create member options with proper formatting - only filter out members without names
     const validMembers = members.filter(m => {
         // Check if member has a valid name (not empty after trimming)
         const hasValidName = m.name && m.name.trim().length > 0;
-        // Check if member has a valid email 
-        const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
-        // Check if member is active
-        const isActive = m.status === 'Active';
-        
-        return hasValidName && hasValidEmail && isActive;
+        // Only filter by name - include all members regardless of email or status
+        return hasValidName;
     });
     
-    const memberOptions = validMembers.map(m => `${m.name} (${m.email})`);
-
-    // Debug logging to help identify problematic members
-    if (process.env.NODE_ENV === 'development') {
-        const invalidMembers = members.filter(m => {
-            const hasValidName = m.name && m.name.trim().length > 0;
-            const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
-            return !hasValidName || !hasValidEmail;
-        });
-        
-        if (invalidMembers.length > 0) {
-            console.warn('Found members with invalid data:', invalidMembers.map(m => ({
-                id: m.id,
-                name: m.name,
-                email: m.email,
-                status: m.status
-            })));
-        }
-    }
+    // Show only member names in the dropdown
+    const memberOptions = validMembers.map(m => m.name);
 
     return (
         <div>
@@ -195,13 +174,12 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                 options={memberOptions} 
                                                 value={(() => {
                                                     const member = validMembers.find(m => m.email === memberId);
-                                                    return member ? `${member.name} (${member.email})` : '';
+                                                    return member ? member.name : '';
                                                 })()} 
                                                 onChange={e => {
-                                                    // Extract email from the selected option format "Name (email)"
-                                                    const match = e.target.value.match(/\(([^)]+)\)$/);
-                                                    const selectedEmail = match ? match[1] : '';
-                                                    setMemberId(selectedEmail);
+                                                    // Find the selected member by name and store their email
+                                                    const selectedMember = validMembers.find(m => m.name === e.target.value);
+                                                    setMemberId(selectedMember ? selectedMember.email : '');
                                                 }} 
                                                 required={memberRequiredCategories.includes(category as IncomeCategory)} 
                                             />
