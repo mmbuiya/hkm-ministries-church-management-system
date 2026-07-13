@@ -1,9 +1,9 @@
 
 import { useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { AttendanceRecord, AttendanceStatus } from '../components/attendanceData';
 import {
-    GET_ATTENDANCE_QUERY,
+    GET_ATTENDANCE_SUBSCRIPTION,
     ADD_ATTENDANCE_MUTATION,
     DELETE_ATTENDANCE_MUTATION,
     DELETE_ATTENDANCE_BY_SERVICE_MUTATION
@@ -11,8 +11,7 @@ import {
 import { Member } from '../components/memberData';
 
 export function useAttendance(members: Member[] = []) {
-    const { data, loading, error, refetch } = useQuery(GET_ATTENDANCE_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_ATTENDANCE_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addAttendanceMutation] = useMutation(ADD_ATTENDANCE_MUTATION);
@@ -77,8 +76,7 @@ export function useAttendance(members: Member[] = []) {
                 });
             }
             
-            // 4. Refetch data to update UI immediately
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (err) {
             console.error("Error saving attendance:", err);
             throw err;
@@ -90,8 +88,7 @@ export function useAttendance(members: Member[] = []) {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

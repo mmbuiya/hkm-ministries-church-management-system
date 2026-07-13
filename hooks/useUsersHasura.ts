@@ -1,16 +1,15 @@
 
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { useMemo } from 'react';
 import { User as AppUser } from '../components/userData';
 import {
-    GET_USERS_QUERY,
+    GET_USERS_SUBSCRIPTION,
     UPSERT_USER_MUTATION,
     DELETE_USER_MUTATION
 } from '../services/graphql/users_hasura';
 
 export function useUsersHasura() {
-    const { data, loading, error, refetch } = useQuery(GET_USERS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_USERS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION);
@@ -46,8 +45,7 @@ export function useUsersHasura() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteUser = async (id: string) => {
@@ -55,8 +53,7 @@ export function useUsersHasura() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

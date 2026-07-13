@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { Member } from '../components/memberData';
 import {
-    GET_MEMBERS_QUERY,
+    GET_MEMBERS_SUBSCRIPTION,
     ADD_MEMBER_MUTATION,
     UPDATE_MEMBER_MUTATION,
     DELETE_MEMBER_MUTATION
@@ -70,8 +70,7 @@ function transformMember(hasuraMember: HasuraMember): Member {
 }
 
 export function useMembers() {
-    const { data, loading, error, refetch } = useQuery(GET_MEMBERS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_MEMBERS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION);
@@ -112,8 +111,7 @@ export function useMembers() {
                 }
             });
 
-            // Refetch data to update UI immediately
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (error) {
             console.error('Error adding member:', error);
             throw error;
@@ -148,8 +146,7 @@ export function useMembers() {
             }
         });
 
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteMember = async (id: string) => {
@@ -157,8 +154,7 @@ export function useMembers() {
             variables: { id }
         });
 
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

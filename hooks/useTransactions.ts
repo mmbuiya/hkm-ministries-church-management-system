@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { Transaction } from '../components/financeData';
 import {
-    GET_TRANSACTIONS_QUERY,
+    GET_TRANSACTIONS_SUBSCRIPTION,
     ADD_TRANSACTION_MUTATION,
     UPDATE_TRANSACTION_MUTATION,
     DELETE_TRANSACTION_MUTATION
@@ -56,8 +56,7 @@ function transformTransaction(hasuraTx: HasuraTransaction): Transaction {
 }
 
 export function useTransactions() {
-    const { data, loading, error, refetch } = useQuery(GET_TRANSACTIONS_QUERY, {
-        pollInterval: 5000,
+    const { data, loading, error } = useSubscription(GET_TRANSACTIONS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
@@ -105,9 +104,7 @@ export function useTransactions() {
                 throw new Error('Transaction could not be saved. The database rejected the operation.');
             }
 
-            console.log('[useTransactions] Mutation succeeded, refetching...');
-            await refetch();
-            console.log('[useTransactions] Refetch complete');
+            console.log('[useTransactions] Mutation succeeded');
         } catch (error: any) {
             console.error('[useTransactions] Error adding transaction:', error);
             const message = error.graphQLErrors?.[0]?.message || error.message || 'Failed to save transaction. Please check your connection and try again.';
@@ -144,7 +141,7 @@ export function useTransactions() {
                 throw new Error('Transaction could not be updated. The database rejected the operation.');
             }
 
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (error: any) {
             console.error('Error updating transaction:', error);
             const message = error.graphQLErrors?.[0]?.message || error.message || 'Failed to update transaction. Please check your connection and try again.';
@@ -162,7 +159,7 @@ export function useTransactions() {
                 throw new Error('Failed to delete transaction - no data returned');
             }
 
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (error: any) {
             console.error('Error deleting transaction:', error);
             throw new Error(error.message || 'Failed to delete transaction. Please check your connection and try again.');

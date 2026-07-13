@@ -1,17 +1,16 @@
 
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { useMemo } from 'react';
 import { Branch } from '../components/branchData';
 import {
-    GET_BRANCHES_QUERY,
+    GET_BRANCHES_SUBSCRIPTION,
     ADD_BRANCH_MUTATION,
     UPDATE_BRANCH_MUTATION,
     DELETE_BRANCH_MUTATION
 } from '../services/graphql/branches';
 
 export function useBranches() {
-    const { data, loading, error, refetch } = useQuery(GET_BRANCHES_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_BRANCHES_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addBranchMutation] = useMutation(ADD_BRANCH_MUTATION);
@@ -86,8 +85,7 @@ export function useBranches() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateBranch = async (id: string, branch: Partial<Branch>) => {
@@ -105,8 +103,7 @@ export function useBranches() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteBranch = async (id: string) => {
@@ -114,8 +111,7 @@ export function useBranches() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

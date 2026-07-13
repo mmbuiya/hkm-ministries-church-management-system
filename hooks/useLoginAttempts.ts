@@ -1,9 +1,8 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_LOGIN_ATTEMPTS_QUERY, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
+import { useSubscription, useMutation } from '@apollo/client';
+import { GET_LOGIN_ATTEMPTS_SUBSCRIPTION, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
 
 export function useLoginAttempts() {
-    const { data, loading, error, refetch } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
@@ -26,8 +25,7 @@ export function useLoginAttempts() {
                 }
             });
             
-            // Refetch data to update UI immediately
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (err) {
             console.error('Error logging login attempt:', err);
         }

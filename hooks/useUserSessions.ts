@@ -1,9 +1,9 @@
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation } from '@apollo/client';
 import { useMemo } from 'react';
 import { UserSession, LoginAttempt } from '../components/userSessionData';
 import {
-    GET_USER_SESSIONS_QUERY,
-    GET_LOGIN_ATTEMPTS_QUERY,
+    GET_USER_SESSIONS_SUBSCRIPTION,
+    GET_LOGIN_ATTEMPTS_SUBSCRIPTION,
     ADD_USER_SESSION_MUTATION,
     UPDATE_USER_SESSION_MUTATION,
     END_USER_SESSION_MUTATION,
@@ -11,8 +11,7 @@ import {
 } from '../services/graphql/cleanup';
 
 export function useUserSessions() {
-    const { data, loading, error, refetch } = useQuery(GET_USER_SESSIONS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_USER_SESSIONS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addSessionMutation] = useMutation(ADD_USER_SESSION_MUTATION);
@@ -60,8 +59,7 @@ export function useUserSessions() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateSession = async (id: string, changes: Partial<UserSession>) => {
@@ -85,8 +83,7 @@ export function useUserSessions() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const endSession = async (id: string, logoutTime: string) => {
@@ -97,8 +94,7 @@ export function useUserSessions() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {
@@ -112,8 +108,7 @@ export function useUserSessions() {
 }
 
 export function useLoginAttempts() {
-    const { data, loading, error, refetch } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data, loading, error } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
@@ -149,8 +144,7 @@ export function useLoginAttempts() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {
