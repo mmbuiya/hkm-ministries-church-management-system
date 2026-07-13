@@ -11,7 +11,15 @@ import {
 import { Member } from '../components/memberData';
 
 export function useAttendance(members: Member[] = []) {
+    // Calculate the date 6 months ago to limit data fetched
+    const sixMonthsAgo = useMemo(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 6);
+        return d.toISOString().split('T')[0];
+    }, []);
+
     const { data, loading, error } = useSubscription(GET_ATTENDANCE_SUBSCRIPTION, {
+        variables: { startDate: sixMonthsAgo },
         errorPolicy: 'all'
     });
     const [addAttendanceMutation] = useMutation(ADD_ATTENDANCE_MUTATION);

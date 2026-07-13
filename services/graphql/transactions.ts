@@ -18,8 +18,8 @@ export const GET_TRANSACTIONS_QUERY = gql`
 `;
 
 export const GET_TRANSACTIONS_SUBSCRIPTION = gql`
-  subscription GetTransactions {
-    transactions(order_by: {created_at: desc}) {
+  subscription GetTransactions($startDate: date!) {
+    transactions(where: {date: {_gte: $startDate}}, order_by: {created_at: desc}) {
       id
       date
       category

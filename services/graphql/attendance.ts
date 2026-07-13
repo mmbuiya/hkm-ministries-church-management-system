@@ -18,8 +18,8 @@ export const GET_ATTENDANCE_QUERY = gql`
 `;
 
 export const GET_ATTENDANCE_SUBSCRIPTION = gql`
-  subscription GetAttendance {
-    attendance_records(order_by: {date: desc}) {
+  subscription GetAttendance($startDate: date!) {
+    attendance_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
       id
       date
       service

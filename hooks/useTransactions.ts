@@ -56,7 +56,15 @@ function transformTransaction(hasuraTx: HasuraTransaction): Transaction {
 }
 
 export function useTransactions() {
+    // Calculate the date 6 months ago to limit data fetched
+    const sixMonthsAgo = useMemo(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 6);
+        return d.toISOString().split('T')[0];
+    }, []);
+
     const { data, loading, error } = useSubscription(GET_TRANSACTIONS_SUBSCRIPTION, {
+        variables: { startDate: sixMonthsAgo },
         errorPolicy: 'all'
     });
     const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
