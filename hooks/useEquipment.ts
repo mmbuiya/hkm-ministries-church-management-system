@@ -1,10 +1,11 @@
 
 import { useMemo } from 'react';
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Equipment, EquipmentCondition } from '../components/equipmentData';
 import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../components/maintenanceData';
 import {
     GET_EQUIPMENT_SUBSCRIPTION,
+    GET_EQUIPMENT_QUERY,
     ADD_EQUIPMENT_MUTATION,
     UPDATE_EQUIPMENT_MUTATION,
     DELETE_EQUIPMENT_MUTATION,
@@ -14,9 +15,15 @@ import {
 } from '../services/graphql/equipment';
 
 export function useEquipment() {
-    const { data, loading, error } = useSubscription(GET_EQUIPMENT_SUBSCRIPTION, {
+    const { data: queryData, loading: queryLoading } = useQuery(GET_EQUIPMENT_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_EQUIPMENT_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addEquipmentMutation] = useMutation(ADD_EQUIPMENT_MUTATION);
     const [updateEquipmentMutation] = useMutation(UPDATE_EQUIPMENT_MUTATION);
     const [deleteEquipmentMutation] = useMutation(DELETE_EQUIPMENT_MUTATION);

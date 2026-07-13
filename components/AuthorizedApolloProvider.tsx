@@ -25,9 +25,22 @@ const authLink = setContext((_, { headers }) => {
 
 const wsLink = new GraphQLWsLink(createClient({
   url: wsUri,
+  lazy: true, // Don't connect until first subscription is used
+  retryAttempts: 5, // Retry 5 times on failure (handles Hasura cold start)
   connectionParams: {
     headers: {
       'x-hasura-admin-secret': adminSecret
+    }
+  },
+  on: {
+    error: (err) => {
+      console.error('[GraphQL WS] Connection error:', err);
+    },
+    connected: () => {
+      console.log('[GraphQL WS] Connected to Hasura');
+    },
+    closed: () => {
+      console.warn('[GraphQL WS] Connection closed');
     }
   }
 }));

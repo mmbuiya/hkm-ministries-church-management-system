@@ -1,9 +1,10 @@
 
 import { useMemo } from 'react';
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Visitor, FollowUp, VisitorStatus } from '../components/visitorData';
 import {
     GET_VISITORS_SUBSCRIPTION,
+    GET_VISITORS_QUERY,
     ADD_VISITOR_MUTATION,
     UPDATE_VISITOR_MUTATION,
     DELETE_VISITOR_MUTATION,
@@ -13,9 +14,15 @@ import {
 } from '../services/graphql/visitors';
 
 export function useVisitors() {
-    const { data, loading, error } = useSubscription(GET_VISITORS_SUBSCRIPTION, {
+    const { data: queryData, loading: queryLoading } = useQuery(GET_VISITORS_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_VISITORS_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addVisitorMutation] = useMutation(ADD_VISITOR_MUTATION);
     const [updateVisitorMutation] = useMutation(UPDATE_VISITOR_MUTATION);
     const [deleteVisitorMutation] = useMutation(DELETE_VISITOR_MUTATION);

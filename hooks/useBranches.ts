@@ -1,18 +1,25 @@
 
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { Branch } from '../components/branchData';
 import {
     GET_BRANCHES_SUBSCRIPTION,
+    GET_BRANCHES_QUERY,
     ADD_BRANCH_MUTATION,
     UPDATE_BRANCH_MUTATION,
     DELETE_BRANCH_MUTATION
 } from '../services/graphql/branches';
 
 export function useBranches() {
-    const { data, loading, error } = useSubscription(GET_BRANCHES_SUBSCRIPTION, {
+    const { data: queryData, loading: queryLoading } = useQuery(GET_BRANCHES_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_BRANCHES_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addBranchMutation] = useMutation(ADD_BRANCH_MUTATION);
     const [updateBranchMutation] = useMutation(UPDATE_BRANCH_MUTATION);
     const [deleteBranchMutation] = useMutation(DELETE_BRANCH_MUTATION);

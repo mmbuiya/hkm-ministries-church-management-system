@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Member } from '../components/memberData';
 import {
     GET_MEMBERS_SUBSCRIPTION,
+    GET_MEMBERS_QUERY,
     ADD_MEMBER_MUTATION,
     UPDATE_MEMBER_MUTATION,
     DELETE_MEMBER_MUTATION
@@ -70,9 +71,20 @@ function transformMember(hasuraMember: HasuraMember): Member {
 }
 
 export function useMembers() {
-    const { data, loading, error } = useSubscription(GET_MEMBERS_SUBSCRIPTION, {
+    // HTTP query fires immediately on load — wakes Hasura from auto-pause and provides initial data
+    const { data: queryData, loading: queryLoading } = useQuery(GET_MEMBERS_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+
+    // WebSocket subscription takes over for real-time updates once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_MEMBERS_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+
+    // Prefer live subscription data; fall back to HTTP query data
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION);
     const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
     const [deleteMemberMutation] = useMutation(DELETE_MEMBER_MUTATION);
