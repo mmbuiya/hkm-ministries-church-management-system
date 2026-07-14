@@ -1,8 +1,9 @@
 
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { PermissionRequest } from '../components/PermissionRequest';
 import {
+    GET_PERMISSION_REQUESTS_QUERY,
     GET_PERMISSION_REQUESTS_SUBSCRIPTION,
     ADD_PERMISSION_REQUEST_MUTATION,
     UPDATE_PERMISSION_REQUEST_MUTATION,
@@ -10,14 +11,21 @@ import {
 } from '../services/graphql/cleanup';
 
 export function usePermissionRequests() {
-    const { data, loading, error } = useSubscription(GET_PERMISSION_REQUESTS_SUBSCRIPTION);
+    // HTTP query fires immediately — works even when Hasura is waking up
+    const { data: queryData, loading: queryLoading } = useQuery(GET_PERMISSION_REQUESTS_QUERY, {
+        fetchPolicy: 'cache-first'
+    });
+
+    // WebSocket subscription takes over once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_PERMISSION_REQUESTS_SUBSCRIPTION);
     const [addMutation] = useMutation(ADD_PERMISSION_REQUEST_MUTATION);
     const [updateMutation] = useMutation(UPDATE_PERMISSION_REQUEST_MUTATION);
     const [deleteMutation] = useMutation(DELETE_PERMISSION_REQUEST_MUTATION);
 
     const requests: PermissionRequest[] = useMemo(() => {
-        if (!data?.permission_requests) return [];
-        return data.permission_requests.map((r: any) => ({
+        const raw = subData?.permission_requests || queryData?.permission_requests;
+        if (!raw) return [];
+        return raw.map((r: any) => ({
             id: r.id,
             requesterId: r.requester_id,
             requesterName: r.requester_name,
@@ -34,7 +42,7 @@ export function usePermissionRequests() {
             reviewNotes: r.review_notes,
             expiresAt: r.expires_at
         }));
-    }, [data]);
+    }, [subData, queryData]);
 
     const addRequest = async (request: Omit<PermissionRequest, 'id' | 'requestedAt' | 'status'>) => {
         const id = `${request.requestType}_${request.dataType}_${request.dataId}_${Date.now()}`;
@@ -78,7 +86,7 @@ export function usePermissionRequests() {
 
     return {
         data: requests,
-        loading,
+        loading: queryLoading && !queryData,
         error,
         addRequest,
         updateRequest,

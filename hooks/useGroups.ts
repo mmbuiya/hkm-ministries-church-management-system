@@ -1,8 +1,9 @@
 
 import { useMemo } from 'react';
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Group } from '../components/GroupsManagementPage';
 import {
+    GET_GROUPS_QUERY,
     GET_GROUPS_SUBSCRIPTION,
     ADD_GROUP_MUTATION,
     UPDATE_GROUP_MUTATION,
@@ -11,14 +12,18 @@ import {
 import { Member } from '../components/memberData';
 
 export function useGroups(members: Member[] = []) {
-    const { data, loading, error } = useSubscription(GET_GROUPS_SUBSCRIPTION);
+    const { data: queryData, loading: queryLoading } = useQuery(GET_GROUPS_QUERY, {
+        fetchPolicy: 'cache-first'
+    });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_GROUPS_SUBSCRIPTION);
     const [addGroupMutation] = useMutation(ADD_GROUP_MUTATION);
     const [updateGroupMutation] = useMutation(UPDATE_GROUP_MUTATION);
     const [deleteGroupMutation] = useMutation(DELETE_GROUP_MUTATION);
 
     const groups: Group[] = useMemo(() => {
-        if (!data?.groups) return [];
-        return data.groups.map((g: any) => ({
+        const raw = subData?.groups || queryData?.groups;
+        if (!raw) return [];
+        return raw.map((g: any) => ({
             id: g.id,
             name: g.name,
             leader: g.leader?.email || g.leader_id || '', // Maintain email-based leader for UI compatibility
@@ -26,7 +31,7 @@ export function useGroups(members: Member[] = []) {
             created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
             category: g.category || 'General'
         }));
-    }, [data]);
+    }, [subData, queryData]);
 
     const addGroup = async (groupData: Partial<Group>) => {
         // Find member ID by email (UI uses email for leader)
@@ -67,7 +72,7 @@ export function useGroups(members: Member[] = []) {
 
     return {
         data: groups,
-        loading,
+        loading: queryLoading && !queryData,
         error,
         addGroup,
         updateGroup,

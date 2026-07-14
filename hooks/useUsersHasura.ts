@@ -1,23 +1,28 @@
 
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { User as AppUser } from '../components/userData';
 import {
+    GET_USERS_QUERY,
     GET_USERS_SUBSCRIPTION,
     UPSERT_USER_MUTATION,
     DELETE_USER_MUTATION
 } from '../services/graphql/users_hasura';
 
 export function useUsersHasura() {
-    const { data, loading, error } = useSubscription(GET_USERS_SUBSCRIPTION, {
+    const { data: queryData, loading: queryLoading } = useQuery(GET_USERS_QUERY, {
+        fetchPolicy: 'cache-first'
+    });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_USERS_SUBSCRIPTION, {
         errorPolicy: 'all'
     });
     const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION);
     const [deleteUserMutation] = useMutation(DELETE_USER_MUTATION);
 
     const users: AppUser[] = useMemo(() => {
-        if (!data?.users) return [];
-        return data.users.map((u: any) => ({
+        const raw = subData?.users || queryData?.users;
+        if (!raw) return [];
+        return raw.map((u: any) => ({
             id: u.id,
             username: u.username,
             email: u.email,
@@ -26,7 +31,7 @@ export function useUsersHasura() {
             lastLogin: u.last_login || '',
             passwordHash: 'MANAGED_BY_FIREBASE'
         }));
-    }, [data]);
+    }, [subData, queryData]);
 
     const upsertUser = async (user: Partial<AppUser>) => {
         if (!user.id || !user.email) return;
@@ -58,7 +63,7 @@ export function useUsersHasura() {
 
     return {
         users,
-        loading,
+        loading: queryLoading && !queryData,
         error,
         upsertUser,
         deleteUser

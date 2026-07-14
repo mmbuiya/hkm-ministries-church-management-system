@@ -14,8 +14,8 @@ interface UserSessionMonitorProps {
 }
 
 const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) => {
-    const { sessions, loading: sessionsLoading, addSession } = useUserSessions();
-    const { attempts, loading: attemptsLoading, logLoginAttempt } = useLoginAttempts();
+    const { sessions, loading: sessionsLoading, addSession, loadMoreSessions, daysBack: sessionDaysBack } = useUserSessions();
+    const { attempts, loading: attemptsLoading, logLoginAttempt, loadMoreAttempts, daysBack: attemptDaysBack } = useLoginAttempts();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
     const [selectedTab, setSelectedTab] = useState<'sessions' | 'attempts'>('sessions');
@@ -362,11 +362,35 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
                     </div>
                 )}
 
+                {selectedTab === 'sessions' && filteredSessions.length > 0 && (
+                    <div className="flex flex-col items-center py-4 border-t bg-gray-50">
+                        <p className="text-xs text-gray-500 mb-2">Showing sessions from the last {sessionDaysBack} days</p>
+                        <button
+                            onClick={loadMoreSessions}
+                            className="bg-white border border-gray-300 text-gray-600 text-sm font-medium py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            Load {sessionDaysBack + 30} days of history
+                        </button>
+                    </div>
+                )}
+
                 {selectedTab === 'attempts' && filteredAttempts.length === 0 && (
                     <div className="p-8 text-center">
                         <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-600 mb-2">No login attempts</h3>
                         <p className="text-gray-500">No login attempts match your search criteria.</p>
+                    </div>
+                )}
+
+                {selectedTab === 'attempts' && filteredAttempts.length > 0 && (
+                    <div className="flex flex-col items-center py-4 border-t bg-gray-50">
+                        <p className="text-xs text-gray-500 mb-2">Showing attempts from the last {attemptDaysBack} days</p>
+                        <button
+                            onClick={loadMoreAttempts}
+                            className="bg-white border border-gray-300 text-gray-600 text-sm font-medium py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            Load {attemptDaysBack + 30} days of history
+                        </button>
                     </div>
                 )}
             </div>

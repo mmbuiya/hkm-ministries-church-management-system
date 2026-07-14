@@ -81,7 +81,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const { data: attendanceRecords, loading: attendanceLoading, batchSaveAttendance, deleteAttendanceRecord } = useAttendance(members);
   const { data: transactions, setData: setTransactions, loading: transactionsLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { equipment, maintenanceRecords, loading: equipmentLoading, addEquipment, updateEquipment, deleteEquipment, addMaintenance, updateMaintenance, deleteMaintenance } = useEquipment();
-  const { data: smsRecords, loading: smsLoading, addSmsRecord, deleteSmsRecord } = useSms();
+  const { data: smsRecords, loading: smsLoading, addSmsRecord, deleteSmsRecord, loadMore: loadMoreSms, monthsBack: smsMonthsBack } = useSms();
   const { data: branches, loading: branchesLoading, addBranch, updateBranch, deleteBranch } = useBranches();
   const { data: recycleBinItems, moveToRecycleBin, removeFromRecycleBin, loading: recycleBinLoading } = useRecycleBin();
   const { users: allUsers, loading: usersLoading, upsertUser: onSaveOrUpdateUser, deleteUser: onDeleteUser } = useUsersHasura();
@@ -627,7 +627,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       case 'Add Transaction':
         return <AddTransactionPage onBack={() => { setTransactionToEdit(null); setActivePage('Finance') }} onSave={handleSaveOrUpdateTransaction} transactionToEdit={transactionToEdit} members={members} />;
       case 'SMS Broadcast':
-        return <SmsBroadcastPage members={members} groups={groups} smsRecords={smsRecords} onLogSms={addSmsRecord} onDeleteSms={deleteSmsRecord} />;
+        return <SmsBroadcastPage members={members} groups={groups} smsRecords={smsRecords} onLogSms={addSmsRecord} onDeleteSms={deleteSmsRecord} onLoadMoreSms={loadMoreSms} smsMonthsBack={smsMonthsBack} />;
       case 'Equipment':
         return <EquipmentPage setActivePage={setActivePage} equipment={equipment} onEdit={handleStartEditEquipment} onDelete={handleDeleteEquipment} maintenanceRecords={maintenanceRecords} onEditMaintenance={handleStartEditMaintenance} onDeleteMaintenance={handleDeleteMaintenance} />;
       case 'Add Equipment':

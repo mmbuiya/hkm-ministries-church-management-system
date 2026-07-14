@@ -1,9 +1,21 @@
 
 import { gql } from '@apollo/client';
 
+export const GET_SMS_QUERY = gql`
+  query GetSmsRecords($startDate: date!) {
+    sms_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
+      id
+      recipient_count
+      message
+      status
+      date
+    }
+  }
+`;
+
 export const GET_SMS_SUBSCRIPTION = gql`
-  subscription GetSmsRecords {
-    sms_records(order_by: {date: desc}) {
+  subscription GetSmsRecords($startDate: date!) {
+    sms_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
       id
       recipient_count
       message
