@@ -5,7 +5,7 @@ import {
     EquipmentIcon, SmsIcon, VisitorsIcon, ReportsIcon, UsersIcon, 
     SettingsIcon, AiIcon, GiftIcon, TrashIcon 
 } from './Icons';
-import { Building2, Users2, Shield, Activity } from 'lucide-react';
+import { Building2, Users2, Shield, Activity, MessageSquare } from 'lucide-react';
 import { User, AccessibleSection } from './userData';
 import { useTheme } from './ThemeContext';
 import { canAccessSection } from './AccessControl';
@@ -34,6 +34,7 @@ const navItems: NavItem[] = [
   { name: 'Equipment', icon: EquipmentIcon, section: 'Equipment' },
   { name: 'SMS Broadcast', icon: SmsIcon, section: 'SMS Broadcast' },
   { name: 'Visitors', icon: VisitorsIcon, section: 'Visitors' },
+  { name: 'Helpdesk', icon: MessageSquare, adminOnly: true },
   { name: 'Branches', icon: Building2, section: 'Branches' },
   { name: 'Reports', icon: ReportsIcon, adminOnly: true },
   { name: 'Users', icon: UsersIcon, superAdminOnly: true },

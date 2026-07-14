@@ -18,7 +18,7 @@ interface HasuraMember {
     email?: string;
     phone?: string;
     department?: string;
-    status: 'Active' | 'Inactive' | 'Transferred';
+    status: 'Active' | 'Inactive' | 'Transferred' | 'Pending Fee';
     dob?: string;
     gender: 'Male' | 'Female';
     avatar_transform?: string;
@@ -26,6 +26,8 @@ interface HasuraMember {
     joined_at?: string;
     occupation?: string;
     marital_status?: string;
+    pin?: string | null;
+    is_portal_active?: boolean;
 }
 
 // Transform Hasura data to frontend Member format
@@ -66,7 +68,9 @@ function transformMember(hasuraMember: HasuraMember): Member {
         gender: hasuraMember.gender,
         occupation: hasuraMember.occupation,
         maritalStatus: hasuraMember.marital_status,
-        location: hasuraMember.address
+        location: hasuraMember.address,
+        pin: hasuraMember.pin || null,
+        is_portal_active: hasuraMember.is_portal_active || false
     };
 }
 
@@ -120,14 +124,16 @@ export function useMembers() {
                 email: member.email || null,
                 phone: member.phone || null,
                 department: member.department || '',
-                status: member.status || 'Active',
+                status: member.status || 'Pending Fee',
                 dob: member.dob || null,
                 gender: member.gender || 'Male',
                 avatar_transform: member.avatarTransform ? JSON.stringify(member.avatarTransform) : null,
                 address: member.location || '',
                 occupation: member.occupation || null,
                 marital_status: member.maritalStatus || null,
-                joined_at: member.dateAdded || new Date().toISOString().split('T')[0]
+                joined_at: member.dateAdded || new Date().toISOString().split('T')[0],
+                pin: null,
+                is_portal_active: false
             };
 
             const result = await addMemberMutation({

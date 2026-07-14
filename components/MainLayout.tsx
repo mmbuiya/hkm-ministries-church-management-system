@@ -18,6 +18,7 @@ import AddEquipmentPage from './AddEquipmentPage';
 import AddMaintenancePage from './AddMaintenancePage';
 import VisitorsModule from './VisitorsModule';
 import ReportsModule from './ReportsModule';
+import HelpdeskPage from './HelpdeskPage';
 import UsersPage from './UsersPage';
 import AddUserPage from './AddUserPage';
 import SettingsPage from './SettingsPage';
@@ -646,6 +647,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         return <SettingsPage currentUser={currentUser} />;
       case 'AI Features':
         return <AiFeaturesPage />;
+      case 'Helpdesk':
+        return <HelpdeskPage />;
       case 'Branches':
         return <BranchesPage
           branches={branches}

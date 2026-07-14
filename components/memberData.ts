@@ -17,7 +17,7 @@ export interface Member {
     email?: string;
     department: string;
     role: string;
-    status: 'Active' | 'Inactive' | 'Transferred';
+    status: 'Active' | 'Inactive' | 'Transferred' | 'Pending Fee';
     dateAdded: string;
     dob: string;
     gender: 'Male' | 'Female';
@@ -25,6 +25,8 @@ export interface Member {
     maritalStatus?: string;
     location?: string;
     ageGroup?: AgeGroup;  // Auto-calculated based on DOB
+    pin?: string | null;
+    is_portal_active?: boolean;
 }
 
 const formatMemberId = (id: number): string => `HKM-${String(id).padStart(3, '0')}`;

@@ -8,6 +8,7 @@ import {
     UPDATE_TRANSACTION_MUTATION,
     DELETE_TRANSACTION_MUTATION
 } from '../services/graphql/transactions';
+import { UPDATE_MEMBER_MUTATION } from '../services/graphql/members';
 
 interface HasuraMember {
     id: string;
@@ -82,6 +83,7 @@ export function useTransactions() {
     const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
     const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);
     const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
+    const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
 
     const transactions: Transaction[] = useMemo(() => {
         console.log('[useTransactions] Query data:', data, 'Error:', error);
@@ -122,6 +124,27 @@ export function useTransactions() {
             if (!result.data?.insert_transactions_one) {
                 console.error('[useTransactions] No insert_transactions_one in result', { data: result.data });
                 throw new Error('Transaction could not be saved. The database rejected the operation.');
+            }
+
+            // --- Payment-Gated Activation Logic ---
+            if (transaction.category === 'Registration Fee' && transaction.memberId) {
+                console.log('[useTransactions] Registration Fee detected. Generating PIN and activating member portal...');
+                
+                // Generate a random 6-digit PIN
+                const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                await updateMemberMutation({
+                    variables: {
+                        id: transaction.memberId,
+                        updates: {
+                            status: 'Active',
+                            pin: generatedPin,
+                            is_portal_active: true
+                        }
+                    }
+                });
+                console.log('[useTransactions] Member activated with new PIN.');
+                // Note: SMS notification should be triggered here using smsService.
             }
 
             console.log('[useTransactions] Mutation succeeded');
