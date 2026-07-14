@@ -1,8 +1,9 @@
 
 import { useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Visitor, FollowUp, VisitorStatus } from '../components/visitorData';
 import {
+    GET_VISITORS_SUBSCRIPTION,
     GET_VISITORS_QUERY,
     ADD_VISITOR_MUTATION,
     UPDATE_VISITOR_MUTATION,
@@ -13,10 +14,15 @@ import {
 } from '../services/graphql/visitors';
 
 export function useVisitors() {
-    const { data, loading, error, refetch } = useQuery(GET_VISITORS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data: queryData, loading: queryLoading } = useQuery(GET_VISITORS_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_VISITORS_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addVisitorMutation] = useMutation(ADD_VISITOR_MUTATION);
     const [updateVisitorMutation] = useMutation(UPDATE_VISITOR_MUTATION);
     const [deleteVisitorMutation] = useMutation(DELETE_VISITOR_MUTATION);
@@ -65,8 +71,7 @@ export function useVisitors() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateVisitor = async (id: number, updates: Partial<Visitor>) => {
@@ -84,8 +89,7 @@ export function useVisitors() {
             variables: { id, _set: set }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteVisitor = async (id: number) => {
@@ -93,8 +97,7 @@ export function useVisitors() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const addFollowUp = async (followUp: Omit<FollowUp, 'id'>) => {
@@ -111,8 +114,7 @@ export function useVisitors() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateFollowUp = async (id: number, updates: Partial<FollowUp>) => {
@@ -127,8 +129,7 @@ export function useVisitors() {
             variables: { id, _set: set }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteFollowUp = async (id: number) => {
@@ -136,8 +137,7 @@ export function useVisitors() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

@@ -1,21 +1,29 @@
 
-import { useSubscription, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { RecycleBinItem } from '../components/userData';
 import {
+    GET_RECYCLE_BIN_QUERY,
     GET_RECYCLE_BIN_SUBSCRIPTION,
     ADD_RECYCLE_BIN_MUTATION,
     DELETE_RECYCLE_BIN_MUTATION
 } from '../services/graphql/cleanup';
 
 export function useRecycleBin() {
-    const { data, loading, error } = useSubscription(GET_RECYCLE_BIN_SUBSCRIPTION);
+    // HTTP query fires immediately — works even when Hasura is waking up
+    const { data: queryData, loading: queryLoading } = useQuery(GET_RECYCLE_BIN_QUERY, {
+        fetchPolicy: 'cache-first'
+    });
+
+    // WebSocket subscription takes over once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_RECYCLE_BIN_SUBSCRIPTION);
     const [addMutation] = useMutation(ADD_RECYCLE_BIN_MUTATION);
     const [deleteMutation] = useMutation(DELETE_RECYCLE_BIN_MUTATION);
 
     const items: RecycleBinItem[] = useMemo(() => {
-        if (!data?.recycle_bin) return [];
-        return data.recycle_bin.map((item: any) => ({
+        const raw = subData?.recycle_bin || queryData?.recycle_bin;
+        if (!raw) return [];
+        return raw.map((item: any) => ({
             id: item.id,
             originalId: item.original_id,
             type: item.type,
@@ -24,7 +32,7 @@ export function useRecycleBin() {
             deletedAt: item.deleted_at,
             reason: item.reason
         }));
-    }, [data]);
+    }, [subData, queryData]);
 
     const moveToRecycleBin = async (
         type: string,
@@ -58,7 +66,7 @@ export function useRecycleBin() {
 
     return {
         data: items,
-        loading,
+        loading: queryLoading && !queryData,
         error,
         moveToRecycleBin,
         removeFromRecycleBin

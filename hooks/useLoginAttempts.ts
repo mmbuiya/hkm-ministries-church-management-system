@@ -1,11 +1,28 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_LOGIN_ATTEMPTS_QUERY, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
+import { useState, useMemo } from 'react';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { GET_LOGIN_ATTEMPTS_QUERY, GET_LOGIN_ATTEMPTS_SUBSCRIPTION, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
 
 export function useLoginAttempts() {
-    const { data, loading, error, refetch } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const [daysBack, setDaysBack] = useState(30);
+
+    const startDate = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - daysBack);
+        return d.toISOString();
+    }, [daysBack]);
+
+    // HTTP query fires immediately — works even when Hasura is waking up
+    const { data: queryData, loading: queryLoading } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
+        variables: { startDate },
+        fetchPolicy: 'cache-first'
+    });
+
+    // WebSocket subscription takes over once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
+        variables: { startDate },
         errorPolicy: 'all'
     });
+
     const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
 
     const logLoginAttempt = async (attempt: any) => {
@@ -25,18 +42,19 @@ export function useLoginAttempts() {
                     }
                 }
             });
-            
-            // Refetch data to update UI immediately
-            await refetch();
         } catch (err) {
             console.error('Error logging login attempt:', err);
         }
     };
 
+    const loadMoreAttempts = () => setDaysBack(prev => prev + 30);
+
     return {
-        attempts: data?.login_attempts || [],
-        loading,
+        attempts: subData?.login_attempts || queryData?.login_attempts || [],
+        loading: queryLoading && !queryData,
         error,
+        daysBack,
+        loadMoreAttempts,
         logLoginAttempt
     };
 }

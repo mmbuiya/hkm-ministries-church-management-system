@@ -1,6 +1,24 @@
 
 import { gql } from '@apollo/client';
 
+export const GET_GROUPS_QUERY = gql`
+  query GetGroups {
+    groups(order_by: {name: asc}) {
+      id
+      name
+      leader_id
+      member_count
+      created_at
+      category
+      leader {
+        first_name
+        last_name
+        email
+      }
+    }
+  }
+`;
+
 export const GET_GROUPS_SUBSCRIPTION = gql`
   subscription GetGroups {
     groups(order_by: {name: asc}) {

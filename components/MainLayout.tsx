@@ -28,7 +28,6 @@ import DataPersonnelManagementPage from './DataPersonnelManagementPage';
 import RecycleBinPage from './RecycleBinPage';
 import PermissionRequestsPage from './PermissionRequestsPage';
 import SuperAdminLogin from './SuperAdminLogin';
-import QuickNav from './QuickNav';
 import UserSessionMonitor from './UserSessionMonitor';
 import { AttendanceStatus, AttendanceRecord } from './attendanceData';
 import { Transaction } from './financeData';
@@ -82,7 +81,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const { data: attendanceRecords, loading: attendanceLoading, batchSaveAttendance, deleteAttendanceRecord } = useAttendance(members);
   const { data: transactions, setData: setTransactions, loading: transactionsLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { equipment, maintenanceRecords, loading: equipmentLoading, addEquipment, updateEquipment, deleteEquipment, addMaintenance, updateMaintenance, deleteMaintenance } = useEquipment();
-  const { data: smsRecords, loading: smsLoading, addSmsRecord, deleteSmsRecord } = useSms();
+  const { data: smsRecords, loading: smsLoading, addSmsRecord, deleteSmsRecord, loadMore: loadMoreSms, monthsBack: smsMonthsBack } = useSms();
   const { data: branches, loading: branchesLoading, addBranch, updateBranch, deleteBranch } = useBranches();
   const { data: recycleBinItems, moveToRecycleBin, removeFromRecycleBin, loading: recycleBinLoading } = useRecycleBin();
   const { users: allUsers, loading: usersLoading, upsertUser: onSaveOrUpdateUser, deleteUser: onDeleteUser } = useUsersHasura();
@@ -297,19 +296,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
   // --- Transaction Handlers ---
   const handleSaveOrUpdateTransaction = async (transactionData: Omit<Transaction, 'id'> | Transaction) => {
+    console.log('[MainLayout] handleSaveOrUpdateTransaction called', { data: transactionData, hasId: 'id' in transactionData });
     try {
       if ('id' in transactionData) { // Update
         const updated = transactionData as Transaction;
+        console.log('[MainLayout] Updating transaction', { id: updated.id });
         await updateTransaction(updated.id, transactionData);
         showToast("Transaction updated.", 'success');
       } else { // Add
+        console.log('[MainLayout] Adding new transaction');
         await addTransaction(transactionData);
         showToast("Transaction recorded.", 'success');
       }
+      console.log('[MainLayout] Save succeeded, navigating to Finance');
       setTransactionToEdit(null);
       setActivePage('Finance');
     } catch (error) {
-      console.error("Error saving transaction:", error);
+      console.error("[MainLayout] Error saving transaction:", error);
       showToast("Failed to save transaction", 'error');
     }
   };
@@ -624,7 +627,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       case 'Add Transaction':
         return <AddTransactionPage onBack={() => { setTransactionToEdit(null); setActivePage('Finance') }} onSave={handleSaveOrUpdateTransaction} transactionToEdit={transactionToEdit} members={members} />;
       case 'SMS Broadcast':
-        return <SmsBroadcastPage members={members} groups={groups} smsRecords={smsRecords} onLogSms={addSmsRecord} onDeleteSms={deleteSmsRecord} />;
+        return <SmsBroadcastPage members={members} groups={groups} smsRecords={smsRecords} onLogSms={addSmsRecord} onDeleteSms={deleteSmsRecord} onLoadMoreSms={loadMoreSms} smsMonthsBack={smsMonthsBack} />;
       case 'Equipment':
         return <EquipmentPage setActivePage={setActivePage} equipment={equipment} onEdit={handleStartEditEquipment} onDelete={handleDeleteEquipment} maintenanceRecords={maintenanceRecords} onEditMaintenance={handleStartEditMaintenance} onDeleteMaintenance={handleDeleteMaintenance} />;
       case 'Add Equipment':
@@ -721,7 +724,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           onNavigate={setActivePage}
           onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
-        <QuickNav activePage={activePage} onNavigate={setActivePage} />
         <main className={`flex-1 overflow-x-hidden overflow-y-auto ${modeColors.bgSecondary} p-3 sm:p-4 lg:p-6`}>
           {renderPage()}
         </main>

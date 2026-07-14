@@ -13,9 +13,9 @@ interface AddTransactionPageProps {
     members: Member[];
 }
 
-const incomeCategories: IncomeCategory[] = ['Tithe', 'Offering', 'Project Offering', 'Pledge', 'Seed', "Pastor's Appreciation", 'Welfare', 'Children Service Offering', 'Donation', 'Others'];
+const incomeCategories: IncomeCategory[] = ['Tithe', 'Offering', 'Project Offering', 'Pledge', 'Seed', "Pastor's Appreciation", 'Welfare', 'Children Service Offering', 'Donation', 'Church Bills Contribution', 'Others'];
 const expenseCategories: ExpenseCategory[] = ['Utilities', 'Rent', 'Salaries', 'Supplies', 'Events', 'Maintenance', 'Outreach', 'Honorarium', 'Others'];
-const memberRequiredCategories: IncomeCategory[] = ['Tithe', 'Welfare', 'Pledge', 'Seed', "Pastor's Appreciation"];
+const memberRequiredCategories: IncomeCategory[] = ['Tithe', 'Welfare', 'Pledge', 'Seed', "Pastor's Appreciation", 'Church Bills Contribution'];
 
 
 const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave, transactionToEdit, members }) => {
@@ -24,6 +24,11 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
     const [type, setType] = useState<'Income' | 'Expense'>('Income');
     const [category, setCategory] = useState<IncomeCategory | ExpenseCategory>('Tithe');
     const [memberId, setMemberId] = useState<string>('');
+    
+    // Debug memberId changes
+    useEffect(() => {
+        console.log('memberId state changed to:', memberId);
+    }, [memberId]);
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
@@ -42,6 +47,12 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
             setDescription(transactionToEdit.description);
             setIsNonMember(!!transactionToEdit.nonMemberName);
             setNonMemberName(transactionToEdit.nonMemberName || '');
+            
+            console.log('Edit mode - loaded transaction with memberId:', transactionToEdit.memberId);
+        } else {
+            // Reset form when not in edit mode
+            console.log('Form reset - clearing memberId');
+            setMemberId('');
         }
     }, [transactionToEdit, isEditMode]);
 
@@ -65,21 +76,27 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const isMemberRequired = type === 'Income' && !isNonMember && memberRequiredCategories.includes(category as IncomeCategory);
-        if (isMemberRequired && !memberId) {
-            alert('Please select a member for this transaction category.');
+        if (!category || !amount || !date) {
+            alert('Please fill in all required fields.');
             return;
         }
 
-        if (!category || !amount || !date) {
-            alert('Please fill in all required fields.');
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            alert('Please enter a valid positive amount.');
+            return;
+        }
+
+        const isMemberRequired = type === 'Income' && !isNonMember && memberRequiredCategories.includes(category as IncomeCategory);
+        if (isMemberRequired && !memberId) {
+            alert('Please select a member for this transaction category.');
             return;
         }
         
         const transactionData = {
             type,
             category,
-            amount: parseFloat(amount),
+            amount: parsedAmount,
             date,
             description,
             memberId: type === 'Income' && !isNonMember && memberId ? memberId : undefined,
@@ -95,11 +112,18 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setShowConfirmation(true);
     };
 
-    const handleConfirmSave = () => {
+    const handleConfirmSave = async () => {
         if (pendingTransactionData) {
-            onSave(pendingTransactionData);
-            setShowConfirmation(false);
-            setPendingTransactionData(null);
+            console.log('[Save] handleConfirmSave called', { type: pendingTransactionData.type, category: pendingTransactionData.category, amount: pendingTransactionData.amount, memberId: pendingTransactionData.memberId });
+            try {
+                await onSave(pendingTransactionData);
+                console.log('[Save] onSave completed successfully');
+            } catch (err) {
+                console.error('[Save] onSave failed:', err);
+            } finally {
+                setShowConfirmation(false);
+                setPendingTransactionData(null);
+            }
         }
     };
 
@@ -108,37 +132,35 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         setPendingTransactionData(null);
     };
     
-    // Create member options with proper formatting - filter out members without valid names or emails
+    // Create member options - include all members from database
+    // The useMembers hook should now provide fallback names for members without proper names
     const validMembers = members.filter(m => {
-        // Check if member has a valid name (not empty after trimming)
-        const hasValidName = m.name && m.name.trim().length > 0;
-        // Check if member has a valid email 
-        const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
-        // Check if member is active
-        const isActive = m.status === 'Active';
-        
-        return hasValidName && hasValidEmail && isActive;
+        // Very minimal filtering - just ensure we have some kind of name
+        const hasName = m.name && typeof m.name === 'string' && m.name.trim().length > 0;
+        return hasName;
     });
     
-    const memberOptions = validMembers.map(m => `${m.name} (${m.email})`);
-
-    // Debug logging to help identify problematic members
-    if (process.env.NODE_ENV === 'development') {
-        const invalidMembers = members.filter(m => {
-            const hasValidName = m.name && m.name.trim().length > 0;
-            const hasValidEmail = m.email && m.email.trim().length > 0 && m.email.includes('@');
-            return !hasValidName || !hasValidEmail;
-        });
-        
-        if (invalidMembers.length > 0) {
-            console.warn('Found members with invalid data:', invalidMembers.map(m => ({
-                id: m.id,
-                name: m.name,
-                email: m.email,
-                status: m.status
-            })));
+    // Check for duplicate names and handle them
+    const memberCounts = validMembers.reduce((acc, member) => {
+        acc[member.name] = (acc[member.name] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    // Add ID suffix for members with duplicate names to make them unique
+    const memberOptions = validMembers.map(m => {
+        if (memberCounts[m.name] > 1) {
+            return `${m.name} (${m.id})`;
         }
-    }
+        return m.name;
+    });
+
+    // Debug logging to see what's happening with member data
+    console.log('=== Member Data Debug ===');
+    console.log('Total members from DB:', members.length);
+    console.log('Valid members after filtering:', validMembers.length);
+    console.log('Duplicate names found:', Object.entries(memberCounts).filter(([name, count]) => count > 1));
+    console.log('Current selected memberId:', memberId);
+    console.log('Current selected member:', validMembers.find(m => m.email === memberId));
 
     return (
         <div>
@@ -194,14 +216,52 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                 label="Member" 
                                                 options={memberOptions} 
                                                 value={(() => {
-                                                    const member = validMembers.find(m => m.email === memberId);
-                                                    return member ? `${member.name} (${member.email})` : '';
+                                                    console.log('Calculating dropdown value. memberId:', memberId);
+                                                    
+                                                    if (!memberId) {
+                                                        console.log('No memberId set, returning empty string');
+                                                        return '';
+                                                    }
+                                                    
+                                                    // Find member by ID instead of email
+                                                    const member = validMembers.find(m => m.id === memberId);
+                                                    console.log('Found member for dropdown:', member);
+                                                    
+                                                    if (!member) {
+                                                        console.log('No member found with id:', memberId);
+                                                        return '';
+                                                    }
+                                                    
+                                                    // Check if this member name has duplicates
+                                                    if (memberCounts[member.name] > 1) {
+                                                        const displayValue = `${member.name} (${member.id})`;
+                                                        console.log('Member has duplicates, showing:', displayValue);
+                                                        return displayValue;
+                                                    }
+                                                    
+                                                    console.log('Showing member name:', member.name);
+                                                    return member.name;
                                                 })()} 
                                                 onChange={e => {
-                                                    // Extract email from the selected option format "Name (email)"
-                                                    const match = e.target.value.match(/\(([^)]+)\)$/);
-                                                    const selectedEmail = match ? match[1] : '';
-                                                    setMemberId(selectedEmail);
+                                                    console.log('Member selection changed to:', e.target.value);
+                                                    
+                                                    // Handle both regular names and names with ID suffix
+                                                    let selectedMember;
+                                                    if (e.target.value.includes(' (') && e.target.value.endsWith(')')) {
+                                                        // Extract ID from "Name (ID)" format
+                                                        const idMatch = e.target.value.match(/\(([^)]+)\)$/);
+                                                        const id = idMatch ? idMatch[1] : '';
+                                                        selectedMember = validMembers.find(m => m.id === id);
+                                                    } else {
+                                                        // Find by exact name match
+                                                        selectedMember = validMembers.find(m => m.name === e.target.value);
+                                                    }
+                                                    
+                                                    console.log('Selected member object:', selectedMember);
+                                                    // Use member ID instead of email since many members don't have emails
+                                                    const newMemberId = selectedMember ? selectedMember.id : '';
+                                                    console.log('Setting memberId to:', newMemberId);
+                                                    setMemberId(newMemberId);
                                                 }} 
                                                 required={memberRequiredCategories.includes(category as IncomeCategory)} 
                                             />
@@ -276,7 +336,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                             <p><strong>Amount:</strong> KSH {pendingTransactionData.amount.toLocaleString()}</p>
                                             <p><strong>Date:</strong> {new Date(pendingTransactionData.date).toLocaleDateString()}</p>
                                             {pendingTransactionData.memberId && (
-                                                <p><strong>Member:</strong> {validMembers.find(m => m.email === pendingTransactionData.memberId)?.name}</p>
+                                                <p><strong>Member:</strong> {validMembers.find(m => m.id === pendingTransactionData.memberId)?.name}</p>
                                             )}
                                             {pendingTransactionData.nonMemberName && (
                                                 <p><strong>Non-Member:</strong> {pendingTransactionData.nonMemberName}</p>

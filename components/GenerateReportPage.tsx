@@ -94,7 +94,7 @@ const GenerateReportPage: React.FC<GenerateReportPageProps> = ({ onBack, members
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Report Type *</label>
                         <select value={reportType} onChange={e => setReportType(e.target.value)} required className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                            <option value="">Select Report Type</option>
+                            <option value="" disabled hidden>Select Report Type</option>
                             <option value="Member List">Member List</option>
                             <option value="Attendance Summary">Attendance Summary</option>
                             <option value="Financial Statement">Financial Statement</option>

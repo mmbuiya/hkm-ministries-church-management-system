@@ -18,7 +18,7 @@ interface TitheHistoryPageProps {
 }
 
 const TitheHistoryPage: React.FC<TitheHistoryPageProps> = ({ currentUser, memberId, transactions, members, onBack, onAddTithe, onEdit, onDelete }) => {
-    const member = useMemo(() => members.find(m => m.email === memberId), [memberId, members]);
+    const member = useMemo(() => members.find(m => m.id === memberId), [memberId, members]);
 
     const memberTitheHistory = useMemo(() => {
         return transactions.filter(t => t.memberId === memberId && t.category === 'Tithe')

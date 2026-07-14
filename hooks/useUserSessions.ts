@@ -1,42 +1,69 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { UserSession, LoginAttempt } from '../components/userSessionData';
 import {
     GET_USER_SESSIONS_QUERY,
+    GET_USER_SESSIONS_SUBSCRIPTION,
     GET_LOGIN_ATTEMPTS_QUERY,
+    GET_LOGIN_ATTEMPTS_SUBSCRIPTION,
     ADD_USER_SESSION_MUTATION,
     UPDATE_USER_SESSION_MUTATION,
     END_USER_SESSION_MUTATION,
     ADD_LOGIN_ATTEMPT_MUTATION
 } from '../services/graphql/cleanup';
 
+// Helper to compute a start date N days ago as ISO string
+function daysAgoISO(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString();
+}
+
+function mapSession(s: any): UserSession {
+    return {
+        id: s.id,
+        userId: s.user_id,
+        userEmail: s.user_email,
+        userName: s.user_name,
+        userRole: s.user_role,
+        loginTime: s.login_time,
+        logoutTime: s.logout_time,
+        isActive: s.is_active,
+        ipAddress: s.ip_address,
+        userAgent: s.user_agent,
+        location: s.location,
+        sessionDuration: s.session_duration,
+        lastActivity: s.last_activity
+    };
+}
+
 export function useUserSessions() {
-    const { data, loading, error, refetch } = useQuery(GET_USER_SESSIONS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const [daysBack, setDaysBack] = useState(30);
+    const startDate = useMemo(() => daysAgoISO(daysBack), [daysBack]);
+
+    // HTTP query fires immediately — works even when Hasura is waking up
+    const { data: queryData, loading: queryLoading } = useQuery(GET_USER_SESSIONS_QUERY, {
+        variables: { startDate },
+        fetchPolicy: 'cache-first'
+    });
+
+    // WebSocket subscription takes over once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_USER_SESSIONS_SUBSCRIPTION, {
+        variables: { startDate },
         errorPolicy: 'all'
     });
+
     const [addSessionMutation] = useMutation(ADD_USER_SESSION_MUTATION);
     const [updateSessionMutation] = useMutation(UPDATE_USER_SESSION_MUTATION);
     const [endSessionMutation] = useMutation(END_USER_SESSION_MUTATION);
 
     const sessions: UserSession[] = useMemo(() => {
-        if (!data?.user_sessions) return [];
-        return data.user_sessions.map((s: any) => ({
-            id: s.id,
-            userId: s.user_id,
-            userEmail: s.user_email,
-            userName: s.user_name,
-            userRole: s.user_role,
-            loginTime: s.login_time,
-            logoutTime: s.logout_time,
-            isActive: s.is_active,
-            ipAddress: s.ip_address,
-            userAgent: s.user_agent,
-            location: s.location,
-            sessionDuration: s.session_duration,
-            lastActivity: s.last_activity
-        }));
-    }, [data]);
+        const raw = subData?.user_sessions || queryData?.user_sessions;
+        if (!raw) return [];
+        return raw.map(mapSession);
+    }, [subData, queryData]);
+
+    const loadMoreSessions = () => setDaysBack(prev => prev + 30);
 
     const addSession = async (session: Omit<UserSession, 'id'>) => {
         const id = Date.now().toString();
@@ -59,9 +86,6 @@ export function useUserSessions() {
                 }
             }
         });
-        
-        // Refetch data to update UI immediately
-        await refetch();
     };
 
     const updateSession = async (id: string, changes: Partial<UserSession>) => {
@@ -84,27 +108,20 @@ export function useUserSessions() {
                 }
             }
         });
-        
-        // Refetch data to update UI immediately
-        await refetch();
     };
 
     const endSession = async (id: string, logoutTime: string) => {
         await endSessionMutation({
-            variables: {
-                id,
-                logout_time: logoutTime
-            }
+            variables: { id, logout_time: logoutTime }
         });
-        
-        // Refetch data to update UI immediately
-        await refetch();
     };
 
     return {
         sessions,
-        loading,
+        loading: queryLoading && !queryData,
         error,
+        daysBack,
+        loadMoreSessions,
         addSession,
         updateSession,
         endSession
@@ -112,15 +129,25 @@ export function useUserSessions() {
 }
 
 export function useLoginAttempts() {
-    const { data, loading, error, refetch } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const [daysBack, setDaysBack] = useState(30);
+    const startDate = useMemo(() => daysAgoISO(daysBack), [daysBack]);
+
+    const { data: queryData, loading: queryLoading } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
+        variables: { startDate },
+        fetchPolicy: 'cache-first'
+    });
+
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
+        variables: { startDate },
         errorPolicy: 'all'
     });
+
     const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
 
     const attempts: LoginAttempt[] = useMemo(() => {
-        if (!data?.login_attempts) return [];
-        return data.login_attempts.map((a: any) => ({
+        const raw = subData?.login_attempts || queryData?.login_attempts;
+        if (!raw) return [];
+        return raw.map((a: any) => ({
             id: a.id,
             email: a.email,
             timestamp: a.timestamp,
@@ -130,7 +157,9 @@ export function useLoginAttempts() {
             userAgent: a.user_agent,
             location: a.location
         }));
-    }, [data]);
+    }, [subData, queryData]);
+
+    const loadMoreAttempts = () => setDaysBack(prev => prev + 30);
 
     const addAttempt = async (attempt: Omit<LoginAttempt, 'id'>) => {
         const id = Date.now().toString();
@@ -148,15 +177,14 @@ export function useLoginAttempts() {
                 }
             }
         });
-        
-        // Refetch data to update UI immediately
-        await refetch();
     };
 
     return {
         attempts,
-        loading,
+        loading: queryLoading && !queryData,
         error,
+        daysBack,
+        loadMoreAttempts,
         addAttempt
     };
 }

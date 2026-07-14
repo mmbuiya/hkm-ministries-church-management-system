@@ -1,8 +1,9 @@
 
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { Branch } from '../components/branchData';
 import {
+    GET_BRANCHES_SUBSCRIPTION,
     GET_BRANCHES_QUERY,
     ADD_BRANCH_MUTATION,
     UPDATE_BRANCH_MUTATION,
@@ -10,10 +11,15 @@ import {
 } from '../services/graphql/branches';
 
 export function useBranches() {
-    const { data, loading, error, refetch } = useQuery(GET_BRANCHES_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data: queryData, loading: queryLoading } = useQuery(GET_BRANCHES_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_BRANCHES_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addBranchMutation] = useMutation(ADD_BRANCH_MUTATION);
     const [updateBranchMutation] = useMutation(UPDATE_BRANCH_MUTATION);
     const [deleteBranchMutation] = useMutation(DELETE_BRANCH_MUTATION);
@@ -86,8 +92,7 @@ export function useBranches() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateBranch = async (id: string, branch: Partial<Branch>) => {
@@ -105,8 +110,7 @@ export function useBranches() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteBranch = async (id: string) => {
@@ -114,8 +118,7 @@ export function useBranches() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

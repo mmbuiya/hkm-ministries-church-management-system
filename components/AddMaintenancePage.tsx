@@ -110,7 +110,7 @@ const AddMaintenancePage: React.FC<AddMaintenancePageProps> = ({ onBack, onSave,
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">Equipment</label>
                             <select name="equipmentId" value={formState.equipmentId} onChange={handleChange} required className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                                <option value="">Select Equipment</option>
+                                <option value="" disabled hidden>Select Equipment</option>
                                 {equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                             </select>
                         </div>

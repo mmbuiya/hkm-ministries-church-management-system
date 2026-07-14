@@ -1,9 +1,10 @@
 
 import { useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Equipment, EquipmentCondition } from '../components/equipmentData';
 import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../components/maintenanceData';
 import {
+    GET_EQUIPMENT_SUBSCRIPTION,
     GET_EQUIPMENT_QUERY,
     ADD_EQUIPMENT_MUTATION,
     UPDATE_EQUIPMENT_MUTATION,
@@ -14,10 +15,15 @@ import {
 } from '../services/graphql/equipment';
 
 export function useEquipment() {
-    const { data, loading, error, refetch } = useQuery(GET_EQUIPMENT_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    const { data: queryData, loading: queryLoading } = useQuery(GET_EQUIPMENT_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_EQUIPMENT_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addEquipmentMutation] = useMutation(ADD_EQUIPMENT_MUTATION);
     const [updateEquipmentMutation] = useMutation(UPDATE_EQUIPMENT_MUTATION);
     const [deleteEquipmentMutation] = useMutation(DELETE_EQUIPMENT_MUTATION);
@@ -75,8 +81,7 @@ export function useEquipment() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateEquipment = async (id: number, updates: Partial<Equipment>) => {
@@ -93,8 +98,7 @@ export function useEquipment() {
             variables: { id, _set: set }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteEquipment = async (id: number) => {
@@ -102,8 +106,7 @@ export function useEquipment() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const addMaintenance = async (record: Omit<MaintenanceRecord, 'id'>) => {
@@ -120,8 +123,7 @@ export function useEquipment() {
             }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const updateMaintenance = async (id: number, updates: Partial<MaintenanceRecord>) => {
@@ -136,8 +138,7 @@ export function useEquipment() {
             variables: { id, _set: set }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteMaintenance = async (id: number) => {
@@ -145,8 +146,7 @@ export function useEquipment() {
             variables: { id }
         });
         
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {

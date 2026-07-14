@@ -8,6 +8,8 @@ interface SmsHistoryPageProps {
     smsRecords: SmsRecord[];
     onBack: () => void;
     onDeleteSms: (id: number) => Promise<void>;
+    onLoadMore?: () => void;
+    monthsBack?: number;
 }
 
 const getStatusChip = (status: SmsRecord['status']) => {
@@ -18,7 +20,7 @@ const getStatusChip = (status: SmsRecord['status']) => {
     }
 };
 
-const SmsHistoryPage: React.FC<SmsHistoryPageProps> = ({ smsRecords, onBack, onDeleteSms }) => {
+const SmsHistoryPage: React.FC<SmsHistoryPageProps> = ({ smsRecords, onBack, onDeleteSms, onLoadMore, monthsBack }) => {
     const [filterStatus, setFilterStatus] = useState<'All' | SmsRecord['status']>('All');
     const [selectedSms, setSelectedSms] = useState<SmsRecord | null>(null);
 
@@ -97,6 +99,17 @@ const SmsHistoryPage: React.FC<SmsHistoryPageProps> = ({ smsRecords, onBack, onD
                         <p className="text-center p-8 text-gray-500">
                             {filterStatus === 'All' ? 'There are no messages in the history.' : `No messages found with status "${filterStatus}".`}
                         </p>
+                    )}
+                    {onLoadMore && (
+                        <div className="flex flex-col items-center py-4 border-t bg-gray-50">
+                            <p className="text-xs text-gray-500 mb-2">Showing the last {monthsBack || 3} months</p>
+                            <button
+                                onClick={onLoadMore}
+                                className="bg-white border border-gray-300 text-gray-600 text-sm font-medium py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                Load {(monthsBack || 3) + 3} months of history
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

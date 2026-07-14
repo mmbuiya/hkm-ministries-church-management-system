@@ -2,7 +2,6 @@
 import React, { useState, useMemo } from 'react';
 import { FlagIcon, PlusIcon } from './Icons';
 import { attendanceData } from './attendanceData';
-import { initialMembers as allMembers } from './memberData';
 
 const initialGoals = [
     { id: 1, title: "Achieve 85% attendance for Sunday Morning Service in April", target: 85, service: 'Sunday Morning Service', month: 3, year: 2025 },
@@ -14,7 +13,7 @@ const GoalCard: React.FC<{ goal: any }> = ({ goal }) => {
         if (goal.type === 'absences_below') {
             const records = attendanceData.filter(r => {
                 const recordDate = new Date(r.date);
-                const member = allMembers.find(m => m.name.toLowerCase() === r.memberName.toLowerCase());
+                const member = null;
                 return recordDate.getMonth() === goal.month && recordDate.getFullYear() === goal.year && member?.department === goal.department && r.status === 'Absent';
             });
             const services = new Set(records.map(r => r.date)).size;

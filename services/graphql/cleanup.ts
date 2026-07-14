@@ -2,6 +2,20 @@
 import { gql } from '@apollo/client';
 
 // Recycle Bin
+export const GET_RECYCLE_BIN_QUERY = gql`
+  query GetRecycleBin {
+    recycle_bin(order_by: {deleted_at: desc}) {
+      id
+      original_id
+      type
+      data
+      deleted_by
+      deleted_at
+      reason
+    }
+  }
+`;
+
 export const GET_RECYCLE_BIN_SUBSCRIPTION = gql`
   subscription GetRecycleBin {
     recycle_bin(order_by: {deleted_at: desc}) {
@@ -33,6 +47,28 @@ export const DELETE_RECYCLE_BIN_MUTATION = gql`
 `;
 
 // Permission Requests
+export const GET_PERMISSION_REQUESTS_QUERY = gql`
+  query GetPermissionRequests {
+    permission_requests(order_by: {requested_at: desc}) {
+      id
+      requester_id
+      requester_name
+      requester_email
+      request_type
+      data_type
+      data_id
+      data_name
+      reason
+      requested_at
+      status
+      reviewed_by
+      reviewed_at
+      review_notes
+      expires_at
+    }
+  }
+`;
+
 export const GET_PERMISSION_REQUESTS_SUBSCRIPTION = gql`
   subscription GetPermissionRequests {
     permission_requests(order_by: {requested_at: desc}) {
@@ -81,8 +117,8 @@ export const DELETE_PERMISSION_REQUEST_MUTATION = gql`
 
 // User Sessions
 export const GET_USER_SESSIONS_QUERY = gql`
-  query GetUserSessions {
-    user_sessions(order_by: {login_time: desc}) {
+  query GetUserSessions($startDate: timestamptz!) {
+    user_sessions(where: {login_time: {_gte: $startDate}}, order_by: {login_time: desc}) {
       id
       user_id
       user_email
@@ -101,8 +137,8 @@ export const GET_USER_SESSIONS_QUERY = gql`
 `;
 
 export const GET_USER_SESSIONS_SUBSCRIPTION = gql`
-  subscription GetUserSessions {
-    user_sessions(order_by: {login_time: desc}) {
+  subscription GetUserSessions($startDate: timestamptz!) {
+    user_sessions(where: {login_time: {_gte: $startDate}}, order_by: {login_time: desc}) {
       id
       user_id
       user_email
@@ -149,8 +185,8 @@ export const END_USER_SESSION_MUTATION = gql`
 
 // Login Attempts
 export const GET_LOGIN_ATTEMPTS_QUERY = gql`
-  query GetLoginAttempts {
-    login_attempts(order_by: {timestamp: desc}) {
+  query GetLoginAttempts($startDate: timestamptz!) {
+    login_attempts(where: {timestamp: {_gte: $startDate}}, order_by: {timestamp: desc}) {
       id
       email
       timestamp
@@ -164,8 +200,8 @@ export const GET_LOGIN_ATTEMPTS_QUERY = gql`
 `;
 
 export const GET_LOGIN_ATTEMPTS_SUBSCRIPTION = gql`
-  subscription GetLoginAttempts {
-    login_attempts(order_by: {timestamp: desc}) {
+  subscription GetLoginAttempts($startDate: timestamptz!) {
+    login_attempts(where: {timestamp: {_gte: $startDate}}, order_by: {timestamp: desc}) {
       id
       email
       timestamp

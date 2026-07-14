@@ -199,6 +199,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 fetchAndSyncProfile(clerkUser).then(profile => {
                     setUserProfile(profile);
                     setLoading(false);
+                }).catch(error => {
+                    console.error('[AuthContext] Profile fetch failed:', error);
+                    setUserProfile(null);
+                    setLoading(false);
                 });
             } else {
                 setUserProfile(null);

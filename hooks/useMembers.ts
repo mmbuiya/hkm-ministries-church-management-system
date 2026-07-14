@@ -1,8 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { Member } from '../components/memberData';
 import {
+    GET_MEMBERS_SUBSCRIPTION,
     GET_MEMBERS_QUERY,
     ADD_MEMBER_MUTATION,
     UPDATE_MEMBER_MUTATION,
@@ -29,7 +30,26 @@ interface HasuraMember {
 
 // Transform Hasura data to frontend Member format
 function transformMember(hasuraMember: HasuraMember): Member {
-    const fullName = `${hasuraMember.first_name || ''} ${hasuraMember.last_name || ''}`.trim();
+    const firstName = hasuraMember.first_name || '';
+    const lastName = hasuraMember.last_name || '';
+    let fullName = `${firstName} ${lastName}`.trim();
+    
+    // Fallback to email or ID if name is empty
+    if (!fullName || fullName.length === 0) {
+        if (hasuraMember.email) {
+            fullName = hasuraMember.email.split('@')[0]; // Use email username part
+        } else {
+            fullName = `Member ${hasuraMember.id}`; // Fallback to ID
+        }
+        console.warn('Member with empty name found, using fallback:', {
+            id: hasuraMember.id,
+            firstName,
+            lastName,
+            email: hasuraMember.email,
+            fallbackName: fullName
+        });
+    }
+    
     return {
         id: hasuraMember.id,
         name: fullName,
@@ -51,10 +71,20 @@ function transformMember(hasuraMember: HasuraMember): Member {
 }
 
 export function useMembers() {
-    const { data, loading, error, refetch } = useQuery(GET_MEMBERS_QUERY, {
-        pollInterval: 5000, // Poll every 5 seconds for real-time updates
+    // HTTP query fires immediately on load — wakes Hasura from auto-pause and provides initial data
+    const { data: queryData, loading: queryLoading } = useQuery(GET_MEMBERS_QUERY, {
+        fetchPolicy: 'network-only',
         errorPolicy: 'all'
     });
+
+    // WebSocket subscription takes over for real-time updates once connected
+    const { data: subData, loading: subLoading, error } = useSubscription(GET_MEMBERS_SUBSCRIPTION, {
+        errorPolicy: 'all'
+    });
+
+    // Prefer live subscription data; fall back to HTTP query data
+    const data = subData ?? queryData;
+    const loading = subData === undefined && queryLoading;
     const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION);
     const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
     const [deleteMemberMutation] = useMutation(DELETE_MEMBER_MUTATION);
@@ -93,8 +123,7 @@ export function useMembers() {
                 }
             });
 
-            // Refetch data to update UI immediately
-            await refetch();
+            // Real-time subscription will update UI automatically
         } catch (error) {
             console.error('Error adding member:', error);
             throw error;
@@ -129,8 +158,7 @@ export function useMembers() {
             }
         });
 
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     const deleteMember = async (id: string) => {
@@ -138,8 +166,7 @@ export function useMembers() {
             variables: { id }
         });
 
-        // Refetch data to update UI immediately
-        await refetch();
+        // Real-time subscription will update UI automatically
     };
 
     return {
