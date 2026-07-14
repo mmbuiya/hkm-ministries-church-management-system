@@ -28,7 +28,6 @@ import DataPersonnelManagementPage from './DataPersonnelManagementPage';
 import RecycleBinPage from './RecycleBinPage';
 import PermissionRequestsPage from './PermissionRequestsPage';
 import SuperAdminLogin from './SuperAdminLogin';
-import QuickNav from './QuickNav';
 import UserSessionMonitor from './UserSessionMonitor';
 import { AttendanceStatus, AttendanceRecord } from './attendanceData';
 import { Transaction } from './financeData';
@@ -725,7 +724,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           onNavigate={setActivePage}
           onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
-        <QuickNav activePage={activePage} onNavigate={setActivePage} />
         <main className={`flex-1 overflow-x-hidden overflow-y-auto ${modeColors.bgSecondary} p-3 sm:p-4 lg:p-6`}>
           {renderPage()}
         </main>
