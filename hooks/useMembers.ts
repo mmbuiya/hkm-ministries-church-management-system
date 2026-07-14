@@ -96,6 +96,19 @@ export function useMembers() {
 
     const addMember = async (member: Partial<Member>) => {
         try {
+            // Check for duplicate member
+            const isDuplicate = members.some(m => {
+                const nameMatches = m.name?.trim().toLowerCase() === member.name?.trim().toLowerCase();
+                const phoneMatches = m.phone && member.phone && m.phone.trim() === member.phone.trim();
+                const emailMatches = m.email && member.email && m.email.trim().toLowerCase() === member.email.trim().toLowerCase();
+                
+                return (nameMatches && phoneMatches) || (emailMatches && emailMatches === true); // email must be present and match
+            });
+
+            if (isDuplicate) {
+                throw new Error("A member with this name and phone number, or email already exists.");
+            }
+
             const [firstName, ...lastNameParts] = (member.name || '').split(' ');
             const lastName = lastNameParts.join(' ');
 
@@ -131,6 +144,26 @@ export function useMembers() {
     };
 
     const updateMember = async (id: string, updates: Partial<Member>) => {
+        // Check for duplicate member
+        const isDuplicate = members.some(m => {
+            if (m.id === id) return false;
+            
+            const currentMember = members.find(member => member.id === id);
+            const targetName = updates.name !== undefined ? updates.name : currentMember?.name;
+            const targetPhone = updates.phone !== undefined ? updates.phone : currentMember?.phone;
+            const targetEmail = updates.email !== undefined ? updates.email : currentMember?.email;
+
+            const nameMatches = m.name?.trim().toLowerCase() === targetName?.trim().toLowerCase();
+            const phoneMatches = m.phone && targetPhone && m.phone.trim() === targetPhone.trim();
+            const emailMatches = m.email && targetEmail && m.email.trim().toLowerCase() === targetEmail.trim().toLowerCase();
+            
+            return (nameMatches && phoneMatches) || (emailMatches && emailMatches === true);
+        });
+
+        if (isDuplicate) {
+            throw new Error("A member with this name and phone number, or email already exists.");
+        }
+
         const hasuraUpdates: any = {};
 
         if (updates.name) {
