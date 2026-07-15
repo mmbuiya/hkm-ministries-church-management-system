@@ -163,11 +163,11 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser }) => {
             {show2FASetup && currentUser && (
                 <TwoFactorSetup
                     user={currentUser}
-                    onClose={() => {
+                    onClose={async () => {
                         setShow2FASetup(false);
                         // Refresh 2FA status
                         if (currentUser) {
-                setIs2FAActive(await is2FAEnabled(currentUser.id));
+                            setIs2FAActive(await is2FAEnabled(currentUser.id));
                         }
                     }}
                 />
