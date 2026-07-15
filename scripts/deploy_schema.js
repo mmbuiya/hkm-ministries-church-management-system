@@ -1,7 +1,9 @@
 
-const API_URL = 'https://sunny-zebra-57.hasura.app';
-const ADMIN_SECRET = 'sC2GxIp9LT3Uis53DfnNQW1gpm47kOhb6iO32mSFYgm79h8ct4H8j3ZIZfyoheei';
-const DATABASE_URL = 'postgresql://neondb_owner:npg_usvajkBxh01F@ep-sparkling-wildflower-a4d8lgyz-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require';
+const API_URL = process.env.HASURA_API_URL || 'https://sunny-zebra-57.hasura.app';
+const ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
+if (!ADMIN_SECRET) throw new Error('HASURA_ADMIN_SECRET environment variable is required');
+const DATABASE_URL = process.env.HASURA_DATABASE_URL;
+if (!DATABASE_URL) throw new Error('HASURA_DATABASE_URL environment variable is required');
 
 const sql = `
 CREATE TABLE IF NOT EXISTS users (
@@ -135,3 +137,4 @@ async function deploy() {
 }
 
 deploy();
+

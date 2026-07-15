@@ -24,7 +24,7 @@ const TwoFactorVerify: React.FC<TwoFactorVerifyProps> = ({ userId, userEmail, on
         setError('');
 
         try {
-            const secret = get2FASecret(userId);
+            const secret = await get2FASecret(userId);
             if (!secret) {
                 setError('2FA configuration not found');
                 return;

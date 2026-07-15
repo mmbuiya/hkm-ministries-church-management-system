@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from './components/MainLayout';
-import { User, SUPER_ADMIN_CONFIG } from './components/userData';
+import { User } from './components/userData';
 import { ToastProvider } from './components/ToastContext';
 import { ThemeProvider } from './components/ThemeContext';
 import { useAuth } from './components/AuthContext';
@@ -49,12 +49,9 @@ const App: React.FC = () => {
                 email: authUser.email,
                 timestamp: new Date().toISOString(),
                 success: true,
-                ipAddress: 'Unknown',
                 userAgent: navigator.userAgent,
                 location: 'Unknown'
-            }).catch(error => {
-                console.error('Failed to log login attempt:', error);
-            });
+            }).catch(() => {});
             
             // Fetch all users for admin features
             client.query({

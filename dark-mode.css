@@ -14,67 +14,67 @@
 
 /* Cards and Containers in Night Mode */
 .dark-mode .bg-white {
-  @apply bg-slate-800 #{!important};
+  @apply bg-slate-800 !important;
 }
 
 .dark-mode .text-gray-900 {
-  @apply text-slate-50 #{!important};
+  @apply text-slate-50 !important;
 }
 
 .dark-mode .text-gray-800 {
-  @apply text-slate-50 #{!important};
+  @apply text-slate-50 !important;
 }
 
 .dark-mode .text-gray-700 {
-  @apply text-slate-100 #{!important};
+  @apply text-slate-100 !important;
 }
 
 .dark-mode .text-gray-600 {
-  @apply text-slate-200 #{!important};
+  @apply text-slate-200 !important;
 }
 
 .dark-mode .text-gray-500 {
-  @apply text-slate-300 #{!important};
+  @apply text-slate-300 !important;
 }
 
 .dark-mode .text-gray-400 {
-  @apply text-slate-400 #{!important};
+  @apply text-slate-400 !important;
 }
 
 .dark-mode .bg-gray-50 {
-  @apply bg-slate-800 #{!important};
+  @apply bg-slate-800 !important;
 }
 
 .dark-mode .bg-gray-100 {
-  @apply bg-slate-700 #{!important};
+  @apply bg-slate-700 !important;
 }
 
 .dark-mode .bg-gray-200 {
-  @apply bg-slate-600 #{!important};
+  @apply bg-slate-600 !important;
 }
 
 .dark-mode .bg-gray-300 {
-  @apply bg-slate-500 #{!important};
+  @apply bg-slate-500 !important;
 }
 
 .dark-mode .border-gray-200 {
-  @apply border-slate-600 #{!important};
+  @apply border-slate-600 !important;
 }
 
 .dark-mode .border-gray-300 {
-  @apply border-slate-500 #{!important};
+  @apply border-slate-500 !important;
 }
 
 .dark-mode .border-gray-400 {
-  @apply border-slate-400 #{!important};
+  @apply border-slate-400 !important;
 }
 
 .dark-mode .hover\:bg-gray-50:hover {
-  @apply bg-slate-700 #{!important};
+  @apply bg-slate-700 !important;
 }
 
 .dark-mode .hover\:bg-gray-100:hover {
-  @apply bg-slate-700 #{!important};
+  @apply bg-slate-700 !important;
 }
 
 /* Tables in Night Mode */
@@ -83,105 +83,105 @@
 }
 
 .dark-mode thead {
-  @apply bg-slate-700 #{!important};
-  @apply text-slate-50 #{!important};
+  @apply bg-slate-700 !important;
+  @apply text-slate-50 !important;
 }
 
 .dark-mode tbody tr {
-  @apply border-slate-600 #{!important};
+  @apply border-slate-600 !important;
 }
 
 .dark-mode tbody tr:hover {
-  @apply bg-slate-700 #{!important};
+  @apply bg-slate-700 !important;
 }
 
 /* Forms in Night Mode */
 .dark-mode input,
 .dark-mode select,
 .dark-mode textarea {
-  @apply bg-slate-700 #{!important};
-  @apply text-slate-50 #{!important};
-  @apply border-slate-600 #{!important};
+  @apply bg-slate-700 !important;
+  @apply text-slate-50 !important;
+  @apply border-slate-600 !important;
 }
 
 .dark-mode input:focus,
 .dark-mode select:focus,
 .dark-mode textarea:focus {
-  @apply border-slate-500 #{!important};
-  @apply ring-slate-400 #{!important};
+  @apply border-slate-500 !important;
+  @apply ring-slate-400 !important;
 }
 
 .dark-mode input::placeholder,
 .dark-mode textarea::placeholder {
-  @apply text-slate-400 #{!important};
+  @apply text-slate-400 !important;
 }
 
 /* Modals and Dropdowns in Night Mode */
 .dark-mode .shadow-lg {
-  @apply shadow-2xl #{!important};
+  @apply shadow-2xl !important;
 }
 
 /* Buttons in Night Mode - Better contrast */
 .dark-mode .hover\:bg-red-50:hover {
-  @apply bg-red-900/40 #{!important};
+  @apply bg-red-900/40 !important;
 }
 
 .dark-mode .hover\:bg-green-50:hover {
-  @apply bg-green-900/40 #{!important};
+  @apply bg-green-900/40 !important;
 }
 
 .dark-mode .hover\:bg-blue-50:hover {
-  @apply bg-blue-900/40 #{!important};
+  @apply bg-blue-900/40 !important;
 }
 
 /* Badges and Pills - Better contrast */
 .dark-mode .bg-blue-100 {
-  @apply bg-blue-900/50 #{!important};
+  @apply bg-blue-900/50 !important;
 }
 
 .dark-mode .bg-green-100 {
-  @apply bg-green-900/50 #{!important};
+  @apply bg-green-900/50 !important;
 }
 
 .dark-mode .bg-cyan-100 {
-  @apply bg-cyan-900/50 #{!important};
+  @apply bg-cyan-900/50 !important;
 }
 
 .dark-mode .bg-purple-100 {
-  @apply bg-purple-900/50 #{!important};
+  @apply bg-purple-900/50 !important;
 }
 
 .dark-mode .bg-red-100 {
-  @apply bg-red-900/50 #{!important};
+  @apply bg-red-900/50 !important;
 }
 
 .dark-mode .bg-yellow-100 {
-  @apply bg-yellow-900/50 #{!important};
+  @apply bg-yellow-900/50 !important;
 }
 
 /* Badge text - Improved contrast */
 .dark-mode .text-blue-800 {
-  @apply text-blue-100 #{!important};
+  @apply text-blue-100 !important;
 }
 
 .dark-mode .text-green-800 {
-  @apply text-green-100 #{!important};
+  @apply text-green-100 !important;
 }
 
 .dark-mode .text-cyan-800 {
-  @apply text-cyan-100 #{!important};
+  @apply text-cyan-100 !important;
 }
 
 .dark-mode .text-purple-800 {
-  @apply text-purple-100 #{!important};
+  @apply text-purple-100 !important;
 }
 
 .dark-mode .text-red-800 {
-  @apply text-red-100 #{!important};
+  @apply text-red-100 !important;
 }
 
 .dark-mode .text-yellow-800 {
-  @apply text-yellow-100 #{!important};
+  @apply text-yellow-100 !important;
 }
 
 /* Scrollbar in Night Mode - Better visibility */
@@ -190,21 +190,21 @@
 }
 
 .dark-mode::-webkit-scrollbar-track {
-  @apply bg-slate-800 #{!important};
+  @apply bg-slate-800 !important;
 }
 
 .dark-mode::-webkit-scrollbar-thumb {
-  @apply bg-slate-500 #{!important};
+  @apply bg-slate-500 !important;
   border-radius: 5px;
 }
 
 .dark-mode::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 #{!important};
+  @apply bg-slate-400 !important;
 }
 
 /* Focus states in Night Mode - Better visibility */
 .dark-mode *:focus-visible {
-  @apply outline-slate-400 #{!important};
+  @apply outline-slate-400 !important;
   outline-width: 2px;
 }
 
@@ -212,60 +212,60 @@
 .dark-mode a,
 .dark-mode .text-blue-600,
 .dark-mode .text-green-600 {
-  @apply brightness-125 #{!important};
+  @apply brightness-125 !important;
 }
 
 .dark-mode a:hover {
-  @apply brightness-150 #{!important};
+  @apply brightness-150 !important;
 }
 
 /* Success/Warning/Error colors in Night Mode - Better contrast */
 .dark-mode .text-red-600 {
-  @apply text-red-300 #{!important};
+  @apply text-red-300 !important;
 }
 
 .dark-mode .text-green-600 {
-  @apply text-green-300 #{!important};
+  @apply text-green-300 !important;
 }
 
 .dark-mode .text-yellow-600 {
-  @apply text-yellow-300 #{!important};
+  @apply text-yellow-300 !important;
 }
 
 .dark-mode .text-blue-600 {
-  @apply text-blue-300 #{!important};
+  @apply text-blue-300 !important;
 }
 
 /* Alert/Message backgrounds - Better contrast */
 .dark-mode .bg-red-50 {
-  @apply bg-red-900/40 #{!important};
+  @apply bg-red-900/40 !important;
 }
 
 .dark-mode .bg-green-50 {
-  @apply bg-green-900/40 #{!important};
+  @apply bg-green-900/40 !important;
 }
 
 .dark-mode .bg-yellow-50 {
-  @apply bg-yellow-900/40 #{!important};
+  @apply bg-yellow-900/40 !important;
 }
 
 .dark-mode .bg-blue-50 {
-  @apply bg-blue-900/40 #{!important};
+  @apply bg-blue-900/40 !important;
 }
 
 /* Dividers and lines in Night Mode */
 .dark-mode hr {
-  @apply border-slate-600 #{!important};
+  @apply border-slate-600 !important;
 }
 
 .dark-mode .divide-gray-200 {
-  @apply divide-slate-600 #{!important};
+  @apply divide-slate-600 !important;
 }
 
 /* Disabled elements */
 .dark-mode .disabled,
 .dark-mode [disabled] {
-  @apply opacity-50 #{!important};
+  @apply opacity-50 !important;
 }
 
 /* Heading elements - Good contrast */
@@ -275,29 +275,29 @@
 .dark-mode h4,
 .dark-mode h5,
 .dark-mode h6 {
-  @apply text-slate-50 #{!important};
+  @apply text-slate-50 !important;
 }
 
 /* Paragraph text */
 .dark-mode p {
-  @apply text-slate-100 #{!important};
+  @apply text-slate-100 !important;
 }
 
 /* List items */
 .dark-mode li {
-  @apply text-slate-100 #{!important};
+  @apply text-slate-100 !important;
 }
 
 /* Code blocks */
 .dark-mode code,
 .dark-mode pre {
-  @apply bg-slate-950 #{!important};
-  @apply text-slate-200 #{!important};
-  @apply border-slate-700 #{!important};
+  @apply bg-slate-950 !important;
+  @apply text-slate-200 !important;
+  @apply border-slate-700 !important;
 }
 
 /* Tooltip and hint text */
 .dark-mode .tooltip,
 .dark-mode [title] {
-  @apply text-slate-50 #{!important};
+  @apply text-slate-50 !important;
 }

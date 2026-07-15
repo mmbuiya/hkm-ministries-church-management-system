@@ -29,15 +29,14 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ user, onClose }) => {
     const [step, setStep] = useState<'status' | 'setup' | 'verify' | 'disable'>('status');
 
     useEffect(() => {
-        const enabled = is2FAEnabled(user.id);
-        setIsEnabled(enabled);
+        is2FAEnabled(user.id).then(setIsEnabled);
     }, [user.id]);
 
-    const handleStartSetup = () => {
+    const handleStartSetup = async () => {
         const newSecret = generate2FASecret();
         setSecret(newSecret);
         setQrCodeUrl(get2FAQRCodeURL(user.email, newSecret));
-        store2FASecret(user.id, newSecret);
+        await store2FASecret(user.id, newSecret);
         setStep('setup');
         setError('');
         setSuccess('');
@@ -63,7 +62,7 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ user, onClose }) => {
         setError('');
 
         try {
-            const storedSecret = get2FASecret(user.id);
+            const storedSecret = await get2FASecret(user.id);
             if (!storedSecret) {
                 setError('2FA setup not found. Please try again.');
                 setStep('status');
@@ -73,7 +72,7 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ user, onClose }) => {
             const isValid = await verifyTOTP(storedSecret, verificationCode);
             
             if (isValid) {
-                enable2FA(user.id);
+                await enable2FA(user.id);
                 setIsEnabled(true);
                 setSuccess('Two-factor authentication has been enabled successfully!');
                 setStep('status');
@@ -98,7 +97,7 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ user, onClose }) => {
         setError('');
 
         try {
-            const storedSecret = get2FASecret(user.id);
+            const storedSecret = await get2FASecret(user.id);
             if (!storedSecret) {
                 setError('2FA not configured');
                 return;
@@ -107,7 +106,7 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ user, onClose }) => {
             const isValid = await verifyTOTP(storedSecret, verificationCode);
             
             if (isValid) {
-                disable2FA(user.id);
+                await disable2FA(user.id);
                 setIsEnabled(false);
                 setSuccess('Two-factor authentication has been disabled.');
                 setStep('status');

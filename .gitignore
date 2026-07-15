@@ -13,6 +13,16 @@ dist-ssr
 *.local
 release
 
+# Secrets
+.env
+.env.local
+.env.production
+
+# Build artifacts
+*.zip
+*.tar.gz
+release/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

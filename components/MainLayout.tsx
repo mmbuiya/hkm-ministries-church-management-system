@@ -18,6 +18,7 @@ import AddEquipmentPage from './AddEquipmentPage';
 import AddMaintenancePage from './AddMaintenancePage';
 import VisitorsModule from './VisitorsModule';
 import ReportsModule from './ReportsModule';
+import HelpdeskPage from './HelpdeskPage';
 import UsersPage from './UsersPage';
 import AddUserPage from './AddUserPage';
 import SettingsPage from './SettingsPage';
@@ -126,7 +127,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
         if (group.members !== newMemberCount || group.leader !== newLeaderEmail) {
           needsUpdate = true;
-          const updatedGroup = { ...group, members: newMemberCount, leader: newLeaderEmail };
+          const updatedGroup = { ...group, members: newMemberCount, leader: newLeaderEmail || '' };
           fbService.groups.save(updatedGroup);
           return updatedGroup;
         }
@@ -190,7 +191,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       setActivePage('Members');
     } catch (error) {
       console.error('Error in handleSaveOrUpdateMember:', error);
-      showToast(`Error saving member: ${error.message || error}`, 'error');
+      showToast(`Error saving member: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -296,19 +297,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
   // --- Transaction Handlers ---
   const handleSaveOrUpdateTransaction = async (transactionData: Omit<Transaction, 'id'> | Transaction) => {
-    console.log('[MainLayout] handleSaveOrUpdateTransaction called', { data: transactionData, hasId: 'id' in transactionData });
+    
     try {
       if ('id' in transactionData) { // Update
         const updated = transactionData as Transaction;
-        console.log('[MainLayout] Updating transaction', { id: updated.id });
         await updateTransaction(updated.id, transactionData);
         showToast("Transaction updated.", 'success');
       } else { // Add
-        console.log('[MainLayout] Adding new transaction');
         await addTransaction(transactionData);
         showToast("Transaction recorded.", 'success');
       }
-      console.log('[MainLayout] Save succeeded, navigating to Finance');
       setTransactionToEdit(null);
       setActivePage('Finance');
     } catch (error) {
@@ -500,12 +498,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const handleSaveUser = (userData: Partial<User>) => { onSaveOrUpdateUser(userData); setUserToEdit(null); setActivePage('Users'); showToast("User saved.", 'success'); };
 
   // Branch Handlers (now using Hasura)
-  const handleSaveBranch = async (branchData: Branch) => {
+  const handleSaveBranch = async (branchData: Partial<Branch>) => {
     try {
       if (branchToEdit) {
         await updateBranch(branchToEdit.id, branchData);
       } else {
-        await addBranch(branchData);
+        await addBranch(branchData as Branch);
       }
       showToast(`Branch ${branchToEdit ? 'updated' : 'added'} successfully`, 'success');
       setActivePage('Branches');
@@ -646,6 +644,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         return <SettingsPage currentUser={currentUser} />;
       case 'AI Features':
         return <AiFeaturesPage />;
+      case 'Helpdesk':
+        return <HelpdeskPage />;
       case 'Branches':
         return <BranchesPage
           branches={branches}

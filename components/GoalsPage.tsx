@@ -13,8 +13,7 @@ const GoalCard: React.FC<{ goal: any }> = ({ goal }) => {
         if (goal.type === 'absences_below') {
             const records = attendanceData.filter(r => {
                 const recordDate = new Date(r.date);
-                const member = null;
-                return recordDate.getMonth() === goal.month && recordDate.getFullYear() === goal.year && member?.department === goal.department && r.status === 'Absent';
+                return recordDate.getMonth() === goal.month && recordDate.getFullYear() === goal.year && r.status === 'Absent';
             });
             const services = new Set(records.map(r => r.date)).size;
             const avgAbsences = services > 0 ? records.length / services : 0;

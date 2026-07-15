@@ -48,8 +48,8 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
         if (isEditMode && memberToEdit) {
             setFormState({
                 name: memberToEdit.name,
-                email: memberToEdit.email,
-                phone: memberToEdit.phone,
+                email: memberToEdit.email || '',
+                phone: memberToEdit.phone || '',
                 dob: memberToEdit.dob,
                 gender: memberToEdit.gender,
                 maritalStatus: memberToEdit.maritalStatus || '',
@@ -90,7 +90,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
         }
 
         // Store the member data and show confirmation
-        const memberData = { name, gender, avatarTransform: formState.avatarTransform, ...rest };
+        const memberData = { name, gender, ...rest };
         setPendingMemberData(memberData);
         setShowConfirmation(true);
     };

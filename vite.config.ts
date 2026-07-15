@@ -6,11 +6,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   // Only apply strict CSP in production, allow inline scripts in development for Vite/React
   const isDev = mode === 'development';
-  
+
   // GitHub Pages deployment configuration
   const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
   const base = isGitHubPages ? '/hkm-ministries-church-management-system/' : './';
-  
+
   return {
     base: base,
     server: {
@@ -27,13 +27,15 @@ export default defineConfig(({ mode }) => {
           "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://accounts.google.com https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
           "img-src 'self' data: https: blob: https://*.clerk.accounts.dev https://img.clerk.com",
-          "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com ws://localhost:* http://localhost:* https://www.google-analytics.com https://accounts.google.com https://apis.google.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://sunny-zebra-57.hasura.app wss://sunny-zebra-57.hasura.app https://challenges.clerk.com",
+          "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://generativelanguage.googleapis.com ws://localhost:* http://localhost:* https://www.google-analytics.com https://accounts.google.com https://apis.google.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://sunny-zebra-57.hasura.app wss://sunny-zebra-57.hasura.app https://challenges.clerk.com https://api.ipify.org",
           "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.clerk.accounts.dev https://challenges.clerk.com",
           "form-action 'self'",
           "base-uri 'self'",
           "frame-ancestors 'none'",
-          isDev ? "" : "upgrade-insecure-requests",
-        ].filter(Boolean).join('; '),
+          isDev ? '' : 'upgrade-insecure-requests',
+        ]
+          .filter(Boolean)
+          .join('; '),
         // Additional security headers
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -44,18 +46,15 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [react()],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-    },
+    define: {},
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      }
+      },
     },
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-    }
+    },
   };
 });

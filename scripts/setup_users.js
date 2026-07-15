@@ -1,9 +1,7 @@
 
-const API_URL = 'https://sunny-zebra-57.app.app'; // Fixed link in next step if wrong, checking .env
-const ADMIN_SECRET = 'sC2GxIp9LT3Uis53DfnNQW1gpm47kOhb6iO32mSFYgm79h8ct4H8j3ZIZfyoheei';
-
-// I noticed the API URL in previous scripts was 'https://sunny-zebra-57.hasura.app'
-const ACTUAL_API_URL = 'https://sunny-zebra-57.hasura.app';
+const API_URL = process.env.HASURA_API_URL || 'https://sunny-zebra-57.hasura.app';
+const ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
+if (!ADMIN_SECRET) throw new Error('HASURA_ADMIN_SECRET environment variable is required');
 
 const sql = `
 CREATE TABLE IF NOT EXISTS users (
@@ -22,7 +20,7 @@ COMMENT ON TABLE users IS 'User profiles and role tracking';
 
 async function runRequest(payload, endpoint = 'v2/query') {
     try {
-        const response = await fetch(`${ACTUAL_API_URL}/${endpoint}`, {
+        const response = await fetch(`${API_URL}/${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

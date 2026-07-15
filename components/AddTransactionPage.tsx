@@ -25,10 +25,6 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
     const [category, setCategory] = useState<IncomeCategory | ExpenseCategory>('Tithe');
     const [memberId, setMemberId] = useState<string>('');
     
-    // Debug memberId changes
-    useEffect(() => {
-        console.log('memberId state changed to:', memberId);
-    }, [memberId]);
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
@@ -114,10 +110,8 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
 
     const handleConfirmSave = async () => {
         if (pendingTransactionData) {
-            console.log('[Save] handleConfirmSave called', { type: pendingTransactionData.type, category: pendingTransactionData.category, amount: pendingTransactionData.amount, memberId: pendingTransactionData.memberId });
             try {
                 await onSave(pendingTransactionData);
-                console.log('[Save] onSave completed successfully');
             } catch (err) {
                 console.error('[Save] onSave failed:', err);
             } finally {
@@ -153,14 +147,6 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
         }
         return m.name;
     });
-
-    // Debug logging to see what's happening with member data
-    console.log('=== Member Data Debug ===');
-    console.log('Total members from DB:', members.length);
-    console.log('Valid members after filtering:', validMembers.length);
-    console.log('Duplicate names found:', Object.entries(memberCounts).filter(([name, count]) => count > 1));
-    console.log('Current selected memberId:', memberId);
-    console.log('Current selected member:', validMembers.find(m => m.email === memberId));
 
     return (
         <div>
@@ -216,51 +202,22 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                                                 label="Member" 
                                                 options={memberOptions} 
                                                 value={(() => {
-                                                    console.log('Calculating dropdown value. memberId:', memberId);
-                                                    
-                                                    if (!memberId) {
-                                                        console.log('No memberId set, returning empty string');
-                                                        return '';
-                                                    }
-                                                    
-                                                    // Find member by ID instead of email
+                                                    if (!memberId) return '';
                                                     const member = validMembers.find(m => m.id === memberId);
-                                                    console.log('Found member for dropdown:', member);
-                                                    
-                                                    if (!member) {
-                                                        console.log('No member found with id:', memberId);
-                                                        return '';
-                                                    }
-                                                    
-                                                    // Check if this member name has duplicates
-                                                    if (memberCounts[member.name] > 1) {
-                                                        const displayValue = `${member.name} (${member.id})`;
-                                                        console.log('Member has duplicates, showing:', displayValue);
-                                                        return displayValue;
-                                                    }
-                                                    
-                                                    console.log('Showing member name:', member.name);
+                                                    if (!member) return '';
+                                                    if (memberCounts[member.name] > 1) return `${member.name} (${member.id})`;
                                                     return member.name;
                                                 })()} 
                                                 onChange={e => {
-                                                    console.log('Member selection changed to:', e.target.value);
-                                                    
-                                                    // Handle both regular names and names with ID suffix
                                                     let selectedMember;
                                                     if (e.target.value.includes(' (') && e.target.value.endsWith(')')) {
-                                                        // Extract ID from "Name (ID)" format
                                                         const idMatch = e.target.value.match(/\(([^)]+)\)$/);
                                                         const id = idMatch ? idMatch[1] : '';
                                                         selectedMember = validMembers.find(m => m.id === id);
                                                     } else {
-                                                        // Find by exact name match
                                                         selectedMember = validMembers.find(m => m.name === e.target.value);
                                                     }
-                                                    
-                                                    console.log('Selected member object:', selectedMember);
-                                                    // Use member ID instead of email since many members don't have emails
                                                     const newMemberId = selectedMember ? selectedMember.id : '';
-                                                    console.log('Setting memberId to:', newMemberId);
                                                     setMemberId(newMemberId);
                                                 }} 
                                                 required={memberRequiredCategories.includes(category as IncomeCategory)} 
