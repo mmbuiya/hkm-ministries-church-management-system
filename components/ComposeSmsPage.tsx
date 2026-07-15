@@ -143,7 +143,7 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
       const result = await smsService.sendSms(recipients, message);
 
       if (result.success) {
-        // Log to Hasura
+        // Log to Supabase
         await onLogSms({
           recipientCount: recipients.filter(Boolean).length,
           message: message,

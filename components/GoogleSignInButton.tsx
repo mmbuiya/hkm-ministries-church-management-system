@@ -15,13 +15,16 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   disabled = false,
   size = 'medium',
   theme = 'light',
-  text = 'signin_with'
+  text = 'signin_with',
 }) => {
   const getSizeClass = () => {
     switch (size) {
-      case 'small': return 'h-8 px-3 text-sm';
-      case 'large': return 'h-12 px-6 text-base';
-      default: return 'h-10 px-4 text-sm';
+      case 'small':
+        return 'h-8 px-3 text-sm';
+      case 'large':
+        return 'h-12 px-6 text-base';
+      default:
+        return 'h-10 px-4 text-sm';
     }
   };
 
@@ -34,9 +37,12 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
   const getText = () => {
     switch (text) {
-      case 'signup_with': return 'Sign up with Google';
-      case 'continue_with': return 'Continue with Google';
-      default: return 'Sign in with Google';
+      case 'signup_with':
+        return 'Sign up with Google';
+      case 'continue_with':
+        return 'Continue with Google';
+      default:
+        return 'Sign in with Google';
     }
   };
 

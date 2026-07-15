@@ -10,7 +10,7 @@ import { client } from './components/AuthorizedApolloProvider';
 import { UserSession, createSessionId } from './components/userSessionData';
 import { useUserSessions } from './hooks/useUserSessions';
 import { useLoginAttempts } from './hooks/useLoginAttempts';
-import { UPSERT_USER_MUTATION } from './services/graphql/users_hasura';
+import { UPSERT_USER_MUTATION } from './services/graphql/users';
 import ClerkAuthPage from './components/ClerkAuthPage';
 import OfflineIndicator from './components/OfflineIndicator';
 

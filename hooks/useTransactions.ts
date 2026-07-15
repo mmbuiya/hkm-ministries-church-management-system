@@ -10,7 +10,7 @@ import {
 } from '../services/graphql/transactions';
 import { UPDATE_MEMBER_MUTATION } from '../services/graphql/members';
 
-interface HasuraMember {
+interface SupabaseMember {
   id: string;
   first_name: string;
   last_name: string;
@@ -20,7 +20,7 @@ interface HasuraMember {
   status?: string;
 }
 
-interface HasuraTransaction {
+interface SupabaseTransaction {
   id: number;
   date: string;
   category: string;
@@ -29,29 +29,29 @@ interface HasuraTransaction {
   description?: string;
   member_id?: string;
   non_member_name?: string;
-  member?: HasuraMember | null;
+  member?: SupabaseMember | null;
 }
 
-function transformTransaction(hasuraTx: HasuraTransaction): Transaction {
+function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
   let contributorName: string | undefined;
   let contributorPhone: string | undefined;
 
-  if (hasuraTx.member) {
-    contributorName = `${hasuraTx.member.first_name} ${hasuraTx.member.last_name}`.trim();
-    contributorPhone = hasuraTx.member.phone;
-  } else if (hasuraTx.non_member_name) {
-    contributorName = hasuraTx.non_member_name;
+  if (SupabaseTx.member) {
+    contributorName = `${SupabaseTx.member.first_name} ${SupabaseTx.member.last_name}`.trim();
+    contributorPhone = SupabaseTx.member.phone;
+  } else if (SupabaseTx.non_member_name) {
+    contributorName = SupabaseTx.non_member_name;
   }
 
   return {
-    id: hasuraTx.id,
-    date: hasuraTx.date,
-    category: hasuraTx.category as any,
-    type: hasuraTx.type,
-    amount: parseFloat(hasuraTx.amount.toString()),
-    description: hasuraTx.description || '',
-    memberId: hasuraTx.member_id,
-    nonMemberName: hasuraTx.non_member_name,
+    id: SupabaseTx.id,
+    date: SupabaseTx.date,
+    category: SupabaseTx.category as any,
+    type: SupabaseTx.type,
+    amount: parseFloat(SupabaseTx.amount.toString()),
+    description: SupabaseTx.description || '',
+    memberId: SupabaseTx.member_id,
+    nonMemberName: SupabaseTx.non_member_name,
     contributorName,
     contributorPhone,
   };
@@ -65,7 +65,7 @@ export function useTransactions() {
     return d.toISOString().split('T')[0];
   }, []);
 
-  // HTTP query fires immediately — wakes Hasura from auto-pause and provides initial data
+  // HTTP query fires immediately — wakes Supabase from auto-pause and provides initial data
   const { data: queryData, loading: queryLoading } = useQuery(GET_TRANSACTIONS_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
@@ -171,20 +171,20 @@ export function useTransactions() {
 
   const updateTransaction = async (id: number, updates: Partial<Transaction>) => {
     try {
-      const hasuraUpdates: any = {};
+      const SupabaseUpdates: any = {};
 
-      if (updates.date !== undefined) hasuraUpdates.date = updates.date;
-      if (updates.category !== undefined) hasuraUpdates.category = updates.category;
-      if (updates.type !== undefined) hasuraUpdates.type = updates.type;
-      if (updates.amount !== undefined) hasuraUpdates.amount = updates.amount;
-      if (updates.description !== undefined) hasuraUpdates.description = updates.description;
-      if (updates.memberId !== undefined) hasuraUpdates.member_id = updates.memberId;
-      if (updates.nonMemberName !== undefined) hasuraUpdates.non_member_name = updates.nonMemberName;
+      if (updates.date !== undefined) SupabaseUpdates.date = updates.date;
+      if (updates.category !== undefined) SupabaseUpdates.category = updates.category;
+      if (updates.type !== undefined) SupabaseUpdates.type = updates.type;
+      if (updates.amount !== undefined) SupabaseUpdates.amount = updates.amount;
+      if (updates.description !== undefined) SupabaseUpdates.description = updates.description;
+      if (updates.memberId !== undefined) SupabaseUpdates.member_id = updates.memberId;
+      if (updates.nonMemberName !== undefined) SupabaseUpdates.non_member_name = updates.nonMemberName;
 
       const result = await updateTransactionMutation({
         variables: {
           id,
-          updates: hasuraUpdates,
+          updates: SupabaseUpdates,
         },
       });
 
@@ -235,7 +235,7 @@ export function useTransactions() {
   return {
     data: transactions,
     setData: (newTransactions: Transaction[]) => {
-      console.warn('setData called on Hasura subscription - data is managed by GraphQL');
+      console.warn('setData called on Supabase subscription - data is managed by GraphQL');
     },
     loading,
     error: error || connectionError,

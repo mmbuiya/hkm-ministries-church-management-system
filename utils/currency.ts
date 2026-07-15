@@ -1,19 +1,18 @@
 // Currency formatting utilities for consistent KSH display
 
-export const formatCurrency = (amount: number, options?: {
-  minimumFractionDigits?: number;
-  maximumFractionDigits?: number;
-  showSymbol?: boolean;
-}): string => {
-  const {
-    minimumFractionDigits = 2,
-    maximumFractionDigits = 2,
-    showSymbol = true
-  } = options || {};
+export const formatCurrency = (
+  amount: number,
+  options?: {
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+    showSymbol?: boolean;
+  },
+): string => {
+  const { minimumFractionDigits = 2, maximumFractionDigits = 2, showSymbol = true } = options || {};
 
   const formattedAmount = amount.toLocaleString('en-US', {
     minimumFractionDigits,
-    maximumFractionDigits
+    maximumFractionDigits,
   });
 
   return showSymbol ? `KSH ${formattedAmount}` : formattedAmount;

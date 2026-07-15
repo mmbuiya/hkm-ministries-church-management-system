@@ -9,8 +9,8 @@ import { useAuth } from '@clerk/clerk-react';
 // Supabase pg_graphql endpoint
 // VITE_SUPABASE_GRAPHQL_URL = https://<project-ref>.supabase.co/graphql/v1
 // VITE_SUPABASE_ANON_KEY    = your supabase anon key
-const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || '';
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1';
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_0TLmEt3REGZu74ljFe54ug_piL2Mj7e';
 
 // Supabase uses wss://<project-ref>.supabase.co/graphql/v1
 const wsUri = httpUri.replace('https://', 'wss://').replace('http://', 'ws://');

@@ -1,140 +1,145 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PermissionRequest } from '../components/PermissionRequest';
 import { User, needsPermissionRequest } from '../components/userData';
-import { fbService } from '../services/firebaseService';
+import { usePermissionRequests } from './usePermissionRequests';
 import { useToast } from '../components/ToastContext';
 
 export const usePermissionRequest = (currentUser: User | null) => {
-    const { showToast } = useToast();
-    const [showRequestModal, setShowRequestModal] = useState(false);
-    const [pendingRequest, setPendingRequest] = useState<{
-        dataType: PermissionRequest['dataType'];
-        dataId: string | number;
-        dataName: string;
-        requestType: 'edit' | 'delete';
-        onApproved: () => void;
-    } | null>(null);
+  const { showToast } = useToast();
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const { data: requests, addRequest } = usePermissionRequests();
 
-    // Check if user can edit without permission request
-    const canEditDirectly = (user: User | null): boolean => {
-        return !needsPermissionRequest(user);
-    };
+  const [pendingRequest, setPendingRequest] = useState<{
+    dataType: PermissionRequest['dataType'];
+    dataId: string | number;
+    dataName: string;
+    requestType: 'edit' | 'delete';
+    onApproved: () => void;
+  } | null>(null);
 
-    // Request permission to edit existing data
-    const requestEditPermission = async (
-        dataType: PermissionRequest['dataType'],
-        dataId: string | number,
-        dataName: string,
-        requestType: 'edit' | 'delete' = 'edit',
-        onApproved: () => void
-    ): Promise<boolean> => {
-        if (!currentUser) return false;
+  // Check if user can edit without permission request
+  const canEditDirectly = (user: User | null): boolean => {
+    return !needsPermissionRequest(user);
+  };
 
-        // Check if user already has active permission
-        const hasPermission = await fbService.permissionRequests.hasActivePermission(
-            currentUser.id,
-            dataType,
-            dataId,
-            requestType
-        );
+  // Request permission to edit existing data
+  const requestEditPermission = async (
+    dataType: PermissionRequest['dataType'],
+    dataId: string | number,
+    dataName: string,
+    requestType: 'edit' | 'delete' = 'edit',
+    onApproved: () => void,
+  ): Promise<boolean> => {
+    if (!currentUser) return false;
 
-        if (hasPermission) {
-            // User already has permission, proceed directly
-            onApproved();
-            return true;
-        }
+    // Check if user already has active permission
+    const activePermission = requests.find(
+      (r) =>
+        r.requesterId === currentUser.id &&
+        r.dataType === dataType &&
+        r.dataId === dataId.toString() &&
+        r.requestType === requestType &&
+        r.status === 'approved' &&
+        (!r.expiresAt || new Date(r.expiresAt) > new Date()),
+    );
 
-        // Show permission request modal
-        setPendingRequest({
-            dataType,
-            dataId,
-            dataName,
-            requestType,
-            onApproved
-        });
-        setShowRequestModal(true);
-        return false;
-    };
+    if (activePermission) {
+      // User already has permission, proceed directly
+      onApproved();
+      return true;
+    }
 
-    // Submit permission request
-    const submitPermissionRequest = async (reason: string): Promise<void> => {
-        if (!currentUser || !pendingRequest) return;
+    // Show permission request modal
+    setPendingRequest({
+      dataType,
+      dataId,
+      dataName,
+      requestType,
+      onApproved,
+    });
+    setShowRequestModal(true);
+    return false;
+  };
 
-        try {
-            await fbService.permissionRequests.createRequest(
-                currentUser.id,
-                currentUser.username,
-                currentUser.email,
-                pendingRequest.requestType,
-                pendingRequest.dataType,
-                pendingRequest.dataId,
-                pendingRequest.dataName,
-                reason
-            );
+  // Submit permission request
+  const submitPermissionRequest = async (reason: string): Promise<void> => {
+    if (!currentUser || !pendingRequest) return;
 
-            showToast(
-                `Permission request sent to Super Admin for review. You'll be notified when approved.`,
-                'info'
-            );
+    try {
+      await addRequest({
+        requesterId: currentUser.id,
+        requesterName: currentUser.username,
+        requesterEmail: currentUser.email,
+        requestType: pendingRequest.requestType,
+        dataType: pendingRequest.dataType,
+        dataId: pendingRequest.dataId.toString(),
+        dataName: pendingRequest.dataName,
+        reason,
+      });
 
-            setShowRequestModal(false);
-            setPendingRequest(null);
-        } catch (error) {
-            console.error('Failed to submit permission request:', error);
-            showToast('Failed to submit permission request', 'error');
-            throw error;
-        }
-    };
+      showToast(`Permission request sent to Super Admin for review. You'll be notified when approved.`, 'info');
 
-    // Cancel permission request
-    const cancelPermissionRequest = () => {
-        setShowRequestModal(false);
-        setPendingRequest(null);
-    };
+      setShowRequestModal(false);
+      setPendingRequest(null);
+    } catch (error) {
+      console.error('Failed to submit permission request:', error);
+      showToast('Failed to submit permission request', 'error');
+      throw error;
+    }
+  };
 
-    // Check and handle edit action
-    const handleEditAction = async (
-        dataType: PermissionRequest['dataType'],
-        dataId: string | number,
-        dataName: string,
-        editAction: () => void,
-        requestType: 'edit' | 'delete' = 'edit'
-    ): Promise<void> => {
-        if (!currentUser) return;
+  // Cancel permission request
+  const cancelPermissionRequest = () => {
+    setShowRequestModal(false);
+    setPendingRequest(null);
+  };
 
-        // If user can edit directly (Super Admin, Admin), proceed
-        if (canEditDirectly(currentUser)) {
-            editAction();
-            return;
-        }
+  // Check and handle edit action
+  const handleEditAction = async (
+    dataType: PermissionRequest['dataType'],
+    dataId: string | number,
+    dataName: string,
+    editAction: () => void,
+    requestType: 'edit' | 'delete' = 'edit',
+  ): Promise<void> => {
+    if (!currentUser) return;
 
-        // Check if user has active permission
-        const hasPermission = await fbService.permissionRequests.hasActivePermission(
-            currentUser.id,
-            dataType,
-            dataId,
-            requestType
-        );
+    // If user can edit directly (Super Admin, Admin), proceed
+    if (canEditDirectly(currentUser)) {
+      editAction();
+      return;
+    }
 
-        if (hasPermission) {
-            // User has active permission, proceed
-            editAction();
-            return;
-        }
+    // Check if user has active permission
+    const activePermission = requests.find(
+      (r) =>
+        r.requesterId === currentUser.id &&
+        r.dataType === dataType &&
+        r.dataId === dataId.toString() &&
+        r.requestType === requestType &&
+        r.status === 'approved' &&
+        (!r.expiresAt || new Date(r.expiresAt) > new Date()),
+    );
 
-        // Request permission
-        await requestEditPermission(dataType, dataId, dataName, requestType, editAction);
-    };
+    if (activePermission) {
+      // User has active permission, proceed
+      editAction();
+      return;
+    }
 
-    return {
-        showRequestModal,
-        pendingRequest,
-        canEditDirectly: canEditDirectly(currentUser),
-        requestEditPermission,
-        submitPermissionRequest,
-        cancelPermissionRequest,
-        handleEditAction
-    };
+    // Request permission
+    await requestEditPermission(dataType, dataId, dataName, requestType, editAction);
+  };
+
+  return {
+    showRequestModal,
+    pendingRequest,
+    canEditDirectly: canEditDirectly(currentUser),
+    requestEditPermission,
+    submitPermissionRequest,
+    cancelPermissionRequest,
+    handleEditAction,
+  };
 };
 
 export default usePermissionRequest;

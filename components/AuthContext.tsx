@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
 import { User } from './userData';
 import { client } from './AuthorizedApolloProvider';
-import { UPSERT_USER_MUTATION, GET_USER_QUERY } from '../services/graphql/users_hasura';
+import { UPSERT_USER_MUTATION, GET_USER_QUERY } from '../services/graphql/users';
 
 interface AuthContextType {
   user: User | null;

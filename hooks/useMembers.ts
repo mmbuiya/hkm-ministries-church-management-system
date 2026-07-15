@@ -9,7 +9,7 @@ import {
   DELETE_MEMBER_MUTATION,
 } from '../services/graphql/members';
 
-interface HasuraMember {
+interface SupabaseMember {
   id: string;
   first_name: string;
   last_name: string;
@@ -29,52 +29,52 @@ interface HasuraMember {
   is_portal_active?: boolean;
 }
 
-// Transform Hasura data to frontend Member format
-function transformMember(hasuraMember: HasuraMember): Member {
-  const firstName = hasuraMember.first_name || '';
-  const lastName = hasuraMember.last_name || '';
+// Transform Supabase data to frontend Member format
+function transformMember(SupabaseMember: SupabaseMember): Member {
+  const firstName = SupabaseMember.first_name || '';
+  const lastName = SupabaseMember.last_name || '';
   let fullName = `${firstName} ${lastName}`.trim();
 
   // Fallback to email or ID if name is empty
   if (!fullName || fullName.length === 0) {
-    if (hasuraMember.email) {
-      fullName = hasuraMember.email.split('@')[0]; // Use email username part
+    if (SupabaseMember.email) {
+      fullName = SupabaseMember.email.split('@')[0]; // Use email username part
     } else {
-      fullName = `Member ${hasuraMember.id}`; // Fallback to ID
+      fullName = `Member ${SupabaseMember.id}`; // Fallback to ID
     }
     console.warn('Member with empty name found, using fallback:', {
-      id: hasuraMember.id,
+      id: SupabaseMember.id,
       firstName,
       lastName,
-      email: hasuraMember.email,
+      email: SupabaseMember.email,
       fallbackName: fullName,
     });
   }
 
   return {
-    id: hasuraMember.id,
+    id: SupabaseMember.id,
     name: fullName,
-    title: hasuraMember.title || '',
+    title: SupabaseMember.title || '',
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}`,
-    avatarTransform: hasuraMember.avatar_transform ? JSON.parse(hasuraMember.avatar_transform) : undefined,
-    phone: hasuraMember.phone || '',
-    email: hasuraMember.email || '',
-    department: hasuraMember.department || '',
+    avatarTransform: SupabaseMember.avatar_transform ? JSON.parse(SupabaseMember.avatar_transform) : undefined,
+    phone: SupabaseMember.phone || '',
+    email: SupabaseMember.email || '',
+    department: SupabaseMember.department || '',
     role: 'Member', // Default role since it's not in the database
-    status: hasuraMember.status,
-    dateAdded: hasuraMember.joined_at || new Date().toISOString().split('T')[0],
-    dob: hasuraMember.dob || '',
-    gender: hasuraMember.gender,
-    occupation: hasuraMember.occupation,
-    maritalStatus: hasuraMember.marital_status,
-    location: hasuraMember.address,
-    pin: hasuraMember.pin || null,
-    is_portal_active: hasuraMember.is_portal_active || false,
+    status: SupabaseMember.status,
+    dateAdded: SupabaseMember.joined_at || new Date().toISOString().split('T')[0],
+    dob: SupabaseMember.dob || '',
+    gender: SupabaseMember.gender,
+    occupation: SupabaseMember.occupation,
+    maritalStatus: SupabaseMember.marital_status,
+    location: SupabaseMember.address,
+    pin: SupabaseMember.pin || null,
+    is_portal_active: SupabaseMember.is_portal_active || false,
   };
 }
 
 export function useMembers() {
-  // HTTP query fires immediately on load — wakes Hasura from auto-pause and provides initial data
+  // HTTP query fires immediately on load — wakes Supabase from auto-pause and provides initial data
   const { data: queryData, loading: queryLoading } = useQuery(GET_MEMBERS_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
@@ -99,7 +99,7 @@ export function useMembers() {
   const members: Member[] = useMemo(() => {
     // Supabase pg_graphql wraps results in membersCollection.edges[].node
     const rows =
-      data?.membersCollection?.edges?.map((e: { node: HasuraMember }) => e.node) ??
+      data?.membersCollection?.edges?.map((e: { node: SupabaseMember }) => e.node) ??
       data?.members ?? // fallback for tests
       [];
     return rows.map(transformMember);
@@ -178,30 +178,31 @@ export function useMembers() {
       throw new Error('A member with this name and phone number, or email already exists.');
     }
 
-    const hasuraUpdates: any = {};
+    const SupabaseUpdates: any = {};
 
     if (updates.name) {
       const [firstName, ...lastNameParts] = updates.name.split(' ');
-      hasuraUpdates.first_name = firstName;
-      hasuraUpdates.last_name = lastNameParts.join(' ');
+      SupabaseUpdates.first_name = firstName;
+      SupabaseUpdates.last_name = lastNameParts.join(' ');
     }
 
-    if (updates.title !== undefined) hasuraUpdates.title = updates.title;
-    if (updates.email !== undefined) hasuraUpdates.email = updates.email || null;
-    if (updates.phone !== undefined) hasuraUpdates.phone = updates.phone || null;
-    if (updates.department !== undefined) hasuraUpdates.department = updates.department;
-    if (updates.status !== undefined) hasuraUpdates.status = updates.status;
-    if (updates.dob !== undefined) hasuraUpdates.dob = updates.dob;
-    if (updates.gender !== undefined) hasuraUpdates.gender = updates.gender;
-    if (updates.avatarTransform !== undefined) hasuraUpdates.avatar_transform = JSON.stringify(updates.avatarTransform);
-    if (updates.location !== undefined) hasuraUpdates.address = updates.location;
-    if (updates.occupation !== undefined) hasuraUpdates.occupation = updates.occupation || null;
-    if (updates.maritalStatus !== undefined) hasuraUpdates.marital_status = updates.maritalStatus || null;
+    if (updates.title !== undefined) SupabaseUpdates.title = updates.title;
+    if (updates.email !== undefined) SupabaseUpdates.email = updates.email || null;
+    if (updates.phone !== undefined) SupabaseUpdates.phone = updates.phone || null;
+    if (updates.department !== undefined) SupabaseUpdates.department = updates.department;
+    if (updates.status !== undefined) SupabaseUpdates.status = updates.status;
+    if (updates.dob !== undefined) SupabaseUpdates.dob = updates.dob;
+    if (updates.gender !== undefined) SupabaseUpdates.gender = updates.gender;
+    if (updates.avatarTransform !== undefined)
+      SupabaseUpdates.avatar_transform = JSON.stringify(updates.avatarTransform);
+    if (updates.location !== undefined) SupabaseUpdates.address = updates.location;
+    if (updates.occupation !== undefined) SupabaseUpdates.occupation = updates.occupation || null;
+    if (updates.maritalStatus !== undefined) SupabaseUpdates.marital_status = updates.maritalStatus || null;
 
     await updateMemberMutation({
       variables: {
         id,
-        updates: hasuraUpdates,
+        updates: SupabaseUpdates,
       },
     });
 
@@ -219,7 +220,7 @@ export function useMembers() {
   return {
     data: members,
     setData: (newMembers: Member[]) => {
-      console.warn('setData called on Hasura subscription - data is managed by GraphQL');
+      console.warn('setData called on Supabase subscription - data is managed by GraphQL');
     },
     loading,
     error,

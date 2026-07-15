@@ -31,7 +31,7 @@ vi.mock('./userData', () => ({
   User: class User {},
 }));
 
-vi.mock('../services/graphql/users_hasura', () => ({
+vi.mock('../services/graphql/users', () => ({
   GET_USER_QUERY: 'query GetUser { users_by_pk { id username email role avatar last_login } }',
   UPSERT_USER_MUTATION: 'mutation UpsertUser { insert_users_one { id } }',
 }));
@@ -65,7 +65,7 @@ describe('AuthContext', () => {
     expect(mod.AuthProvider).toBeDefined();
   });
 
-  it('should create new user profile when not found in Hasura', async () => {
+  it('should create new user profile when not found in Supabase', async () => {
     mockQuery.mockResolvedValueOnce({ data: { users_by_pk: null } });
     mockMutate.mockResolvedValueOnce({ data: { insert_users_one: { id: 'clerk-user-123' } } });
 
