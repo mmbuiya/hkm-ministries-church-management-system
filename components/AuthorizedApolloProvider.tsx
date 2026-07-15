@@ -7,7 +7,11 @@ import { useAuth } from '@clerk/clerk-react';
 // VITE_SUPABASE_GRAPHQL_URL = https://<project-ref>.supabase.co/graphql/v1
 // VITE_SUPABASE_ANON_KEY    = your supabase anon key
 const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1';
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_0TLmEt3REGZu74ljFe54ug_piL2Mj7e';
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''; // Must be a valid JWT starting with eyJ...
+
+if (!anonKey || !anonKey.startsWith('eyJ')) {
+  console.warn('⚠️ Invalid or missing VITE_SUPABASE_ANON_KEY. Supabase requests will fail with 401 Unauthorized.');
+}
 
 let _getToken: (() => Promise<string | null>) | null = null;
 

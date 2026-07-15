@@ -14,9 +14,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: base,
     server: {
-      port: 3000,
-      strictPort: false,
-      host: 'localhost',
+      port: 5173,
+      strictPort: true,
+      host: '0.0.0.0',
       headers: {
         // Content Security Policy - relaxed for development, strict for production
         'Content-Security-Policy': [
