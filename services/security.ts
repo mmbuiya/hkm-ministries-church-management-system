@@ -741,23 +741,25 @@ export async function verifyTOTP(secret: string, code: string): Promise<boolean>
 }
 
 // Store 2FA secret for a user
-export function store2FASecret(userId: string, secret: string): void {
-    const secrets = get2FASecrets();
+export async function store2FASecret(userId: string, secret: string): Promise<void> {
+    const secrets = await get2FASecrets();
     secrets[userId] = {
         secret,
         enabled: false,
         createdAt: Date.now()
     };
-    localStorage.setItem(TOTP_STORAGE_KEY, JSON.stringify(secrets));
+    const encrypted = await encryptData(JSON.stringify(secrets));
+    localStorage.setItem(TOTP_STORAGE_KEY, encrypted);
 }
 
 // Enable 2FA for a user (after they verify their first code)
-export function enable2FA(userId: string): boolean {
-    const secrets = get2FASecrets();
+export async function enable2FA(userId: string): Promise<boolean> {
+    const secrets = await get2FASecrets();
     if (secrets[userId]) {
         secrets[userId].enabled = true;
         secrets[userId].enabledAt = Date.now();
-        localStorage.setItem(TOTP_STORAGE_KEY, JSON.stringify(secrets));
+        const encrypted = await encryptData(JSON.stringify(secrets));
+        localStorage.setItem(TOTP_STORAGE_KEY, encrypted);
         logAuditEvent(AuditActions.SETTINGS_CHANGED, '2fa', userId, '2FA enabled');
         return true;
     }
@@ -765,30 +767,43 @@ export function enable2FA(userId: string): boolean {
 }
 
 // Disable 2FA for a user
-export function disable2FA(userId: string): void {
-    const secrets = get2FASecrets();
+export async function disable2FA(userId: string): Promise<void> {
+    const secrets = await get2FASecrets();
     delete secrets[userId];
-    localStorage.setItem(TOTP_STORAGE_KEY, JSON.stringify(secrets));
+    const encrypted = await encryptData(JSON.stringify(secrets));
+    localStorage.setItem(TOTP_STORAGE_KEY, encrypted);
     logAuditEvent(AuditActions.SETTINGS_CHANGED, '2fa', userId, '2FA disabled');
 }
 
 // Check if user has 2FA enabled
-export function is2FAEnabled(userId: string): boolean {
-    const secrets = get2FASecrets();
+export async function is2FAEnabled(userId: string): Promise<boolean> {
+    const secrets = await get2FASecrets();
     return secrets[userId]?.enabled === true;
 }
 
 // Get user's 2FA secret (for verification)
-export function get2FASecret(userId: string): string | null {
-    const secrets = get2FASecrets();
+export async function get2FASecret(userId: string): Promise<string | null> {
+    const secrets = await get2FASecrets();
     return secrets[userId]?.secret || null;
 }
 
-// Get all 2FA secrets
-function get2FASecrets(): Record<string, { secret: string; enabled: boolean; createdAt: number; enabledAt?: number }> {
+// Get all 2FA secrets (handles both legacy plaintext and encrypted formats)
+async function get2FASecrets(): Promise<Record<string, { secret: string; enabled: boolean; createdAt: number; enabledAt?: number }>> {
     try {
         const stored = localStorage.getItem(TOTP_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : {};
+        if (!stored) return {};
+        try {
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed === 'object') return parsed;
+        } catch {}
+        try {
+            const decrypted = await decryptData(stored);
+            if (decrypted !== stored) {
+                localStorage.setItem(TOTP_STORAGE_KEY, decrypted);
+                return JSON.parse(decrypted);
+            }
+        } catch {}
+        return {};
     } catch {
         return {};
     }

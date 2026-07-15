@@ -1,5 +1,6 @@
 const ACTUAL_API_URL = 'https://sunny-zebra-57.hasura.app';
-const ADMIN_SECRET = 'sC2GxIp9LT3Uis53DfnNQW1gpm47kOhb6iO32mSFYgm79h8ct4H8j3ZIZfyoheei';
+const ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
+if (!ADMIN_SECRET) throw new Error('HASURA_ADMIN_SECRET environment variable is required');
 
 async function runRequest(payload, endpoint = 'v2/query') {
     try {
@@ -57,3 +58,4 @@ async function cleanup() {
 }
 
 cleanup();
+

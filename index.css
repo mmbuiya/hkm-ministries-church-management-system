@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Dynamic theme variables - controlled by ThemeContext */
 :root {
   --church-green: #10b981;

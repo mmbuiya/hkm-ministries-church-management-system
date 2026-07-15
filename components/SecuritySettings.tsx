@@ -167,7 +167,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser }) => {
                         setShow2FASetup(false);
                         // Refresh 2FA status
                         if (currentUser) {
-                            setIs2FAActive(is2FAEnabled(currentUser.id));
+                setIs2FAActive(await is2FAEnabled(currentUser.id));
                         }
                     }}
                 />

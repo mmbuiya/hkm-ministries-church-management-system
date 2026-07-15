@@ -1,29 +1,28 @@
-import { app, BrowserWindow, Menu, session, dialog } from 'electron';
+import { app, BrowserWindow, Menu, session, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const { encryptString, decryptString } = require('./security.cjs');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // Note: squirrel-startup check is skipped for ES modules - handle separately if needed
 let mainWindow;
 
-// Disable CSP for Electron to allow Clerk authentication
-const CSP = "";
+const CSP = "default-src 'self'; script-src 'self' https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: https://*.clerk.accounts.dev; connect-src 'self' https://*.clerk.accounts.dev https://*.hasura.app wss://*.hasura.app https://clerk.com https://*.clerk.com; frame-src 'self' https://*.clerk.accounts.dev https://challenges.clerk.com; form-action 'self'; base-uri 'self'; frame-ancestors 'none'";
 
 const createWindow = () => {
-  // Set CSP headers for all requests - disabled for Clerk compatibility
-  if (CSP) {
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [CSP]
-        }
-      });
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [CSP]
+      }
     });
-  }
+  });
 
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -147,6 +146,14 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+  ipcMain.handle('secure-encrypt', (_event, data) => {
+    return encryptString(data);
+  });
+
+  ipcMain.handle('secure-decrypt', (_event, data) => {
+    return decryptString(data);
+  });
+
   createWindow();
 
   app.on('activate', () => {

@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { AiIcon, PaperAirplaneIcon } from './Icons';
 import { TextAreaField } from './FormControls';
-import { storage } from '../services/storage';
+import { generateWithGemini } from '../services/geminiClient';
 
 const suggestions = [
     "A reminder for our weekly prayer meeting this Wednesday.",
@@ -29,21 +28,12 @@ const AiFeaturesPage: React.FC = () => {
         setError('');
 
         try {
-            const apiKey = await storage.getApiKey();
-            if (!apiKey) {
-                throw new Error("Missing API Key. Please configure the AI API Key in Settings.");
-            }
-
-            const ai = new GoogleGenAI({ apiKey });
             const fullPrompt = `You are a helpful assistant for HKM MINISTRIES. Your task is to write a warm, clear, and concise church announcement suitable for a bulletin or to be read aloud. The announcement should be based on the following topic: "${prompt}". Keep it under 150 words.`;
             
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: fullPrompt,
-            });
+            const text = await generateWithGemini(fullPrompt, { model: 'gemini-2.5-flash' });
 
-            if (response.text) {
-                setGeneratedContent(response.text.trim());
+            if (text) {
+                setGeneratedContent(text);
             } else {
                 setError("Sorry, the AI couldn't generate a message at this time. Please try a different prompt.");
             }

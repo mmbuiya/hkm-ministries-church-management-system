@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { ArrowLeftIcon, PaperAirplaneIcon, AiIcon, CheckCircleIcon, XCircleIcon } from './Icons';
 import { Member } from './memberData';
 import { TextAreaField } from './FormControls';
 import type { AttendanceRecord } from './attendanceData';
-import { storage } from '../services/storage';
+import { generateWithGemini } from '../services/geminiClient';
 import { smsService } from '../services/smsService';
 
 interface ServiceDetailsPageProps {
@@ -30,26 +29,14 @@ const ServiceDetailsPage: React.FC<ServiceDetailsPageProps> = ({ serviceName, se
         setIsGenerating(true);
         setMessage('');
         try {
-            const apiKey = await storage.getApiKey();
-            if (!apiKey) {
-                alert("Please configure the AI API Key in Settings first.");
-                setIsGenerating(false);
-                return;
-            }
-
-            const ai = new GoogleGenAI({ apiKey });
-            
             const prompt = status === 'Present'
                 ? "You are a friendly church pastor for HKM MINISTRIES. Write a short, warm, and congratulatory SMS message (under 160 characters) to thank a member for attending today's service. Start the message with 'Hi [Name],'. Mention how their presence is a blessing to the church family."
                 : "You are a caring church pastor for HKM MINISTRIES. Write a short, encouraging SMS message (under 160 characters) to a member who was absent from today's service. Start the message with 'Hi [Name],'. Let them know they were missed and that the church is praying for them. Avoid sounding guilt-tripping.";
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
+            const text = await generateWithGemini(prompt, { model: 'gemini-2.5-flash' });
 
-            if (response.text) {
-                setMessage(response.text.replace(/"/g, '')); // Remove quotes from response
+            if (text) {
+                setMessage(text.replace(/"/g, ''));
             } else {
                 setMessage("Sorry, I couldn't generate a message at this time.");
             }

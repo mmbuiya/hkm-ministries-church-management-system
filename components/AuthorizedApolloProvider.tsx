@@ -1,48 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink, split } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { useAuth } from '@clerk/clerk-react';
 
 const httpUri = import.meta.env.VITE_HASURA_GRAPHQL_URL || 'https://sunny-zebra-57.hasura.app/v1/graphql';
 const wsUri = httpUri.replace('http://', 'ws://').replace('https://', 'wss://');
 
-const adminSecret = import.meta.env.VITE_HASURA_ADMIN_SECRET || 'sC2GxIp9LT3Uis53DfnNQW1gpm47kOhb6iO32mSFYgm79h8ct4H8j3ZIZfyoheei';
+let _getToken: (() => Promise<string | null>) | null = null;
 
-const httpLink = createHttpLink({
-    uri: httpUri,
-});
+export const setTokenProvider = (getTokenFn: () => Promise<string | null>) => {
+  _getToken = getTokenFn;
+};
 
-const authLink = setContext((_, { headers }) => {
-    return {
-        headers: {
-            ...headers,
-            'x-hasura-admin-secret': adminSecret
-        }
+const httpLink = createHttpLink({ uri: httpUri });
+
+const authLink = setContext(async (_, { headers }) => {
+  const token = _getToken ? await _getToken() : null;
+  return {
+    headers: {
+      ...headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
+  };
 });
 
 const wsLink = new GraphQLWsLink(createClient({
   url: wsUri,
-  lazy: true, // Don't connect until first subscription is used
-  retryAttempts: 5, // Retry 5 times on failure (handles Hasura cold start)
-  connectionParams: {
-    headers: {
-      'x-hasura-admin-secret': adminSecret
-    }
+  lazy: true,
+  retryAttempts: 5,
+  connectionParams: async () => {
+    const token = _getToken ? await _getToken() : null;
+    return {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    };
   },
-  on: {
-    error: (err) => {
-      console.error('[GraphQL WS] Connection error:', err);
-    },
-    connected: () => {
-      console.log('[GraphQL WS] Connected to Hasura');
-    },
-    closed: () => {
-      console.warn('[GraphQL WS] Connection closed');
-    }
-  }
 }));
 
 const splitLink = split(
@@ -58,12 +52,20 @@ const splitLink = split(
 );
 
 export const client = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache()
+  link: splitLink,
+  cache: new InMemoryCache()
 });
 
-export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setTokenProvider(() => getToken({ template: 'hasura' }));
+  }, [getToken]);
+
+  return (
     <ApolloProvider client={client}>
-        {children}
+      {children}
     </ApolloProvider>
-);
+  );
+};

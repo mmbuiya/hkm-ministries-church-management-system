@@ -80,13 +80,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Debug Info - Remove in production */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs">
-                        <p className="font-medium text-blue-800 mb-1">Expected Credentials (for testing):</p>
-                        <p className="text-blue-700">Email: {config.email}</p>
-                        <p className="text-blue-700">Access Code: {config.accessCode}</p>
-                        <p className="text-blue-700">Secret Key: {config.secretKey}</p>
-                    </div>
                     {/* Email */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">

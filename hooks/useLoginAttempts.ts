@@ -2,6 +2,20 @@ import { useState, useMemo } from 'react';
 import { useSubscription, useMutation, useQuery } from '@apollo/client';
 import { GET_LOGIN_ATTEMPTS_QUERY, GET_LOGIN_ATTEMPTS_SUBSCRIPTION, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
 
+let cachedIp: string | null = null;
+
+async function detectIp(): Promise<string> {
+    if (cachedIp) return cachedIp;
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        cachedIp = data.ip;
+        return cachedIp || 'Unknown';
+    } catch {
+        return 'Unknown';
+    }
+}
+
 export function useLoginAttempts() {
     const [daysBack, setDaysBack] = useState(30);
 
@@ -27,6 +41,7 @@ export function useLoginAttempts() {
 
     const logLoginAttempt = async (attempt: any) => {
         try {
+            const ip = attempt.ipAddress || await detectIp();
             const id = Date.now().toString();
             await addAttemptMutation({
                 variables: {
@@ -36,7 +51,7 @@ export function useLoginAttempts() {
                         timestamp: attempt.timestamp || new Date().toISOString(),
                         success: attempt.success,
                         failure_reason: attempt.failureReason,
-                        ip_address: attempt.ipAddress || 'Unknown',
+                        ip_address: ip,
                         user_agent: attempt.userAgent || navigator.userAgent,
                         location: attempt.location || 'Unknown'
                     }

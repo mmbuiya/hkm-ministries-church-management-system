@@ -47,7 +47,7 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
                 location: 'Test Location'
             });
             
-            console.log('Test session and login attempt created');
+            
         } catch (error) {
             console.error('Failed to create test session:', error);
         }

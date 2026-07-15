@@ -1,13 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { ArrowLeftIcon, PaperAirplaneIcon, UsersIcon, UserIcon, CollectionIcon, AiIcon } from './Icons';
 import { Member } from './memberData';
 import { Group } from './GroupsManagementPage';
 import { SmsRecord } from './smsData';
 import { TextAreaField, SelectField } from './FormControls';
 import AiGenerateSmsModal from './AiGenerateSmsModal';
-import { storage } from '../services/storage';
+import { generateWithGemini } from '../services/geminiClient';
 import { smsService } from '../services/smsService';
 
 interface ComposeSmsPageProps {
@@ -91,16 +90,12 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
                 return;
             }
 
-            const ai = new GoogleGenAI({ apiKey });
             const fullPrompt = `You are a friendly church pastor for HKM MINISTRIES. Write a short, concise SMS message (under 160 characters) based on the following instruction: "${prompt}". Make it sound warm and personal. Do not include placeholders like [Name] unless specified in the user's instruction.`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: fullPrompt,
-            });
+            const text = await generateWithGemini(fullPrompt, { model: 'gemini-2.5-flash' });
 
-            if (response.text) {
-                setMessage(response.text.replace(/"/g, ''));
+            if (text) {
+                setMessage(text.replace(/"/g, ''));
                 setIsAiModalOpen(false);
             } else {
                 alert("The AI could not generate a message. Please try again.");

@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { Visitor } from './visitorData';
 import { AiIcon, XCircleIcon, PaperAirplaneIcon, UserIcon, PhoneIcon } from './Icons';
 import { TextAreaField } from './FormControls';
-import { storage } from '../services/storage';
+import { generateWithGemini } from '../services/geminiClient';
 
 interface SendVisitorSmsModalProps {
     isOpen: boolean;
@@ -28,23 +27,12 @@ const SendVisitorSmsModal: React.FC<SendVisitorSmsModalProps> = ({ isOpen, onClo
     const handleGenerateMessage = async (prompt: string) => {
         setIsGenerating(true);
         try {
-            const apiKey = await storage.getApiKey();
-            if (!apiKey) {
-                alert("Please configure the AI API Key in Settings first.");
-                setIsGenerating(false);
-                return;
-            }
-
-            const ai = new GoogleGenAI({ apiKey });
             const fullPrompt = `You are a friendly church pastor for HKM MINISTRIES. Write a short, concise SMS message (under 160 characters) for a visitor named ${visitor.name}, based on this instruction: "${prompt}". Make it sound warm and personal.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: fullPrompt,
-            });
 
-            if (response.text) {
-                setMessage(response.text.replace(/"/g, ''));
+            const text = await generateWithGemini(fullPrompt, { model: 'gemini-2.5-flash' });
+
+            if (text) {
+                setMessage(text.replace(/"/g, ''));
             } else {
                 alert("The AI could not generate a message. Please try again.");
             }

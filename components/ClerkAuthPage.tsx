@@ -15,10 +15,8 @@ const ClerkAuthPage: React.FC = () => {
                         alt="HKM MINISTRIES Logo" 
                         className="h-16 w-auto drop-shadow-2xl border border-white/20 rounded-lg p-2 bg-white/10" 
                         onError={(e) => {
-                            console.log('Mobile logo failed to load');
                             e.currentTarget.style.display = 'none';
                         }}
-                        onLoad={() => console.log('Mobile logo loaded successfully')}
                     />
                     <div className="text-center">
                         <h1 className="text-2xl font-bold text-white">HKM Ministries</h1>
@@ -39,13 +37,11 @@ const ClerkAuthPage: React.FC = () => {
                                 alt="HKM MINISTRIES Logo" 
                                 className="h-24 w-auto drop-shadow-2xl border-2 border-green-500/30 rounded-lg p-3 bg-green-500/10" 
                                 onError={(e) => {
-                                    console.log('Logo failed to load, showing fallback');
                                     const fallback = document.createElement('div');
                                     fallback.className = 'h-24 w-24 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl';
                                     fallback.textContent = 'HKM';
                                     e.currentTarget.parentNode?.replaceChild(fallback, e.currentTarget);
                                 }}
-                                onLoad={() => console.log('Desktop logo loaded successfully')}
                             />
                         </div>
                         <div className="text-center lg:text-left">
