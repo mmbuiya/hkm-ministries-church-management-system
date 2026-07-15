@@ -83,7 +83,7 @@
     "idb": "^8.0.3",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.2.7",
     "recharts": "^2.10.3"
   },
   "devDependencies": {
@@ -92,7 +92,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.64",
-    "@types/react-dom": "^18.2.21",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",
     "@vitejs/plugin-react": "^4.2.1",
