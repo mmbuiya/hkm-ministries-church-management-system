@@ -10,6 +10,7 @@ interface AddTransactionPageProps {
   onSave: (transaction: Omit<Transaction, 'id'> | Transaction) => void;
   transactionToEdit: Transaction | null;
   members: Member[];
+  transactions?: Transaction[];
 }
 
 const incomeCategories: IncomeCategory[] = [
@@ -47,7 +48,13 @@ const memberRequiredCategories: IncomeCategory[] = [
   'Registration Fee',
 ];
 
-const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave, transactionToEdit, members }) => {
+const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
+  onBack,
+  onSave,
+  transactionToEdit,
+  members,
+  transactions,
+}) => {
   const isEditMode = !!transactionToEdit;
 
   const [type, setType] = useState<'Income' | 'Expense'>('Income');
@@ -104,6 +111,31 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
       setNonMemberName('');
     }
   }, [category]);
+
+  // Auto-clear category if fully registered member is selected
+  useEffect(() => {
+    if (memberId && category === 'Registration Fee') {
+      const selectedMember = members.find((m) => m.id === memberId);
+      if (selectedMember && (selectedMember.status === 'Active' || selectedMember.status === 'Transferred')) {
+        setCategory('Tithe');
+      }
+    }
+  }, [memberId, category, members]);
+
+  const disabledIncomeCategories: IncomeCategory[] = [];
+  const selectedMemberObj = members.find((m) => m.id === memberId);
+  if (selectedMemberObj && (selectedMemberObj.status === 'Active' || selectedMemberObj.status === 'Transferred')) {
+    disabledIncomeCategories.push('Registration Fee');
+  }
+
+  const isPendingFee = selectedMemberObj?.status === 'Pending Fee';
+  const pastRegistrationFees =
+    isPendingFee && transactions
+      ? transactions
+          .filter((t) => t.memberId === memberId && t.category === 'Registration Fee')
+          .reduce((sum, t) => sum + t.amount, 0)
+      : 0;
+  const registrationBalance = Math.max(0, 500 - pastRegistrationFees);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,6 +273,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
               name="category"
               label={`${type} Category`}
               options={type === 'Income' ? incomeCategories : expenseCategories}
+              disabledOptions={type === 'Income' ? disabledIncomeCategories : []}
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
               required
@@ -291,31 +324,39 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({ onBack, onSave,
                         </div>
                       </div>
                     ) : (
-                      <SelectField
-                        name="member"
-                        label="Member"
-                        options={memberOptions}
-                        value={(() => {
-                          if (!memberId) return '';
-                          const member = validMembers.find((m) => m.id === memberId);
-                          if (!member) return '';
-                          if (memberCounts[member.name] > 1) return `${member.name} (${member.id})`;
-                          return member.name;
-                        })()}
-                        onChange={(e) => {
-                          let selectedMember;
-                          if (e.target.value.includes(' (') && e.target.value.endsWith(')')) {
-                            const idMatch = e.target.value.match(/\(([^)]+)\)$/);
-                            const id = idMatch ? idMatch[1] : '';
-                            selectedMember = validMembers.find((m) => m.id === id);
-                          } else {
-                            selectedMember = validMembers.find((m) => m.name === e.target.value);
-                          }
-                          const newMemberId = selectedMember ? selectedMember.id : '';
-                          setMemberId(newMemberId);
-                        }}
-                        required={memberRequiredCategories.includes(category as IncomeCategory)}
-                      />
+                      <>
+                        <SelectField
+                          name="member"
+                          label="Member"
+                          options={memberOptions}
+                          value={(() => {
+                            if (!memberId) return '';
+                            const member = validMembers.find((m) => m.id === memberId);
+                            if (!member) return '';
+                            if (memberCounts[member.name] > 1) return `${member.name} (${member.id})`;
+                            return member.name;
+                          })()}
+                          onChange={(e) => {
+                            let selectedMember;
+                            if (e.target.value.includes(' (') && e.target.value.endsWith(')')) {
+                              const idMatch = e.target.value.match(/\(([^)]+)\)$/);
+                              const id = idMatch ? idMatch[1] : '';
+                              selectedMember = validMembers.find((m) => m.id === id);
+                            } else {
+                              selectedMember = validMembers.find((m) => m.name === e.target.value);
+                            }
+                            const newMemberId = selectedMember ? selectedMember.id : '';
+                            setMemberId(newMemberId);
+                          }}
+                          required={memberRequiredCategories.includes(category as IncomeCategory)}
+                        />
+                        {isPendingFee && category === 'Registration Fee' && (
+                          <div className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded">
+                            <strong>Pending Registration:</strong> This member has paid KSH {pastRegistrationFees}.
+                            Balance remaining: KSH {registrationBalance}.
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}

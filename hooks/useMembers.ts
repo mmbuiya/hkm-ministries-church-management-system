@@ -118,7 +118,9 @@ export function useMembers() {
       });
 
       if (isDuplicate) {
-        throw new Error('A member with this name and phone number, or email already exists.');
+        throw new Error(
+          'A member with this name, phone, or email already exists. If they are pending registration, please go to Finances to pay their remaining balance.',
+        );
       }
 
       const [firstName, ...lastNameParts] = (member.name || '').split(' ');
@@ -175,7 +177,7 @@ export function useMembers() {
     });
 
     if (isDuplicate) {
-      throw new Error('A member with this name and phone number, or email already exists.');
+      throw new Error('A member with this name, phone, or email already exists.');
     }
 
     const SupabaseUpdates: any = {};

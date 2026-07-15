@@ -73,3 +73,23 @@ export const DELETE_TRANSACTION_MUTATION = gql`
     }
   }
 `;
+
+export const ADD_NOTIFICATION_LOG_MUTATION = gql`
+  mutation AddNotificationLog($object: notification_logsInsertInput!) {
+    insertIntonotification_logsCollection(objects: [$object]) {
+      records {
+        id
+      }
+    }
+  }
+`;
+
+export const ADD_AUDIT_LOG_MUTATION = gql`
+  mutation AddAuditLog($object: audit_logsInsertInput!) {
+    insertIntoaudit_logsCollection(objects: [$object]) {
+      records {
+        id
+      }
+    }
+  }
+`;

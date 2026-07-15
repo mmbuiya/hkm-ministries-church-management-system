@@ -6,6 +6,8 @@ import {
   ADD_TRANSACTION_MUTATION,
   UPDATE_TRANSACTION_MUTATION,
   DELETE_TRANSACTION_MUTATION,
+  ADD_AUDIT_LOG_MUTATION,
+  ADD_NOTIFICATION_LOG_MUTATION,
 } from '../services/graphql/transactions';
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
 import { sendPinNotification } from '../services/pinNotificationService';
@@ -76,6 +78,8 @@ export function useTransactions() {
   const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);
   const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
   const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
+  const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
+  const [addNotificationLogMutation] = useMutation(ADD_NOTIFICATION_LOG_MUTATION);
 
   const transactions: Transaction[] = useMemo(() => {
     console.log('[useTransactions] Query data:', data, 'Error:', error);
@@ -129,50 +133,127 @@ export function useTransactions() {
 
       // --- Payment-Gated Activation Logic ---
       if (transaction.category === 'Registration Fee' && transaction.memberId) {
-        console.log('[useTransactions] Registration Fee detected. Generating PIN and activating member portal...');
+        const previousRegistrationFees = transactions
+          .filter((t) => t.memberId === transaction.memberId && t.category === 'Registration Fee')
+          .reduce((sum, t) => sum + t.amount, 0);
 
-        // Generate a random 6-digit PIN
-        const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
+        const totalRegistrationPaid = previousRegistrationFees + transaction.amount;
 
-        // Hash it before storing to DB
-        const hashedPin = await hashPin(transaction.memberId, generatedPin);
+        if (totalRegistrationPaid >= 500) {
+          console.log(
+            '[useTransactions] Registration threshold met (500). Generating PIN and activating member portal...',
+          );
 
-        await updateMemberMutation({
-          variables: {
-            id: transaction.memberId,
-            updates: {
-              status: 'Active',
-              pin: hashedPin,
-              is_portal_active: true,
+          // Generate a random 6-digit PIN
+          const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
+
+          // Hash it before storing to DB
+          const hashedPin = await hashPin(transaction.memberId, generatedPin);
+
+          await updateMemberMutation({
+            variables: {
+              id: transaction.memberId,
+              updates: {
+                status: 'Active',
+                pin: hashedPin,
+                is_portal_active: true,
+              },
             },
-          },
-        });
-        console.log('[useTransactions] Member activated with new PIN.');
-
-        // Fetch member details to send notification
-        try {
-          const memberResult = await apolloClient.query({
-            query: GET_MEMBERS_QUERY,
-            fetchPolicy: 'network-only',
           });
+          console.log('[useTransactions] Member activated with new PIN.');
 
-          const memberNode = memberResult.data?.membersCollection?.edges?.find(
-            (e: any) => e.node.id === transaction.memberId,
-          )?.node;
-
-          if (memberNode) {
-            await sendPinNotification({
-              memberId: memberNode.id,
-              memberName: `${memberNode.first_name} ${memberNode.last_name}`.trim(),
-              phone: memberNode.phone,
-              email: memberNode.email,
-              pin: generatedPin,
+          try {
+            await addAuditLogMutation({
+              variables: {
+                object: {
+                  action: 'Member Activated',
+                  entity_type: 'member',
+                  entity_id: transaction.memberId,
+                  details: { reason: 'Registration threshold met', amount: totalRegistrationPaid },
+                },
+              },
             });
-          } else {
-            console.warn('[useTransactions] Could not find member details for PIN notification.');
+          } catch (auditErr) {
+            console.error('Failed to write audit log', auditErr);
           }
-        } catch (notifErr) {
-          console.error('[useTransactions] Error sending PIN notification:', notifErr);
+
+          // Fetch member details to send notification
+          try {
+            const memberResult = await apolloClient.query({
+              query: GET_MEMBERS_QUERY,
+              fetchPolicy: 'network-only',
+            });
+
+            const memberNode = memberResult.data?.membersCollection?.edges?.find(
+              (e: any) => e.node.id === transaction.memberId,
+            )?.node;
+
+            if (memberNode) {
+              const notifResult = await sendPinNotification({
+                memberId: memberNode.id,
+                memberName: `${memberNode.first_name} ${memberNode.last_name}`.trim(),
+                phone: memberNode.phone,
+                email: memberNode.email,
+                pin: generatedPin,
+              });
+
+              // Log SMS result
+              try {
+                await addNotificationLogMutation({
+                  variables: {
+                    object: {
+                      member_id: memberNode.id,
+                      channel: 'sms',
+                      recipient: memberNode.phone || 'None',
+                      status: notifResult.sms.sent ? 'success' : 'failed',
+                      error_message: notifResult.sms.error || null,
+                    },
+                  },
+                });
+              } catch (err) {
+                console.error('Failed to log SMS notif', err);
+              }
+
+              // Log Email result
+              try {
+                await addNotificationLogMutation({
+                  variables: {
+                    object: {
+                      member_id: memberNode.id,
+                      channel: 'email',
+                      recipient: memberNode.email || 'None',
+                      status: notifResult.email.sent ? 'success' : 'failed',
+                      error_message: notifResult.email.error || null,
+                    },
+                  },
+                });
+              } catch (err) {
+                console.error('Failed to log Email notif', err);
+              }
+            } else {
+              console.warn('[useTransactions] Could not find member details for PIN notification.');
+            }
+          } catch (notifErr) {
+            console.error('[useTransactions] Error sending PIN notification:', notifErr);
+          }
+        } else {
+          console.log(
+            `[useTransactions] Partial Registration Fee. Total paid: ${totalRegistrationPaid}. Pending 500 threshold.`,
+          );
+          try {
+            await addAuditLogMutation({
+              variables: {
+                object: {
+                  action: 'Partial Fee Paid',
+                  entity_type: 'member',
+                  entity_id: transaction.memberId,
+                  details: { amount_paid: transaction.amount, total_paid: totalRegistrationPaid },
+                },
+              },
+            });
+          } catch (auditErr) {
+            console.error('Failed to write audit log', auditErr);
+          }
         }
       }
 

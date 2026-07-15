@@ -72,6 +72,31 @@ function loadNotificationSettings(): NotificationSettings {
   };
 }
 
+// ─── Retry Helper ────────────────────────────────────────────────────────────
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 2000,
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      attempt++;
+      console.warn(`[PinNotification] Attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+      // Exponential backoff: 2s, 4s, 8s
+      const delay = baseDelayMs * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Retry loop failed unexpectedly');
+}
+
 // ─── SMS via Arkesel ─────────────────────────────────────────────────────────
 
 async function sendSmsViaArkesel(
@@ -91,17 +116,24 @@ async function sendSmsViaArkesel(
     `Login at: ${settings.portalUrl} — Keep your PIN private.`;
 
   try {
-    const response = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
-      method: 'POST',
-      headers: {
-        'api-key': settings.arkeselApiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sender: settings.arkeselSenderId,
-        message,
-        recipients: [payload.phone.replace(/\s+/g, '')],
-      }),
+    const response = await withRetry(async () => {
+      const res = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
+        method: 'POST',
+        headers: {
+          'api-key': settings.arkeselApiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: settings.arkeselSenderId,
+          message,
+          recipients: [payload.phone!.replace(/\s+/g, '')],
+        }),
+      });
+      if (!res.ok && res.status >= 500) {
+        // Trigger retry on 5xx errors
+        throw new Error(`Arkesel API returned ${res.status}`);
+      }
+      return res;
     });
 
     const result = await response.json();
@@ -222,18 +254,25 @@ async function sendEmailViaResend(
   const html = buildPinEmailHtml(payload.memberName, payload.memberId, payload.pin, settings.portalUrl);
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${settings.resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `HKM Ministries <${settings.resendFromEmail}>`,
-        to: [payload.email],
-        subject: 'Your HKM Member Portal PIN — Keep This Private',
-        html,
-      }),
+    const response = await withRetry(async () => {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${settings.resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `HKM Ministries <${settings.resendFromEmail}>`,
+          to: [payload.email],
+          subject: 'Your HKM Member Portal PIN — Keep This Private',
+          html,
+        }),
+      });
+      if (!res.ok && res.status >= 500) {
+        // Trigger retry on 5xx errors
+        throw new Error(`Resend API returned ${res.status}`);
+      }
+      return res;
     });
 
     const result = await response.json();

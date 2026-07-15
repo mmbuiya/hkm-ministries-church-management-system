@@ -775,6 +775,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
             onSave={handleSaveOrUpdateTransaction}
             transactionToEdit={transactionToEdit}
             members={members}
+            transactions={transactions}
           />
         );
       case 'SMS Broadcast':
