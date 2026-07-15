@@ -79,12 +79,14 @@ export function useTransactions() {
 
   const transactions: Transaction[] = useMemo(() => {
     console.log('[useTransactions] Query data:', data, 'Error:', error);
-    if (!data?.transactions) {
+    if (!data?.transactionsCollection?.edges) {
       console.warn('[useTransactions] No transactions in data', { data, loading, error });
       return [];
     }
-    console.log('[useTransactions] Transactions count:', data.transactions.length);
-    return data.transactions.map(transformTransaction);
+    console.log('[useTransactions] Transactions count:', data.transactionsCollection.edges.length);
+    return data.transactionsCollection.edges.map((edge: { node: SupabaseTransaction }) =>
+      transformTransaction(edge.node),
+    );
   }, [data, error, loading]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'> | Transaction) => {
@@ -103,7 +105,7 @@ export function useTransactions() {
             date: transaction.date,
             category: transaction.category,
             type: transaction.type,
-            amount: transaction.amount,
+            amount: transaction.amount.toString(), // BigFloat requires string
             description: transaction.description || '',
             member_id: transaction.memberId || null,
             non_member_name: transaction.nonMemberName || null,
@@ -119,8 +121,9 @@ export function useTransactions() {
         throw new Error(`Database error: ${errorMessages}`);
       }
 
-      if (!result.data?.insert_transactions_one) {
-        console.error('[useTransactions] No insert_transactions_one in result', { data: result.data });
+      const insertedRecords = result.data?.insertIntotransactionsCollection?.records;
+      if (!insertedRecords || insertedRecords.length === 0) {
+        console.error('[useTransactions] No records returned from insert', { data: result.data });
         throw new Error('Transaction could not be saved. The database rejected the operation.');
       }
 
@@ -192,7 +195,7 @@ export function useTransactions() {
       if (updates.date !== undefined) SupabaseUpdates.date = updates.date;
       if (updates.category !== undefined) SupabaseUpdates.category = updates.category;
       if (updates.type !== undefined) SupabaseUpdates.type = updates.type;
-      if (updates.amount !== undefined) SupabaseUpdates.amount = updates.amount;
+      if (updates.amount !== undefined) SupabaseUpdates.amount = updates.amount.toString(); // BigFloat requires string
       if (updates.description !== undefined) SupabaseUpdates.description = updates.description;
       if (updates.memberId !== undefined) SupabaseUpdates.member_id = updates.memberId;
       if (updates.nonMemberName !== undefined) SupabaseUpdates.non_member_name = updates.nonMemberName;
@@ -209,7 +212,8 @@ export function useTransactions() {
         throw new Error(`Database error: ${errorMessages}`);
       }
 
-      if (!result.data?.update_transactions_by_pk) {
+      const updatedRecords = result.data?.updatetransactionsCollection?.records;
+      if (!updatedRecords || updatedRecords.length === 0) {
         throw new Error('Transaction could not be updated. The database rejected the operation.');
       }
 
