@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const { user: authUser, logout: authLogout } = useAuth();
   const { isLoaded, isSignedIn } = useUser();
 
-  // Hasura hooks
+  // Supabase hooks
   const { addSession } = useUserSessions();
   const { logLoginAttempt } = useLoginAttempts();
 

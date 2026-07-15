@@ -13,7 +13,7 @@ The Content Security Policy (CSP) in the Electron main process was too restricti
    - Added `https://*.clerk.com` to allowed script and image sources
    - Added `https://esm.sh` for ES module imports
    - Added `child-src` directive for iframe support
-   - Added Hasura endpoints to `connect-src` for GraphQL queries
+   - Added Supabase endpoints to `connect-src` for GraphQL queries
 
 2. **Rebuilt the app** with the updated CSP configuration
 
@@ -87,7 +87,7 @@ Once signed in, test these features:
 
 ### Data Not Syncing
 1. Verify internet connection
-2. Check Hasura endpoint is accessible
+2. Check Supabase endpoint is accessible: https://tkzxzriivbbzdvjgrdhk.supabase.co
 3. Look at the offline indicator status
 4. Check DevTools console for sync errors
 

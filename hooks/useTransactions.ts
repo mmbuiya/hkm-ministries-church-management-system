@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client';
 import { Transaction } from '../components/financeData';
 import {
   GET_TRANSACTIONS_QUERY,
@@ -7,7 +7,9 @@ import {
   UPDATE_TRANSACTION_MUTATION,
   DELETE_TRANSACTION_MUTATION,
 } from '../services/graphql/transactions';
-import { UPDATE_MEMBER_MUTATION } from '../services/graphql/members';
+import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
+import { sendPinNotification } from '../services/pinNotificationService';
+import { hashPin } from '../utils/hashPin';
 
 interface SupabaseMember {
   id: string;
@@ -69,6 +71,7 @@ export function useTransactions() {
     pollInterval: 5000,
     errorPolicy: 'all',
   });
+  const apolloClient = useApolloClient();
   const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
   const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);
   const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
@@ -128,18 +131,46 @@ export function useTransactions() {
         // Generate a random 6-digit PIN
         const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // Hash it before storing to DB
+        const hashedPin = await hashPin(transaction.memberId, generatedPin);
+
         await updateMemberMutation({
           variables: {
             id: transaction.memberId,
             updates: {
               status: 'Active',
-              pin: generatedPin,
+              pin: hashedPin,
               is_portal_active: true,
             },
           },
         });
         console.log('[useTransactions] Member activated with new PIN.');
-        // Note: SMS notification should be triggered here using smsService.
+
+        // Fetch member details to send notification
+        try {
+          const memberResult = await apolloClient.query({
+            query: GET_MEMBERS_QUERY,
+            fetchPolicy: 'network-only',
+          });
+
+          const memberNode = memberResult.data?.membersCollection?.edges?.find(
+            (e: any) => e.node.id === transaction.memberId,
+          )?.node;
+
+          if (memberNode) {
+            await sendPinNotification({
+              memberId: memberNode.id,
+              memberName: `${memberNode.first_name} ${memberNode.last_name}`.trim(),
+              phone: memberNode.phone,
+              email: memberNode.email,
+              pin: generatedPin,
+            });
+          } else {
+            console.warn('[useTransactions] Could not find member details for PIN notification.');
+          }
+        } catch (notifErr) {
+          console.error('[useTransactions] Error sending PIN notification:', notifErr);
+        }
       }
 
       console.log('[useTransactions] Mutation succeeded');

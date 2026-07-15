@@ -12,7 +12,7 @@ const { encryptString, decryptString } = require('./security.cjs');
 // Note: squirrel-startup check is skipped for ES modules - handle separately if needed
 let mainWindow;
 
-const CSP = "default-src 'self'; script-src 'self' https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: https://*.clerk.accounts.dev; connect-src 'self' https://*.clerk.accounts.dev https://*.hasura.app wss://*.hasura.app https://clerk.com https://*.clerk.com; frame-src 'self' https://*.clerk.accounts.dev https://challenges.clerk.com; form-action 'self'; base-uri 'self'; frame-ancestors 'none'";
+const CSP = "default-src 'self'; script-src 'self' https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: https://*.clerk.accounts.dev; connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co wss://*.supabase.co https://clerk.com https://*.clerk.com; frame-src 'self' https://*.clerk.accounts.dev https://challenges.clerk.com; form-action 'self'; base-uri 'self'; frame-ancestors 'none'";
 
 const createWindow = () => {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
