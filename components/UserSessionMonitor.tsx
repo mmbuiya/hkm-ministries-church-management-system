@@ -9,6 +9,17 @@ import {
 import { useUserSessions } from '../hooks/useUserSessions';
 import { useLoginAttempts } from '../hooks/useLoginAttempts';
 
+interface LoginAttempt {
+    id: string;
+    email: string;
+    success: boolean;
+    timestamp: string;
+    failureReason?: string | null;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+    location?: string | null;
+}
+
 interface UserSessionMonitorProps {
     currentUser: User;
 }
@@ -69,7 +80,7 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
     });
 
     // Filter login attempts
-    const filteredAttempts = attempts.filter(attempt => 
+    const filteredAttempts = attempts.filter((attempt: LoginAttempt) => 
         attempt.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -78,9 +89,9 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
         totalSessions: sessions.length,
         activeSessions: sessions.filter(s => s.isActive).length,
         totalAttempts: attempts.length,
-        failedAttempts: attempts.filter(a => !a.success).length,
+        failedAttempts: attempts.filter((a: LoginAttempt) => !a.success).length,
         successRate: attempts.length > 0 
-            ? Math.round((attempts.filter(a => a.success).length / attempts.length) * 100)
+            ? Math.round((attempts.filter((a: LoginAttempt) => a.success).length / attempts.length) * 100)
             : 0
     };
 
@@ -322,7 +333,7 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {filteredAttempts.map(attempt => (
+                                {filteredAttempts.map((attempt: LoginAttempt) => (
                                     <tr key={attempt.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 font-medium text-gray-800">
                                             {attempt.email}

@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, user, onLogout, onNavigate,
       const pageInfo = pageHierarchy[currentPage];
       if (pageInfo) {
         breadcrumbs.unshift({ page: currentPage, ...pageInfo });
-        currentPage = pageInfo.parent;
+        currentPage = pageInfo.parent ?? '';
       } else {
         break;
       }

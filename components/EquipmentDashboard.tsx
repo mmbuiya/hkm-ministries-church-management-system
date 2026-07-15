@@ -122,8 +122,8 @@ const EquipmentDashboard: React.FC<EquipmentDashboardProps> = ({ setActivePage, 
                                                     'Category': item.category,
                                                     'Condition': item.condition,
                                                     'Location': item.location,
-                                                    'Purchase Date': new Date(item.purchaseDate).toLocaleDateString(),
-                                                    'Purchase Price': `KSH ${item.purchasePrice.toFixed(2)}`
+                                                    'Purchase Date': new Date(item.purchaseDate || '').toLocaleDateString(),
+                                                    'Purchase Price': `KSH ${(item.purchasePrice ?? 0).toFixed(2)}`
                                                 }}
                                                 size="sm"
                                                 variant="icon"

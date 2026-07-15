@@ -23,7 +23,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser }) => {
                 const settings = await storage.appSettings.getAll();
                 setIsFaceIdEnabled(settings.biometrics[`${currentUser.id}_face`] || false);
                 setIsFingerprintEnabled(settings.biometrics[`${currentUser.id}_fingerprint`] || false);
-                setIs2FAActive(is2FAEnabled(currentUser.id));
+                setIs2FAActive(await is2FAEnabled(currentUser.id));
             }
         };
         loadSettings();

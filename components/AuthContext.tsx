@@ -200,7 +200,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user: userProfile,
         clerkUser: clerkUser,
         loading: loading || !isLoaded,
-        isAuthenticated: isSignedIn,
+        isAuthenticated: isSignedIn ?? false,
         login,
         register,
         logout,

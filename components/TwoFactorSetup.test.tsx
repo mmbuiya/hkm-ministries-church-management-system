@@ -22,6 +22,8 @@ describe('TwoFactorSetup', () => {
     role: 'Admin' as const,
     permissionLevel: 'Editor' as const,
     passwordHash: 'hash',
+    avatar: '',
+    lastLogin: '',
   };
 
   const defaultProps = {

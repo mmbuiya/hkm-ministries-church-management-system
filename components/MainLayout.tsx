@@ -127,7 +127,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
         if (group.members !== newMemberCount || group.leader !== newLeaderEmail) {
           needsUpdate = true;
-          const updatedGroup = { ...group, members: newMemberCount, leader: newLeaderEmail };
+          const updatedGroup = { ...group, members: newMemberCount, leader: newLeaderEmail || '' };
           fbService.groups.save(updatedGroup);
           return updatedGroup;
         }
@@ -191,7 +191,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       setActivePage('Members');
     } catch (error) {
       console.error('Error in handleSaveOrUpdateMember:', error);
-      showToast(`Error saving member: ${error.message || error}`, 'error');
+      showToast(`Error saving member: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 
@@ -498,12 +498,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const handleSaveUser = (userData: Partial<User>) => { onSaveOrUpdateUser(userData); setUserToEdit(null); setActivePage('Users'); showToast("User saved.", 'success'); };
 
   // Branch Handlers (now using Hasura)
-  const handleSaveBranch = async (branchData: Branch) => {
+  const handleSaveBranch = async (branchData: Partial<Branch>) => {
     try {
       if (branchToEdit) {
         await updateBranch(branchToEdit.id, branchData);
       } else {
-        await addBranch(branchData);
+        await addBranch(branchData as Branch);
       }
       showToast(`Branch ${branchToEdit ? 'updated' : 'added'} successfully`, 'success');
       setActivePage('Branches');

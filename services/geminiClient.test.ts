@@ -36,7 +36,7 @@ describe('Gemini Client', () => {
   });
 
   it('should use direct API key when VITE_AI_API_KEY is set', async () => {
-    import.meta.env.VITE_AI_API_KEY = 'test-api-key';
+    vi.stubEnv('VITE_AI_API_KEY', 'test-api-key');
 
     const mod = await import('./geminiClient');
     const result = await mod.generateWithGemini('hello');
@@ -51,7 +51,7 @@ describe('Gemini Client', () => {
     });
     globalThis.fetch = mockFetch;
 
-    delete import.meta.env.VITE_AI_API_KEY;
+    vi.unstubAllEnvs();
 
     const mod = await import('./geminiClient');
     await expect(mod.generateWithGemini('test')).rejects.toThrow();

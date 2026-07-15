@@ -8,6 +8,7 @@ import { TextAreaField, SelectField } from './FormControls';
 import AiGenerateSmsModal from './AiGenerateSmsModal';
 import { generateWithGemini } from '../services/geminiClient';
 import { smsService } from '../services/smsService';
+import { storage } from '../services/storage';
 
 interface ComposeSmsPageProps {
     members: Member[];
