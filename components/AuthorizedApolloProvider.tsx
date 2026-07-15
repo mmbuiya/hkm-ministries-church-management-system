@@ -1,9 +1,6 @@
 import React, { useEffect } from 'react';
-import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink, split } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
-import { createClient } from 'graphql-ws';
-import { getMainDefinition } from '@apollo/client/utilities';
 import { useAuth } from '@clerk/clerk-react';
 
 // Supabase pg_graphql endpoint
@@ -11,9 +8,6 @@ import { useAuth } from '@clerk/clerk-react';
 // VITE_SUPABASE_ANON_KEY    = your supabase anon key
 const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1';
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_0TLmEt3REGZu74ljFe54ug_piL2Mj7e';
-
-// Supabase uses wss://<project-ref>.supabase.co/graphql/v1
-const wsUri = httpUri.replace('https://', 'wss://').replace('http://', 'ws://');
 
 let _getToken: (() => Promise<string | null>) | null = null;
 
@@ -34,34 +28,8 @@ const authLink = setContext(async (_, { headers }) => {
   };
 });
 
-const wsLink = new GraphQLWsLink(
-  createClient({
-    url: wsUri,
-    lazy: true,
-    retryAttempts: 5,
-    connectionParams: async () => {
-      const token = _getToken ? await _getToken() : null;
-      return {
-        headers: {
-          apikey: anonKey,
-          Authorization: token ? `Bearer ${token}` : `Bearer ${anonKey}`,
-        },
-      };
-    },
-  }),
-);
-
-const splitLink = split(
-  ({ query }) => {
-    const definition = getMainDefinition(query);
-    return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
-  },
-  wsLink,
-  authLink.concat(httpLink),
-);
-
 export const client = new ApolloClient({
-  link: splitLink,
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });
 

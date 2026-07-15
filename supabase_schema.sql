@@ -40,8 +40,8 @@ create table if not exists users (
 );
 alter table users enable row level security;
 create policy "Users can read all users" on users for select using (true);
-create policy "Users can upsert own record" on users for insert with check (auth.uid()::text = id);
-create policy "Users can update own record" on users for update using (auth.uid()::text = id);
+create policy "Users can upsert own record" on users for insert with check ((current_setting('request.jwt.claims', true)::json->>'sub')::text = id);
+create policy "Users can update own record" on users for update using ((current_setting('request.jwt.claims', true)::json->>'sub')::text = id);
 
 -- ─── MEMBERS ────────────────────────────────────────────────
 create table if not exists members (
