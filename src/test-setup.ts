@@ -1,20 +1,30 @@
 import '@testing-library/jest-dom';
 
-// Mock Web Crypto API for Node.js
-if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
-  const crypto = await import('node:crypto');
-  globalThis.crypto = crypto.webcrypto as Crypto;
-}
+// Use Node.js Web Crypto API (jsdom's crypto.subtle has issues with importKey)
+const nodeCrypto = await import('node:crypto');
+Object.defineProperty(globalThis, 'crypto', {
+  value: nodeCrypto.webcrypto as Crypto,
+  writable: true,
+  configurable: true,
+});
 
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    get length() { return Object.keys(store).length; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
     key: (index: number) => Object.keys(store)[index] ?? null,
   };
 })();
@@ -25,10 +35,18 @@ const sessionStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    get length() { return Object.keys(store).length; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
     key: (index: number) => Object.keys(store)[index] ?? null,
   };
 })();
