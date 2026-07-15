@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { Transaction } from '../components/financeData';
 import {
-  GET_TRANSACTIONS_SUBSCRIPTION,
   GET_TRANSACTIONS_QUERY,
   ADD_TRANSACTION_MUTATION,
   UPDATE_TRANSACTION_MUTATION,
@@ -65,25 +64,11 @@ export function useTransactions() {
     return d.toISOString().split('T')[0];
   }, []);
 
-  // HTTP query fires immediately — wakes Supabase from auto-pause and provides initial data
-  const { data: queryData, loading: queryLoading } = useQuery(GET_TRANSACTIONS_QUERY, {
+  const { data, loading, error } = useQuery(GET_TRANSACTIONS_QUERY, {
     fetchPolicy: 'network-only',
+    pollInterval: 5000,
     errorPolicy: 'all',
   });
-
-  // WebSocket subscription takes over for real-time updates once connected
-  const {
-    data: subData,
-    loading: subLoading,
-    error,
-  } = useSubscription(GET_TRANSACTIONS_SUBSCRIPTION, {
-    variables: { startDate: sixMonthsAgo },
-    errorPolicy: 'all',
-  });
-
-  // Prefer live subscription data; fall back to HTTP query data
-  const data = subData ?? queryData;
-  const loading = subData === undefined && queryLoading;
   const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
   const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);
   const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
