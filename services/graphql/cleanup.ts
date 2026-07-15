@@ -1,223 +1,269 @@
-
 import { gql } from '@apollo/client';
 
-// Recycle Bin
+// ─── Recycle Bin ────────────────────────────────────────────────
 export const GET_RECYCLE_BIN_QUERY = gql`
   query GetRecycleBin {
-    recycle_bin(order_by: {deleted_at: desc}) {
-      id
-      original_id
-      type
-      data
-      deleted_by
-      deleted_at
-      reason
+    recycle_binCollection(orderBy: [{ deleted_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          original_id
+          type
+          data
+          deleted_by
+          deleted_at
+          reason
+        }
+      }
     }
   }
 `;
 
 export const GET_RECYCLE_BIN_SUBSCRIPTION = gql`
   subscription GetRecycleBin {
-    recycle_bin(order_by: {deleted_at: desc}) {
-      id
-      original_id
-      type
-      data
-      deleted_by
-      deleted_at
-      reason
+    recycle_binCollection(orderBy: [{ deleted_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          original_id
+          type
+          data
+          deleted_by
+          deleted_at
+          reason
+        }
+      }
     }
   }
 `;
 
 export const ADD_RECYCLE_BIN_MUTATION = gql`
-  mutation AddRecycleBin($object: recycle_bin_insert_input!) {
-    insert_recycle_bin_one(object: $object) {
-      id
+  mutation AddRecycleBin($object: recycle_binInsertInput!) {
+    insertIntorecycle_binCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const DELETE_RECYCLE_BIN_MUTATION = gql`
   mutation DeleteRecycleBin($id: String!) {
-    delete_recycle_bin_by_pk(id: $id) {
-      id
+    deleteFromrecycle_binCollection(filter: { id: { eq: $id } }) {
+      records {
+        id
+      }
     }
   }
 `;
 
-// Permission Requests
+// ─── Permission Requests ────────────────────────────────────────
 export const GET_PERMISSION_REQUESTS_QUERY = gql`
   query GetPermissionRequests {
-    permission_requests(order_by: {requested_at: desc}) {
-      id
-      requester_id
-      requester_name
-      requester_email
-      request_type
-      data_type
-      data_id
-      data_name
-      reason
-      requested_at
-      status
-      reviewed_by
-      reviewed_at
-      review_notes
-      expires_at
+    permission_requestsCollection(orderBy: [{ requested_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          requester_id
+          requester_name
+          requester_email
+          request_type
+          data_type
+          data_id
+          data_name
+          reason
+          requested_at
+          status
+          reviewed_by
+          reviewed_at
+          review_notes
+          expires_at
+        }
+      }
     }
   }
 `;
 
 export const GET_PERMISSION_REQUESTS_SUBSCRIPTION = gql`
   subscription GetPermissionRequests {
-    permission_requests(order_by: {requested_at: desc}) {
-      id
-      requester_id
-      requester_name
-      requester_email
-      request_type
-      data_type
-      data_id
-      data_name
-      reason
-      requested_at
-      status
-      reviewed_by
-      reviewed_at
-      review_notes
-      expires_at
+    permission_requestsCollection(orderBy: [{ requested_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          requester_id
+          requester_name
+          requester_email
+          request_type
+          data_type
+          data_id
+          data_name
+          reason
+          requested_at
+          status
+          reviewed_by
+          reviewed_at
+          review_notes
+          expires_at
+        }
+      }
     }
   }
 `;
 
 export const ADD_PERMISSION_REQUEST_MUTATION = gql`
-  mutation AddPermissionRequest($object: permission_requests_insert_input!) {
-    insert_permission_requests_one(object: $object) {
-      id
+  mutation AddPermissionRequest($object: permission_requestsInsertInput!) {
+    insertIntopermission_requestsCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const UPDATE_PERMISSION_REQUEST_MUTATION = gql`
-  mutation UpdatePermissionRequest($id: String!, $changes: permission_requests_set_input!) {
-    update_permission_requests_by_pk(pk_columns: {id: $id}, _set: $changes) {
-      id
+  mutation UpdatePermissionRequest($id: String!, $changes: permission_requestsUpdateInput!) {
+    updatepermission_requestsCollection(filter: { id: { eq: $id } }, set: $changes) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const DELETE_PERMISSION_REQUEST_MUTATION = gql`
   mutation DeletePermissionRequest($id: String!) {
-    delete_permission_requests_by_pk(id: $id) {
-      id
+    deleteFrompermission_requestsCollection(filter: { id: { eq: $id } }) {
+      records {
+        id
+      }
     }
   }
 `;
 
-// User Sessions
+// ─── User Sessions ──────────────────────────────────────────────
 export const GET_USER_SESSIONS_QUERY = gql`
-  query GetUserSessions($startDate: timestamptz!) {
-    user_sessions(where: {login_time: {_gte: $startDate}}, order_by: {login_time: desc}) {
-      id
-      user_id
-      user_email
-      user_name
-      user_role
-      login_time
-      logout_time
-      is_active
-      ip_address
-      user_agent
-      location
-      session_duration
-      last_activity
+  query GetUserSessions($startDate: Datetime!) {
+    user_sessionsCollection(filter: { login_time: { gte: $startDate } }, orderBy: [{ login_time: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          user_id
+          user_email
+          user_name
+          user_role
+          login_time
+          logout_time
+          is_active
+          ip_address
+          user_agent
+          location
+          session_duration
+          last_activity
+        }
+      }
     }
   }
 `;
 
 export const GET_USER_SESSIONS_SUBSCRIPTION = gql`
-  subscription GetUserSessions($startDate: timestamptz!) {
-    user_sessions(where: {login_time: {_gte: $startDate}}, order_by: {login_time: desc}) {
-      id
-      user_id
-      user_email
-      user_name
-      user_role
-      login_time
-      logout_time
-      is_active
-      ip_address
-      user_agent
-      location
-      session_duration
-      last_activity
+  subscription GetUserSessions($startDate: Datetime!) {
+    user_sessionsCollection(filter: { login_time: { gte: $startDate } }, orderBy: [{ login_time: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          user_id
+          user_email
+          user_name
+          user_role
+          login_time
+          logout_time
+          is_active
+          ip_address
+          user_agent
+          location
+          session_duration
+          last_activity
+        }
+      }
     }
   }
 `;
 
 export const ADD_USER_SESSION_MUTATION = gql`
-  mutation AddUserSession($object: user_sessions_insert_input!) {
-    insert_user_sessions_one(object: $object) {
-      id
+  mutation AddUserSession($object: user_sessionsInsertInput!) {
+    insertIntouser_sessionsCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const UPDATE_USER_SESSION_MUTATION = gql`
-  mutation UpdateUserSession($id: String!, $changes: user_sessions_set_input!) {
-    update_user_sessions_by_pk(pk_columns: {id: $id}, _set: $changes) {
-      id
+  mutation UpdateUserSession($id: String!, $changes: user_sessionsUpdateInput!) {
+    updateuser_sessionsCollection(filter: { id: { eq: $id } }, set: $changes) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const END_USER_SESSION_MUTATION = gql`
-  mutation EndUserSession($id: String!, $logout_time: timestamptz!) {
-    update_user_sessions_by_pk(
-      pk_columns: {id: $id}, 
-      _set: {logout_time: $logout_time, is_active: false}
-    ) {
-      id
+  mutation EndUserSession($id: String!, $logout_time: Datetime!) {
+    updateuser_sessionsCollection(filter: { id: { eq: $id } }, set: { logout_time: $logout_time, is_active: false }) {
+      records {
+        id
+      }
     }
   }
 `;
 
-// Login Attempts
+// ─── Login Attempts ─────────────────────────────────────────────
 export const GET_LOGIN_ATTEMPTS_QUERY = gql`
-  query GetLoginAttempts($startDate: timestamptz!) {
-    login_attempts(where: {timestamp: {_gte: $startDate}}, order_by: {timestamp: desc}) {
-      id
-      email
-      timestamp
-      success
-      failure_reason
-      ip_address
-      user_agent
-      location
+  query GetLoginAttempts($startDate: Datetime!) {
+    login_attemptsCollection(filter: { timestamp: { gte: $startDate } }, orderBy: [{ timestamp: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          email
+          timestamp
+          success
+          failure_reason
+          ip_address
+          user_agent
+          location
+        }
+      }
     }
   }
 `;
 
 export const GET_LOGIN_ATTEMPTS_SUBSCRIPTION = gql`
-  subscription GetLoginAttempts($startDate: timestamptz!) {
-    login_attempts(where: {timestamp: {_gte: $startDate}}, order_by: {timestamp: desc}) {
-      id
-      email
-      timestamp
-      success
-      failure_reason
-      ip_address
-      user_agent
-      location
+  subscription GetLoginAttempts($startDate: Datetime!) {
+    login_attemptsCollection(filter: { timestamp: { gte: $startDate } }, orderBy: [{ timestamp: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          email
+          timestamp
+          success
+          failure_reason
+          ip_address
+          user_agent
+          location
+        }
+      }
     }
   }
 `;
 
 export const ADD_LOGIN_ATTEMPT_MUTATION = gql`
-  mutation AddLoginAttempt($object: login_attempts_insert_input!) {
-    insert_login_attempts_one(object: $object) {
-      id
+  mutation AddLoginAttempt($object: login_attemptsInsertInput!) {
+    insertIntologin_attemptsCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;

@@ -1,72 +1,90 @@
-
 import { gql } from '@apollo/client';
 
+// Supabase pg_graphql uses Relay-style collections
 export const GET_MEMBERS_QUERY = gql`
   query GetMembers {
-    members(order_by: {created_at: desc}) {
-      id
-      first_name
-      last_name
-      title
-      email
-      phone
-      department
-      status
-      dob
-      gender
-      avatar_transform
-      address
-      joined_at
-      created_at
-      occupation
-      marital_status
+    membersCollection(orderBy: [{ created_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          first_name
+          last_name
+          title
+          email
+          phone
+          department
+          status
+          dob
+          gender
+          avatar_transform
+          address
+          joined_at
+          created_at
+          occupation
+          marital_status
+          pin
+          is_portal_active
+        }
+      }
     }
   }
 `;
 
 export const GET_MEMBERS_SUBSCRIPTION = gql`
   subscription GetMembers {
-    members(order_by: {created_at: desc}) {
-      id
-      first_name
-      last_name
-      title
-      email
-      phone
-      department
-      status
-      dob
-      gender
-      avatar_transform
-      address
-      joined_at
-      created_at
-      occupation
-      marital_status
+    membersCollection(orderBy: [{ created_at: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          first_name
+          last_name
+          title
+          email
+          phone
+          department
+          status
+          dob
+          gender
+          avatar_transform
+          address
+          joined_at
+          created_at
+          occupation
+          marital_status
+          pin
+          is_portal_active
+        }
+      }
     }
   }
 `;
 
 export const ADD_MEMBER_MUTATION = gql`
-  mutation AddMember($object: members_insert_input!) {
-    insert_members_one(object: $object) {
-      id
+  mutation AddMember($object: membersInsertInput!) {
+    insertIntomembersCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const UPDATE_MEMBER_MUTATION = gql`
-  mutation UpdateMember($id: String!, $updates: members_set_input!) {
-    update_members_by_pk(pk_columns: {id: $id}, _set: $updates) {
-      id
+  mutation UpdateMember($id: String!, $updates: membersUpdateInput!) {
+    updatemembersCollection(filter: { id: { eq: $id } }, set: $updates) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const DELETE_MEMBER_MUTATION = gql`
   mutation DeleteMember($id: String!) {
-    delete_members_by_pk(id: $id) {
-      id
+    deleteFrommembersCollection(filter: { id: { eq: $id } }) {
+      records {
+        id
+      }
     }
   }
 `;

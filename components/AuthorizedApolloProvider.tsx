@@ -6,8 +6,14 @@ import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { useAuth } from '@clerk/clerk-react';
 
-const httpUri = import.meta.env.VITE_HASURA_GRAPHQL_URL || 'https://sunny-zebra-57.hasura.app/v1/graphql';
-const wsUri = httpUri.replace('http://', 'ws://').replace('https://', 'wss://');
+// Supabase pg_graphql endpoint
+// VITE_SUPABASE_GRAPHQL_URL = https://<project-ref>.supabase.co/graphql/v1
+// VITE_SUPABASE_ANON_KEY    = your supabase anon key
+const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || '';
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Supabase uses wss://<project-ref>.supabase.co/graphql/v1
+const wsUri = httpUri.replace('https://', 'wss://').replace('http://', 'ws://');
 
 let _getToken: (() => Promise<string | null>) | null = null;
 
@@ -22,30 +28,33 @@ const authLink = setContext(async (_, { headers }) => {
   return {
     headers: {
       ...headers,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    }
+      apikey: anonKey,
+      ...(token ? { Authorization: `Bearer ${token}` } : { Authorization: `Bearer ${anonKey}` }),
+    },
   };
 });
 
-const wsLink = new GraphQLWsLink(createClient({
-  url: wsUri,
-  lazy: true,
-  retryAttempts: 5,
-  connectionParams: async () => {
-    const token = _getToken ? await _getToken() : null;
-    return {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    };
-  },
-}));
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: wsUri,
+    lazy: true,
+    retryAttempts: 5,
+    connectionParams: async () => {
+      const token = _getToken ? await _getToken() : null;
+      return {
+        headers: {
+          apikey: anonKey,
+          Authorization: token ? `Bearer ${token}` : `Bearer ${anonKey}`,
+        },
+      };
+    },
+  }),
+);
 
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
-    return (
-      definition.kind === 'OperationDefinition' &&
-      definition.operation === 'subscription'
-    );
+    return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
   },
   wsLink,
   authLink.concat(httpLink),
@@ -53,19 +62,16 @@ const splitLink = split(
 
 export const client = new ApolloClient({
   link: splitLink,
-  cache: new InMemoryCache()
+  cache: new InMemoryCache(),
 });
 
 export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { getToken } = useAuth();
 
   useEffect(() => {
-    setTokenProvider(() => getToken({ template: 'hasura' }));
+    // 'supabase' is the Clerk JWT template name for Supabase integration
+    setTokenProvider(() => getToken({ template: 'supabase' }));
   }, [getToken]);
 
-  return (
-    <ApolloProvider client={client}>
-      {children}
-    </ApolloProvider>
-  );
+  return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };

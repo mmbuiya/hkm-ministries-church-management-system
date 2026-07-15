@@ -1,42 +1,53 @@
-
 import { gql } from '@apollo/client';
 
 export const GET_SMS_QUERY = gql`
-  query GetSmsRecords($startDate: date!) {
-    sms_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
-      id
-      recipient_count
-      message
-      status
-      date
+  query GetSmsRecords($startDate: Date!) {
+    sms_recordsCollection(filter: { date: { gte: $startDate } }, orderBy: [{ date: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          recipient_count
+          message
+          status
+          date
+        }
+      }
     }
   }
 `;
 
 export const GET_SMS_SUBSCRIPTION = gql`
-  subscription GetSmsRecords($startDate: date!) {
-    sms_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
-      id
-      recipient_count
-      message
-      status
-      date
+  subscription GetSmsRecords($startDate: Date!) {
+    sms_recordsCollection(filter: { date: { gte: $startDate } }, orderBy: [{ date: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          recipient_count
+          message
+          status
+          date
+        }
+      }
     }
   }
 `;
 
 export const ADD_SMS_MUTATION = gql`
-  mutation AddSmsRecord($object: sms_records_insert_input!) {
-    insert_sms_records_one(object: $object) {
-      id
+  mutation AddSmsRecord($object: sms_recordsInsertInput!) {
+    insertIntosms_recordsCollection(objects: [$object]) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const DELETE_SMS_MUTATION = gql`
   mutation DeleteSmsRecord($id: Int!) {
-    delete_sms_records_by_pk(id: $id) {
-      id
+    deleteFromsms_recordsCollection(filter: { id: { eq: $id } }) {
+      records {
+        id
+      }
     }
   }
 `;

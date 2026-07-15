@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VITE_HASURA_GRAPHQL_URL: ${{ vars.VITE_HASURA_GRAPHQL_URL || 'https://sunny-zebra-57.hasura.app/v1/graphql' }}
+  VITE_SUPABASE_GRAPHQL_URL: ${{ vars.VITE_SUPABASE_GRAPHQL_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
   VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
 
 jobs:
@@ -44,7 +45,8 @@ jobs:
     - name: Build
       run: npm run build
       env:
-        VITE_HASURA_GRAPHQL_URL: ${{ vars.VITE_HASURA_GRAPHQL_URL || 'https://sunny-zebra-57.hasura.app/v1/graphql' }}
+        VITE_SUPABASE_GRAPHQL_URL: ${{ vars.VITE_SUPABASE_GRAPHQL_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
 
     - name: Secret scan
@@ -75,7 +77,8 @@ jobs:
     - name: Build
       run: npm run build
       env:
-        VITE_HASURA_GRAPHQL_URL: ${{ vars.VITE_HASURA_GRAPHQL_URL || 'https://sunny-zebra-57.hasura.app/v1/graphql' }}
+        VITE_SUPABASE_GRAPHQL_URL: ${{ vars.VITE_SUPABASE_GRAPHQL_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
 
     - uses: actions/configure-pages@v4

@@ -1,42 +1,49 @@
-
 import { gql } from '@apollo/client';
 
 export const GET_ATTENDANCE_QUERY = gql`
   query GetAttendance {
-    attendance_records(order_by: {date: desc}) {
-      id
-      date
-      service
-      member_id
-      status
-      member {
-        first_name
-        last_name
+    attendance_recordsCollection(orderBy: [{ date: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          date
+          service
+          member_id
+          status
+          members {
+            first_name
+            last_name
+          }
+        }
       }
     }
   }
 `;
 
 export const GET_ATTENDANCE_SUBSCRIPTION = gql`
-  subscription GetAttendance($startDate: date!) {
-    attendance_records(where: {date: {_gte: $startDate}}, order_by: {date: desc}) {
-      id
-      date
-      service
-      member_id
-      status
-      member {
-        first_name
-        last_name
+  subscription GetAttendance($startDate: Date!) {
+    attendance_recordsCollection(filter: { date: { gte: $startDate } }, orderBy: [{ date: DescNullsLast }]) {
+      edges {
+        node {
+          id
+          date
+          service
+          member_id
+          status
+          members {
+            first_name
+            last_name
+          }
+        }
       }
     }
   }
 `;
 
 export const ADD_ATTENDANCE_MUTATION = gql`
-  mutation AddAttendanceRecords($objects: [attendance_records_insert_input!]!) {
-    insert_attendance_records(objects: $objects) {
-      returning {
+  mutation AddAttendanceRecords($objects: [attendance_recordsInsertInput!]!) {
+    insertIntoattendance_recordsCollection(objects: $objects) {
+      records {
         id
       }
     }
@@ -45,16 +52,20 @@ export const ADD_ATTENDANCE_MUTATION = gql`
 
 export const DELETE_ATTENDANCE_MUTATION = gql`
   mutation DeleteAttendanceRecord($id: Int!) {
-    delete_attendance_records_by_pk(id: $id) {
-      id
+    deleteFromattendance_recordsCollection(filter: { id: { eq: $id } }) {
+      records {
+        id
+      }
     }
   }
 `;
 
 export const DELETE_ATTENDANCE_BY_SERVICE_MUTATION = gql`
-  mutation DeleteAttendanceByService($date: date!, $service: String!) {
-    delete_attendance_records(where: {date: {_eq: $date}, service: {_eq: $service}}) {
-      affected_rows
+  mutation DeleteAttendanceByService($date: Date!, $service: String!) {
+    deleteFromattendance_recordsCollection(filter: { date: { eq: $date }, service: { eq: $service } }) {
+      records {
+        id
+      }
     }
   }
 `;
