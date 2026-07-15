@@ -28,7 +28,7 @@ function MockCreateClient() { return {}; }
 vi.mock('@apollo/client', () => ({
   ApolloClient: MockApolloClient,
   ApolloProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  InMemoryCache: vi.fn().mockReturnValue({}),
+  InMemoryCache: class { constructor() { return {}; } },
   createHttpLink: vi.fn().mockReturnValue({}),
   split: vi.fn().mockReturnValue({}),
 }));
