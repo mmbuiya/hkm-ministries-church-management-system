@@ -688,7 +688,7 @@ export async function generateTOTP(secret: string, timeOffset: number = 0): Prom
   }
 
   const keyBytes = base32Decode(secret);
-  const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBytes), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
 
   const signature = await crypto.subtle.sign('HMAC', key, counterBytes);
   const hash = new Uint8Array(signature);
