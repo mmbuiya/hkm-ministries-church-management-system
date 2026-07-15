@@ -1,1 +1,16 @@
-npm run build && npm test
+echo "=== 1/5 Lockfile check ==="
+npm ls --depth=0 > /dev/null 2>&1 || { echo "FAIL: Dependencies mismatch. Run 'npm install' and commit package-lock.json"; exit 1; }
+
+echo "=== 2/5 Dependency audit ==="
+npm audit --audit-level=high || echo "WARN: Audit found issues (non-blocking)"
+
+echo "=== 3/5 Type check ==="
+npx tsc --noEmit || { echo "FAIL: TypeScript errors"; exit 1; }
+
+echo "=== 4/5 Build ==="
+npm run build || { echo "FAIL: Build failed"; exit 1; }
+
+echo "=== 5/5 Tests ==="
+npm test || { echo "FAIL: Tests failed"; exit 1; }
+
+echo "=== All checks passed ==="
