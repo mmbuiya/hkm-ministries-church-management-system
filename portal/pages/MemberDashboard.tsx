@@ -554,7 +554,7 @@ const MemberDashboard: React.FC = () => {
                   />
                 ) : (
                   <p className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">
-                    {((memberData as Record<string, unknown>)?.[key] as string) || '—'}
+                    {((memberData as unknown as Record<string, unknown>)?.[key] as string) || '—'}
                   </p>
                 )}
               </div>
