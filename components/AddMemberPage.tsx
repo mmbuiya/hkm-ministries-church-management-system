@@ -91,6 +91,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
         department: memberToEdit.department,
         role: memberToEdit.role,
         status: memberToEdit.status,
+        email_tier: memberToEdit.email_tier || 'member',
         avatar: memberToEdit.avatar,
         avatarTransform: memberToEdit.avatarTransform,
       });
@@ -121,7 +122,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
       return;
     }
 
-    const memberData = { name, gender, email_tier: formState.email_tier, ...rest };
+    const memberData = { name, gender, ...rest };
     setPendingMemberData(memberData);
     setShowConfirmation(true);
   };
