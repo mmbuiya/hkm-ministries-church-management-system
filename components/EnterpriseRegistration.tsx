@@ -383,11 +383,7 @@ const EnterpriseRegistration: React.FC<EnterpriseRegistrationProps> = ({
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-block mb-4">
-              <img
-                src="https://i.ibb.co/5xzH9bWR/HKM-LOGO.png"
-                alt="HKM MINISTRIES Logo"
-                className="h-16 w-auto mx-auto"
-              />
+              <img src="/hkm-logo.webp" alt="Heavenly God Kingdom Churches Logo" className="h-16 w-auto mx-auto" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800">Create Your Account</h1>
             <p className="text-gray-500">Join HKM MINISTRIES with enterprise-grade security</p>
