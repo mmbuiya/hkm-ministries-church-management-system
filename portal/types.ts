@@ -1,0 +1,19 @@
+export interface MemberUser {
+  id: string;
+  email: string;
+  membership_number: string;
+  full_name: string;
+  phone_number?: string;
+  department?: string;
+  status?: string;
+  expiresAt?: number;
+}
+
+export interface GivingRecord {
+  id: string;
+  member: string;
+  date: string;
+  type: string;
+  amount_kes: number;
+  method: string;
+}

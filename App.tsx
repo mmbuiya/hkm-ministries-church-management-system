@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './components/MainLayout';
 import { User } from './components/userData';
 import { ToastProvider } from './components/ToastContext';
@@ -14,36 +15,32 @@ import { UPSERT_USER_MUTATION } from './services/graphql/users';
 import ClerkAuthPage from './components/ClerkAuthPage';
 import OfflineIndicator from './components/OfflineIndicator';
 
-const App: React.FC = () => {
-  // Auth context and Clerk hooks
+// Portal Pages (no Clerk auth needed — uses its own PIN-based auth)
+import { ApolloProvider } from '@apollo/client';
+import { portalApolloClient } from './portal/services/portalApollo';
+import PortalLogin from './portal/pages/PortalLogin';
+import MemberDashboard from './portal/pages/MemberDashboard';
+import PortalAuthGuard from './portal/components/PortalAuthGuard';
+
+// ─── Admin CMS (Clerk-guarded) ────────────────────────────────────────────────
+const AdminApp: React.FC = () => {
   const { user: authUser, logout: authLogout } = useAuth();
   const { isLoaded, isSignedIn } = useUser();
-
-  // Supabase hooks
   const { addSession } = useUserSessions();
   const { logLoginAttempt } = useLoginAttempts();
-
-  // Local state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
 
-  // Sync auth context user with local state
   useEffect(() => {
     if (authUser) {
       setCurrentUser(authUser);
 
-      // Create user session when user logs in
       createUserSession(authUser)
         .then((session) => {
-          if (session) {
-            console.log('User session created:', session);
-          }
+          if (session) console.log('User session created:', session);
         })
-        .catch((error) => {
-          console.error('Failed to create user session:', error);
-        });
+        .catch((error) => console.error('Failed to create user session:', error));
 
-      // Log successful login attempt
       logLoginAttempt({
         email: authUser.email,
         timestamp: new Date().toISOString(),
@@ -52,7 +49,6 @@ const App: React.FC = () => {
         location: 'Unknown',
       }).catch(() => {});
 
-      // Fetch all users for admin features
       client
         .query({
           query: gql`
@@ -80,7 +76,6 @@ const App: React.FC = () => {
     }
   }, [authUser]);
 
-  // Session creation
   const createUserSession = async (user: User): Promise<UserSession | null> => {
     try {
       const sessionData = {
@@ -95,13 +90,8 @@ const App: React.FC = () => {
         userAgent: navigator.userAgent,
         location: 'Unknown',
       };
-
       await addSession(sessionData);
-
-      return {
-        id: createSessionId(),
-        ...sessionData,
-      };
+      return { id: createSessionId(), ...sessionData };
     } catch (error) {
       console.warn('[App] Session creation failed:', error);
       return null;
@@ -122,7 +112,6 @@ const App: React.FC = () => {
         if (!existing) return;
         updatedUser = { ...existing, ...userData } as User;
         setUsers((prev) => prev.map((u) => (u.id === userData.id ? updatedUser : u)));
-
         await client.mutate({
           mutation: UPSERT_USER_MUTATION,
           variables: {
@@ -150,7 +139,6 @@ const App: React.FC = () => {
           isActive: true,
         };
         setUsers((prev) => [updatedUser, ...prev]);
-
         await client.mutate({
           mutation: UPSERT_USER_MUTATION,
           variables: {
@@ -173,7 +161,6 @@ const App: React.FC = () => {
   const handleDeleteUser = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        // Future: Add delete mutation
         setUsers((prev) => prev.filter((u) => u.id !== id));
       } catch (e) {
         console.error('Error deleting user', e);
@@ -184,22 +171,55 @@ const App: React.FC = () => {
   if (!isLoaded) return null;
 
   return (
+    <>
+      {!isSignedIn ? (
+        <ClerkAuthPage />
+      ) : (
+        <>
+          <MainLayout
+            currentUser={currentUser}
+            users={users}
+            onSaveOrUpdateUser={handleSaveOrUpdateUser}
+            onDeleteUser={handleDeleteUser}
+            onLogout={handleLogout}
+          />
+          <OfflineIndicator />
+        </>
+      )}
+    </>
+  );
+};
+
+// ─── Root App with Router ─────────────────────────────────────────────────────
+const App: React.FC = () => {
+  return (
     <ThemeProvider>
       <ToastProvider>
-        {!isSignedIn ? (
-          <ClerkAuthPage />
-        ) : (
-          <>
-            <MainLayout
-              currentUser={currentUser}
-              users={users}
-              onSaveOrUpdateUser={handleSaveOrUpdateUser}
-              onDeleteUser={handleDeleteUser}
-              onLogout={handleLogout}
+        <HashRouter>
+          <Routes>
+            {/* Member Portal — public PIN-based auth, no Clerk */}
+            <Route
+              path="/portal/login"
+              element={
+                <ApolloProvider client={portalApolloClient}>
+                  <PortalLogin />
+                </ApolloProvider>
+              }
             />
-            <OfflineIndicator />
-          </>
-        )}
+            <Route
+              path="/portal/dashboard"
+              element={
+                <ApolloProvider client={portalApolloClient}>
+                  <PortalAuthGuard>
+                    <MemberDashboard />
+                  </PortalAuthGuard>
+                </ApolloProvider>
+              }
+            />
+            {/* Admin CMS — all other routes handled by the existing AdminApp */}
+            <Route path="/*" element={<AdminApp />} />
+          </Routes>
+        </HashRouter>
       </ToastProvider>
     </ThemeProvider>
   );
