@@ -12,8 +12,7 @@ import {
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
 import { sendPinNotification } from '../services/pinNotificationService';
 import { hashPin } from '../utils/hashPin';
-import { generateOrgEmail, createAlias, loadImprovMXConfig } from '../services/improvmxService';
-
+import { generateOrgEmail, createAlias, loadImprovMXConfig, checkAliasExists } from '../services/improvmxService';
 interface SupabaseMember {
   id: string;
   first_name: string;
@@ -197,7 +196,26 @@ export function useTransactions() {
 
               if (!orgEmail) {
                 const config = loadImprovMXConfig();
-                orgEmail = generateOrgEmail(memberName, config.domain || 'hkmministries.org');
+                const baseEmail = generateOrgEmail(memberName, config.domain || 'hkmministries.org');
+                orgEmail = baseEmail;
+
+                // Ensure uniqueness
+                if (config.apiKey) {
+                  let isUnique = false;
+                  let attempts = 0;
+                  while (!isUnique && attempts < 5) {
+                    const checkResult = await checkAliasExists(orgEmail);
+                    if (!checkResult.exists) {
+                      isUnique = true; // Not found, so it's unique
+                    } else {
+                      // It exists, append random 3 digits
+                      const randomDigits = Math.floor(100 + Math.random() * 900);
+                      const parts = baseEmail.split('@');
+                      orgEmail = `${parts[0]}.${randomDigits}@${parts[1]}`;
+                    }
+                    attempts++;
+                  }
+                }
 
                 if (emailTier === 'member') {
                   const aliasResult = await createAlias(orgEmail, memberNode.email || '');
