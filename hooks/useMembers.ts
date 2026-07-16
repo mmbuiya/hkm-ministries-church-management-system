@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSubscription, useMutation, useQuery } from '@apollo/client';
-import { Member } from '../components/memberData';
+import { Member, EmailTier } from '../components/memberData';
 import {
   GET_MEMBERS_SUBSCRIPTION,
   GET_MEMBERS_QUERY,
@@ -27,6 +27,8 @@ interface SupabaseMember {
   marital_status?: string;
   pin?: string | null;
   is_portal_active?: boolean;
+  email_tier?: EmailTier;
+  org_email?: string;
 }
 
 // Transform Supabase data to frontend Member format
@@ -70,6 +72,8 @@ function transformMember(SupabaseMember: SupabaseMember): Member {
     location: SupabaseMember.address,
     pin: SupabaseMember.pin || null,
     is_portal_active: SupabaseMember.is_portal_active || false,
+    email_tier: SupabaseMember.email_tier || 'member',
+    org_email: SupabaseMember.org_email || undefined,
   };
 }
 
@@ -144,6 +148,8 @@ export function useMembers() {
         joined_at: member.dateAdded || new Date().toISOString().split('T')[0],
         pin: null,
         is_portal_active: false,
+        email_tier: member.email_tier || 'member',
+        org_email: member.org_email || null,
       };
 
       const result = await addMemberMutation({
@@ -200,6 +206,8 @@ export function useMembers() {
     if (updates.location !== undefined) SupabaseUpdates.address = updates.location;
     if (updates.occupation !== undefined) SupabaseUpdates.occupation = updates.occupation || null;
     if (updates.maritalStatus !== undefined) SupabaseUpdates.marital_status = updates.maritalStatus || null;
+    if (updates.email_tier !== undefined) SupabaseUpdates.email_tier = updates.email_tier;
+    if (updates.org_email !== undefined) SupabaseUpdates.org_email = updates.org_email || null;
 
     await updateMemberMutation({
       variables: {

@@ -18,6 +18,8 @@
 export interface NotificationSettings {
   arkeselApiKey: string; // Arkesel SMS API key (Settings → SMS Config)
   arkeselSenderId: string; // Alphanumeric sender ID, e.g. "HKM MIN"
+  textbeeApiKey?: string; // Textbee API Key
+  textbeeDeviceId?: string; // Textbee Device ID
   resendApiKey: string; // Resend email API key (Settings → Email Config)
   resendFromEmail: string; // Verified sender email, e.g. "noreply@hkmministries.org"
   portalUrl: string; // e.g. "https://hkmministries.org/login"
@@ -29,6 +31,7 @@ export interface PinNotificationPayload {
   phone?: string | null;
   email?: string | null;
   pin: string;
+  orgEmail?: string;
 }
 
 export interface NotificationResult {
@@ -41,6 +44,8 @@ export interface NotificationResult {
 function loadNotificationSettings(): NotificationSettings {
   let smsKey = '';
   let smsFrom = 'HKM MIN';
+  let textbeeApiKey = '';
+  let textbeeDeviceId = '';
   let emailKey = '';
   let emailFrom = 'noreply@hkmministries.org';
   let portalUrl = 'https://hkmministries.org/login';
@@ -48,15 +53,17 @@ function loadNotificationSettings(): NotificationSettings {
   try {
     const raw = localStorage.getItem('hkm_app_settings');
     if (raw) {
-      const settings = JSON.parse(raw);
-      if (settings.smsConfig) {
-        smsKey = settings.smsConfig.apiKey || '';
-        smsFrom = settings.smsConfig.senderId || 'HKM MIN';
+      const parsed = JSON.parse(raw);
+      if (parsed.smsConfig) {
+        smsKey = parsed.smsConfig.apiKey || '';
+        smsFrom = parsed.smsConfig.senderId || 'HKM MIN';
+        textbeeApiKey = parsed.smsConfig.textbeeApiKey || '';
+        textbeeDeviceId = parsed.smsConfig.textbeeDeviceId || '';
       }
-      if (settings.emailConfig) {
-        emailKey = settings.emailConfig.resendApiKey || '';
-        emailFrom = settings.emailConfig.resendFromEmail || 'noreply@hkmministries.org';
-        portalUrl = settings.emailConfig.portalUrl || 'https://hkmministries.org/login';
+      if (parsed.emailConfig) {
+        emailKey = parsed.emailConfig.resendApiKey || '';
+        emailFrom = parsed.emailConfig.resendFromEmail || 'noreply@hkmministries.org';
+        portalUrl = parsed.emailConfig.portalUrl || 'https://hkmministries.org/login';
       }
     }
   } catch {
@@ -66,6 +73,8 @@ function loadNotificationSettings(): NotificationSettings {
   return {
     arkeselApiKey: smsKey,
     arkeselSenderId: smsFrom,
+    textbeeApiKey,
+    textbeeDeviceId,
     resendApiKey: emailKey,
     resendFromEmail: emailFrom,
     portalUrl,
@@ -95,6 +104,59 @@ async function withRetry<T>(
     }
   }
   throw new Error('Retry loop failed unexpectedly');
+}
+
+// ─── SMS via Textbee ─────────────────────────────────────────────────────────
+
+async function sendSmsViaTextbee(
+  payload: PinNotificationPayload,
+  settings: NotificationSettings,
+): Promise<{ sent: boolean; error?: string }> {
+  if (!payload.phone) {
+    return { sent: false, error: 'Member has no phone number on file.' };
+  }
+  if (!settings.textbeeApiKey || !settings.textbeeDeviceId) {
+    return { sent: false, error: 'Textbee API key or Device ID not configured.' };
+  }
+
+  try {
+    const backendUrl = import.meta.env.VITE_SMS_BACKEND_URL || 'http://localhost:3000/api/sms/send';
+
+    const response = await withRetry(async () => {
+      const res = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: payload.memberId,
+          memberName: payload.memberName,
+          phone: payload.phone!.replace(/\s+/g, ''),
+          pin: payload.pin,
+          portalUrl: settings.portalUrl,
+          textbeeApiKey: settings.textbeeApiKey,
+          textbeeDeviceId: settings.textbeeDeviceId,
+        }),
+      });
+      if (!res.ok && res.status >= 500) {
+        throw new Error(`SMS Backend API returned ${res.status}`);
+      }
+      return res;
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error(`[PinNotification] SMS Backend API Error: ${response.status}`, result);
+      return { sent: false, error: `SMS Backend API returned ${response.status}: ${JSON.stringify(result)}` };
+    }
+
+    console.log(`[PinNotification] SMS successfully queued on backend for ${payload.phone}.`);
+    return { sent: true };
+  } catch (err: any) {
+    console.error('[PinNotification] Unexpected error calling SMS Backend API:', err);
+    return { sent: false, error: err.message };
+  }
 }
 
 // ─── SMS via Arkesel ─────────────────────────────────────────────────────────
@@ -154,7 +216,13 @@ async function sendSmsViaArkesel(
 
 // ─── Email via Resend ─────────────────────────────────────────────────────────
 
-function buildPinEmailHtml(memberName: string, memberId: string, pin: string, portalUrl: string): string {
+function buildPinEmailHtml(
+  memberName: string,
+  memberId: string,
+  pin: string,
+  portalUrl: string,
+  orgEmail?: string,
+): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -186,6 +254,21 @@ function buildPinEmailHtml(memberName: string, memberId: string, pin: string, po
                 Welcome to the HKM Ministries Member Portal! Your account has been
                 activated following confirmation of your Registration Fee.
               </p>
+              ${
+                orgEmail
+                  ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ff;border:1px solid #6366f1;border-radius:12px;margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 24px;text-align:center;">
+                    <p style="margin:0 0 4px;color:#4338ca;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Your Church Email Address</p>
+                    <p style="margin:0;color:#1e1b4b;font-size:18px;font-weight:bold;">${orgEmail}</p>
+                    <p style="margin:8px 0 0;color:#4338ca;font-size:13px;">This email forwards to your personal inbox.</p>
+                  </td>
+                </tr>
+              </table>
+              `
+                  : ''
+              }
               <p style="margin:0 0 20px;color:#374151;font-size:15px;line-height:1.7;">
                 Use the details below to sign in:
               </p>
@@ -251,7 +334,13 @@ async function sendEmailViaResend(
     };
   }
 
-  const html = buildPinEmailHtml(payload.memberName, payload.memberId, payload.pin, settings.portalUrl);
+  const html = buildPinEmailHtml(
+    payload.memberName,
+    payload.memberId,
+    payload.pin,
+    settings.portalUrl,
+    payload.orgEmail,
+  );
 
   try {
     const response = await withRetry(async () => {
@@ -312,16 +401,23 @@ async function sendEmailViaResend(
 export async function sendPinNotification(payload: PinNotificationPayload): Promise<NotificationResult> {
   const settings = loadNotificationSettings();
 
-  const [smsResult, emailResult] = await Promise.allSettled([
-    sendSmsViaArkesel(payload, settings),
-    sendEmailViaResend(payload, settings),
-  ]);
+  const results: NotificationResult = {
+    sms: { sent: false, error: 'Not attempted' },
+    email: { sent: false, error: 'Not attempted' },
+  };
 
-  const sms = smsResult.status === 'fulfilled' ? smsResult.value : { sent: false, error: smsResult.reason?.message };
+  // 1. Send SMS
+  if (settings.textbeeApiKey && settings.textbeeDeviceId) {
+    results.sms = await sendSmsViaTextbee(payload, settings);
+  } else if (settings.arkeselApiKey) {
+    results.sms = await sendSmsViaArkesel(payload, settings);
+  } else {
+    results.sms = { sent: false, error: 'Neither Textbee nor Arkesel are configured' };
+  }
 
-  const email =
-    emailResult.status === 'fulfilled' ? emailResult.value : { sent: false, error: emailResult.reason?.message };
+  // 2. Send Email
+  results.email = await sendEmailViaResend(payload, settings);
 
-  console.log('[PinNotification] Results:', { sms, email });
-  return { sms, email };
+  console.log('[PinNotification] Results:', results);
+  return results;
 }

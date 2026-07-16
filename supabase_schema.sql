@@ -62,6 +62,8 @@ create table if not exists members (
   marital_status   text,
   pin              text,
   is_portal_active boolean default false,
+  email_tier       text not null default 'member',
+  org_email        text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );

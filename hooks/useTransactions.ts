@@ -12,6 +12,7 @@ import {
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
 import { sendPinNotification } from '../services/pinNotificationService';
 import { hashPin } from '../utils/hashPin';
+import { generateOrgEmail, createAlias, loadImprovMXConfig } from '../services/improvmxService';
 
 interface SupabaseMember {
   id: string;
@@ -177,7 +178,7 @@ export function useTransactions() {
             console.error('Failed to write audit log', auditErr);
           }
 
-          // Fetch member details to send notification
+          // Fetch member details to send notification and create org email
           try {
             const memberResult = await apolloClient.query({
               query: GET_MEMBERS_QUERY,
@@ -189,12 +190,56 @@ export function useTransactions() {
             )?.node;
 
             if (memberNode) {
+              // --- Org Email Alias Creation ---
+              const memberName = `${memberNode.first_name} ${memberNode.last_name}`.trim();
+              const emailTier = memberNode.email_tier || 'member';
+              let orgEmail = memberNode.org_email;
+
+              if (!orgEmail) {
+                const config = loadImprovMXConfig();
+                orgEmail = generateOrgEmail(memberName, config.domain || 'hkmministries.org');
+
+                if (emailTier === 'member') {
+                  const aliasResult = await createAlias(orgEmail, memberNode.email || '');
+                  if (aliasResult.success) {
+                    await updateMemberMutation({
+                      variables: {
+                        id: transaction.memberId,
+                        updates: { org_email: orgEmail },
+                      },
+                    });
+                    console.log(`[useTransactions] Org email ${orgEmail} created and saved.`);
+                  } else {
+                    console.error('[useTransactions] Failed to create alias:', aliasResult.error);
+                  }
+                } else if (emailTier === 'leadership') {
+                  try {
+                    await addAuditLogMutation({
+                      variables: {
+                        object: {
+                          action: 'Leadership Email Required',
+                          entity_type: 'member',
+                          entity_id: transaction.memberId,
+                          details: {
+                            note: 'Leadership member — set up Google Workspace Gmail manually',
+                            org_email: orgEmail,
+                          },
+                        },
+                      },
+                    });
+                  } catch (auditErr) {
+                    console.error('Failed to write audit log for leadership email notice', auditErr);
+                  }
+                }
+              }
+
               const notifResult = await sendPinNotification({
                 memberId: memberNode.id,
-                memberName: `${memberNode.first_name} ${memberNode.last_name}`.trim(),
+                memberName,
                 phone: memberNode.phone,
                 email: memberNode.email,
                 pin: generatedPin,
+                orgEmail: orgEmail,
               });
 
               // Log SMS result

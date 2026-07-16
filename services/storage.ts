@@ -35,6 +35,8 @@ export interface ChurchInfo {
 export interface SmsConfig {
   apiKey: string;
   senderId: string;
+  textbeeApiKey?: string;
+  textbeeDeviceId?: string;
   welcomeMessage: string;
   birthdayMessage: string;
 }
@@ -45,10 +47,16 @@ export interface EmailConfig {
   portalUrl: string;
 }
 
+export interface ImprovMXConfig {
+  apiKey: string;
+  domain: string;
+}
+
 export interface AppSettings {
   churchInfo: ChurchInfo;
   smsConfig: SmsConfig;
   emailConfig: EmailConfig;
+  improvmxConfig: ImprovMXConfig;
   aiApiKey: string;
   biometrics: Record<string, boolean>;
 }
@@ -63,6 +71,8 @@ const initialSettings: AppSettings = {
   smsConfig: {
     apiKey: '',
     senderId: 'HKM MIN',
+    textbeeApiKey: '',
+    textbeeDeviceId: '',
     welcomeMessage: 'Hi {name}, welcome to HKM MINISTRIES! We are so glad you joined us.',
     birthdayMessage: 'Happy Birthday {name}! We wish you a day filled with joy.',
   },
@@ -70,6 +80,10 @@ const initialSettings: AppSettings = {
     resendApiKey: '',
     resendFromEmail: 'noreply@hkmministries.org',
     portalUrl: 'https://hkmministries.org/login',
+  },
+  improvmxConfig: {
+    apiKey: '',
+    domain: 'hkmministries.org',
   },
   aiApiKey: '',
   biometrics: {},
@@ -186,11 +200,19 @@ class SettingsStore {
     try {
       const item = localStorage.getItem(this.key);
       if (item === null) {
-        // First time - initialize and persist
         localStorage.setItem(this.key, JSON.stringify(this.initialData));
         return { ...this.initialData };
       }
-      return JSON.parse(item);
+      const parsed = JSON.parse(item);
+      // Merge with defaults so missing nested objects never cause runtime errors
+      return {
+        ...this.initialData,
+        ...parsed,
+        churchInfo: { ...this.initialData.churchInfo, ...parsed.churchInfo },
+        smsConfig: { ...this.initialData.smsConfig, ...parsed.smsConfig },
+        emailConfig: { ...this.initialData.emailConfig, ...parsed.emailConfig },
+        improvmxConfig: { ...this.initialData.improvmxConfig, ...parsed.improvmxConfig },
+      };
     } catch {
       return { ...this.initialData };
     }
@@ -256,6 +278,7 @@ export const storage = {
       ...settingsRaw,
       smsConfig: { ...settingsRaw.smsConfig, apiKey: '' },
       emailConfig: { ...settingsRaw.emailConfig, resendApiKey: '' },
+      improvmxConfig: { ...settingsRaw.improvmxConfig, apiKey: '' },
       aiApiKey: '',
     };
 

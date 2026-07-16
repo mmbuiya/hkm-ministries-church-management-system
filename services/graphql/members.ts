@@ -24,6 +24,8 @@ export const GET_MEMBERS_QUERY = gql`
           marital_status
           pin
           is_portal_active
+          email_tier
+          org_email
         }
       }
     }
@@ -53,6 +55,8 @@ export const GET_MEMBERS_SUBSCRIPTION = gql`
           marital_status
           pin
           is_portal_active
+          email_tier
+          org_email
         }
       }
     }

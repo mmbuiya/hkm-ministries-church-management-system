@@ -1,0 +1,108 @@
+interface ImprovMXConfig {
+  apiKey: string;
+  domain: string;
+}
+
+function generateOrgEmail(name: string, domain: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '.')
+    .replace(/[^a-z0-9.-]/g, '');
+  return `${slug}@${domain}`;
+}
+
+function loadImprovMXConfig(): ImprovMXConfig {
+  try {
+    const raw = localStorage.getItem('hkm_app_settings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.improvmxConfig) {
+        return {
+          apiKey: parsed.improvmxConfig.apiKey || '',
+          domain: parsed.improvmxConfig.domain || 'hkmministries.org',
+        };
+      }
+    }
+  } catch {
+    console.warn('[ImprovMX] Could not parse hkm_app_settings');
+  }
+  return { apiKey: '', domain: 'hkmministries.org' };
+}
+
+async function createAlias(orgEmail: string, forwardTo: string): Promise<{ success: boolean; error?: string }> {
+  const config = loadImprovMXConfig();
+  if (!config.apiKey) {
+    return { success: false, error: 'ImprovMX API key not configured.' };
+  }
+  if (!forwardTo) {
+    return { success: false, error: 'No forwarding email address provided.' };
+  }
+
+  const domain = config.domain;
+  const localPart = orgEmail.split('@')[0];
+
+  try {
+    const response = await fetch(`https://api.improvmx.com/v3/domains/${domain}/aliases`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${btoa(config.apiKey + ':')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        alias: localPart,
+        forward: forwardTo,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      console.log(`[ImprovMX] Alias ${orgEmail} -> ${forwardTo} created successfully.`);
+      return { success: true };
+    }
+
+    const errMsg = result.error || result.message || `HTTP ${response.status}`;
+    console.error('[ImprovMX] Create alias failed:', result);
+    return { success: false, error: `ImprovMX: ${errMsg}` };
+  } catch (err: any) {
+    console.error('[ImprovMX] Network error:', err);
+    return { success: false, error: `Network error: ${err.message}` };
+  }
+}
+
+async function deleteAlias(orgEmail: string): Promise<{ success: boolean; error?: string }> {
+  const config = loadImprovMXConfig();
+  if (!config.apiKey) {
+    return { success: false, error: 'ImprovMX API key not configured.' };
+  }
+
+  const domain = config.domain;
+  const localPart = orgEmail.split('@')[0];
+
+  try {
+    const response = await fetch(`https://api.improvmx.com/v3/domains/${domain}/aliases/${localPart}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Basic ${btoa(config.apiKey + ':')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      console.log(`[ImprovMX] Alias ${orgEmail} deleted successfully.`);
+      return { success: true };
+    }
+
+    const result = await response.json();
+    const errMsg = result.error || result.message || `HTTP ${response.status}`;
+    console.error('[ImprovMX] Delete alias failed:', result);
+    return { success: false, error: `ImprovMX: ${errMsg}` };
+  } catch (err: any) {
+    console.error('[ImprovMX] Network error:', err);
+    return { success: false, error: `Network error: ${err.message}` };
+  }
+}
+
+export { generateOrgEmail, createAlias, deleteAlias, loadImprovMXConfig };
+export type { ImprovMXConfig };

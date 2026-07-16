@@ -17,7 +17,7 @@ import DatabaseManagement from './DatabaseManagement';
 import { User } from './userData';
 import { storage, AppSettings } from '../services/storage';
 import { useTheme, ThemeName } from './ThemeContext';
-import { Palette } from 'lucide-react';
+import { Palette, AtSign } from 'lucide-react';
 
 interface SettingsPageProps {
   currentUser: User | null;
@@ -131,6 +131,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
     });
   };
 
+  const updateImprovmxConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!settings) return;
+    setSettings({
+      ...settings,
+      improvmxConfig: { ...settings.improvmxConfig, [e.target.name]: e.target.value },
+    });
+  };
+
   const updateAiConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!settings) return;
     setSettings({
@@ -178,6 +186,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
             <TabButton name="Security" label="Security" icon={ShieldCheckIcon} />
             <TabButton name="SMS" label="SMS Config" icon={SmsIcon} />
             <TabButton name="Email" label="Email Config" icon={MailIcon} />
+            <TabButton name="ImprovMX" label="Email Aliases" icon={AtSign} />
             <TabButton name="AI" label="AI Configuration" icon={AiIcon} />
             <TabButton name="Database" label="Database" icon={DatabaseIcon} />
           </nav>
@@ -268,6 +277,31 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
                         placeholder="e.g., HKM MIN"
                       />
                     </div>
+
+                    <div className="mt-4 border-t pt-4">
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Textbee (Free Android SMS Gateway)</h3>
+                      <p className="text-xs text-gray-500 mb-4">
+                        Leave Arkesel API key blank to use Textbee as the primary SMS gateway.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <InputField
+                          name="textbeeApiKey"
+                          label="Textbee API Key"
+                          type="password"
+                          value={settings.smsConfig.textbeeApiKey || ''}
+                          onChange={updateSmsConfig}
+                          icon={LockIcon}
+                        />
+                        <InputField
+                          name="textbeeDeviceId"
+                          label="Textbee Device ID"
+                          type="text"
+                          value={settings.smsConfig.textbeeDeviceId || ''}
+                          onChange={updateSmsConfig}
+                          placeholder="e.g., 60d5ec9a..."
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-700">Message Templates</h2>
@@ -344,6 +378,52 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
                       className="bg-church-green hover:bg-church-green-dark text-white font-bold py-2 px-6 rounded-lg flex items-center shadow transition duration-300"
                     >
                       <SaveIcon className="h-5 w-5 mr-2" /> Save Email Settings
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'ImprovMX' && (
+                <div className="space-y-8 animate-fade-in-up">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-700 flex items-center">
+                      <AtSign className="h-6 w-6 mr-2 text-indigo-600" />
+                      Email Aliases (ImprovMX)
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Configure ImprovMX to auto-generate @hkmministries.org forwarding aliases for members.
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg space-y-4 bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <InputField
+                        name="apiKey"
+                        label="ImprovMX API Key"
+                        type="password"
+                        value={settings.improvmxConfig.apiKey}
+                        onChange={updateImprovmxConfig}
+                        icon={LockIcon}
+                      />
+                      <InputField
+                        name="domain"
+                        label="Church Domain"
+                        type="text"
+                        value={settings.improvmxConfig.domain}
+                        onChange={updateImprovmxConfig}
+                        placeholder="e.g., hkmministries.org"
+                        icon={AtSign}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Aliases are auto-created when a member's registration fee (500 KSH) is completed.
+                    </p>
+                  </div>
+                  <div className="flex justify-start">
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg flex items-center shadow transition duration-300"
+                    >
+                      <SaveIcon className="h-5 w-5 mr-2" /> Save Email Alias Settings
                     </button>
                   </div>
                 </div>

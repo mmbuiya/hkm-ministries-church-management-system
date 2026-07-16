@@ -6,12 +6,14 @@ export interface AvatarTransform {
 
 export type AgeGroup = 'Children/Sunday School' | 'Junior Youth' | 'Youth' | 'Adult';
 
+export type EmailTier = 'member' | 'leadership';
+
 export interface Member {
   id: string;
   name: string;
   title: string;
   avatar: string;
-  avatarTransform?: AvatarTransform; // Position and scale for avatar
+  avatarTransform?: AvatarTransform;
   phone?: string;
   email?: string;
   department: string;
@@ -23,9 +25,11 @@ export interface Member {
   occupation?: string;
   maritalStatus?: string;
   location?: string;
-  ageGroup?: AgeGroup; // Auto-calculated based on DOB
+  ageGroup?: AgeGroup;
   pin?: string | null;
   is_portal_active?: boolean;
+  email_tier?: EmailTier;
+  org_email?: string;
 }
 
 const formatMemberId = (id: number): string => `HKM-${String(id).padStart(3, '0')}`;
