@@ -21,9 +21,6 @@ import { Visitor } from '../components/visitorData';
 import { Group } from '../components/GroupsManagementPage';
 import { Branch, initialBranches } from '../components/branchData';
 
-// Helper for simulated async delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // Types for Settings
 export interface ChurchInfo {
   name: string;
@@ -125,27 +122,21 @@ class LocalStore<T extends { id: any }> {
   }
 
   async getAll(): Promise<T[]> {
-    await delay(50);
     return this.getStored();
   }
 
-  // Overwrite all items (used for restoring backup or reordering)
   async saveAll(items: T[]): Promise<void> {
-    await delay(50);
     this.setStored(items);
   }
 
   async add(item: T): Promise<void> {
-    await delay(50);
     const items = this.getStored();
     items.push(item);
     this.setStored(items);
   }
 
   async update(id: any, data: Partial<T>): Promise<void> {
-    await delay(50);
     const items = this.getStored();
-    // Use loose equality to match string IDs with number IDs if necessary
     const index = items.findIndex((i) => i.id == id);
     if (index !== -1) {
       items[index] = { ...items[index], ...data };
@@ -153,10 +144,7 @@ class LocalStore<T extends { id: any }> {
     }
   }
 
-  // Generic save that handles both add (if id not present or new) and update
-  // Note: For this app's pattern, explicit add/update is often used, but this is a helper.
   async save(item: T): Promise<void> {
-    await delay(50);
     const items = this.getStored();
     const index = items.findIndex((i) => i.id == item.id);
     if (index !== -1) {
@@ -168,7 +156,6 @@ class LocalStore<T extends { id: any }> {
   }
 
   async delete(id: any): Promise<void> {
-    await delay(50);
     const items = this.getStored();
     const newItems = items.filter((i) => i.id != id);
     this.setStored(newItems);
@@ -221,12 +208,10 @@ class SettingsStore {
   }
 
   async getAll(): Promise<AppSettings> {
-    await delay(50);
     return this.getStored();
   }
 
   async save(settings: AppSettings): Promise<void> {
-    await delay(50);
     try {
       localStorage.setItem(this.key, JSON.stringify(settings));
     } catch (e) {
@@ -433,9 +418,7 @@ export const dbService = {
     },
 
     resetPassword: async (email: string) => {
-      // Simulated - in production, send email with reset link
       logAuditEvent(AuditActions.PASSWORD_RESET, 'auth', undefined, `Password reset requested: ${email}`);
-      await delay(500);
     },
   },
 

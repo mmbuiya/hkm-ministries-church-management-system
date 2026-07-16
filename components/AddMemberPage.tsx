@@ -45,7 +45,7 @@ const departments = [
   'None',
 ];
 const roles = ['Member', 'Leader'];
-const statuses: Member['status'][] = ['Active', 'Inactive', 'Transferred'];
+const statuses: Member['status'][] = ['Active', 'Inactive', 'Transferred', 'Pending Fee'];
 const emailTierOptions: { value: EmailTier; label: string }[] = [
   { value: 'member', label: 'Regular Member' },
   { value: 'leadership', label: 'Leadership' },
@@ -67,7 +67,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
     title: '',
     department: '',
     role: 'Member',
-    status: 'Active' as Member['status'],
+    status: 'Pending Fee' as Member['status'],
     email_tier: 'member' as EmailTier,
     avatar: '',
     avatarTransform: undefined as AvatarTransform | undefined,

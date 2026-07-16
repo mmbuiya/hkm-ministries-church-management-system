@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { useMutation, useQuery, useApolloClient } from '@apollo/client';
+import { useSubscription, useMutation, useQuery, useApolloClient } from '@apollo/client';
 import { Transaction } from '../components/financeData';
 import {
   GET_TRANSACTIONS_QUERY,
+  GET_TRANSACTIONS_SUBSCRIPTION,
   ADD_TRANSACTION_MUTATION,
   UPDATE_TRANSACTION_MUTATION,
   DELETE_TRANSACTION_MUTATION,
@@ -68,11 +69,22 @@ export function useTransactions() {
     return d.toISOString().split('T')[0];
   }, []);
 
-  const { data, loading, error } = useQuery(GET_TRANSACTIONS_QUERY, {
+  const { data: queryData, loading: queryLoading } = useQuery(GET_TRANSACTIONS_QUERY, {
     fetchPolicy: 'network-only',
-    pollInterval: 5000,
     errorPolicy: 'all',
   });
+
+  const {
+    data: subData,
+    loading: subLoading,
+    error,
+  } = useSubscription(GET_TRANSACTIONS_SUBSCRIPTION, {
+    variables: { startDate: sixMonthsAgo },
+    errorPolicy: 'all',
+  });
+
+  const data = subData ?? queryData;
+  const loading = subData === undefined && queryLoading;
   const apolloClient = useApolloClient();
   const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
   const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);

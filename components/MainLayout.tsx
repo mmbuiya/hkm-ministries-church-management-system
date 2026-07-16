@@ -270,7 +270,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           email: memberData.email || '',
           department: memberData.department || 'None',
           role: memberData.role || 'Member',
-          status: memberData.status || 'Active',
+          status: memberData.status || 'Pending Fee',
           dateAdded: new Date().toISOString().split('T')[0],
           dob: memberData.dob || '',
           gender: memberData.gender!,
