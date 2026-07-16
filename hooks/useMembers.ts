@@ -8,6 +8,7 @@ import {
   UPDATE_MEMBER_MUTATION,
   DELETE_MEMBER_MUTATION,
 } from '../services/graphql/members';
+import { updateAlias, deleteAlias } from '../services/improvmxService';
 
 interface SupabaseMember {
   id: string;
@@ -215,6 +216,26 @@ export function useMembers() {
         updates: SupabaseUpdates,
       },
     });
+
+    // Handle ImprovMX alias updates and deletions
+    const currentMember = members.find((member) => member.id === id);
+    if (currentMember?.org_email && currentMember?.email_tier === 'member') {
+      // If email changed, update forwarding destination
+      if (updates.email !== undefined && updates.email !== currentMember.email) {
+        if (updates.email) {
+          updateAlias(currentMember.org_email, updates.email).catch((err) =>
+            console.error('Failed to update alias:', err),
+          );
+        }
+      }
+
+      // If status changed to inactive/transferred, delete the alias
+      if (updates.status !== undefined && updates.status !== currentMember.status) {
+        if (updates.status === 'Inactive' || updates.status === 'Transferred') {
+          deleteAlias(currentMember.org_email).catch((err) => console.error('Failed to delete alias:', err));
+        }
+      }
+    }
 
     // Real-time subscription will update UI automatically
   };
