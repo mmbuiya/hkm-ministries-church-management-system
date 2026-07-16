@@ -13,7 +13,7 @@ const ClerkAuthPage: React.FC = () => {
           <img
             src="/hkm-logo.webp"
             alt="Heavenly God Kingdom Churches Logo"
-            className="h-16 w-auto drop-shadow-2xl border border-white/20 rounded-lg p-2 bg-white/10 object-contain"
+            className="h-16 w-auto drop-shadow-2xl border border-white/20 rounded-lg p-2 bg-sky-100 object-contain"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -34,7 +34,7 @@ const ClerkAuthPage: React.FC = () => {
               <img
                 src="/hkm-logo.webp"
                 alt="Heavenly God Kingdom Churches Logo"
-                className="h-24 w-auto drop-shadow-2xl border-2 border-green-500/30 rounded-lg p-3 bg-green-500/10 object-contain"
+                className="h-24 w-auto drop-shadow-2xl border-2 border-green-500/30 rounded-lg p-3 bg-sky-100 object-contain"
                 onError={(e) => {
                   const fallback = document.createElement('div');
                   fallback.className =

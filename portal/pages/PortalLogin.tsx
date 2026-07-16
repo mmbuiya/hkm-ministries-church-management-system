@@ -269,7 +269,7 @@ const PortalLogin: React.FC = () => {
           height: 110px;
           margin: 0 auto 1rem;
           border-radius: 50%;
-          background: rgba(255,255,255,0.08);
+          background: #e0f2fe; /* Light sky blue to make the logo pop */
           border: 2px solid rgba(212, 175, 55, 0.5);
           padding: 6px;
           display: flex;
