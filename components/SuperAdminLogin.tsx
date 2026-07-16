@@ -1,15 +1,18 @@
+// DEPRECATED: This component was part of a legacy client-side auth system.
+// All authentication is now handled through Clerk.
+// This component is retained only as a reference — it is NOT rendered anywhere in the app.
+// If re-implementing super admin elevation, do it server-side via a Supabase Edge Function.
+
 import React, { useState } from 'react';
-import { SuperAdminConfig } from './userData';
-import { EyeIcon, EyeOffIcon, LockIcon } from './Icons';
-import { Shield, Lock, Key, AlertTriangle } from 'lucide-react';
+import { EyeIcon, EyeOffIcon } from './Icons';
+import { Shield, AlertTriangle } from 'lucide-react';
 
 interface SuperAdminLoginProps {
   onLogin: (email: string, password: string, accessCode: string, secretKey: string) => Promise<boolean>;
   onCancel: () => void;
-  config: SuperAdminConfig;
 }
 
-const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, config }) => {
+const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -48,7 +51,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-        {/* Header */}
         <div className="p-6 border-b bg-gradient-to-r from-red-600 to-red-700 text-white rounded-t-xl">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-8 h-8" />
@@ -57,7 +59,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
           <p className="text-red-100 text-sm">Enhanced security verification required</p>
         </div>
 
-        {/* Security Notice */}
         <div className="p-4 bg-amber-50 border-b border-amber-200">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
@@ -71,9 +72,7 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Super Admin Email</label>
             <input
@@ -87,7 +86,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
             <div className="relative">
@@ -110,15 +108,11 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
             </div>
           </div>
 
-          {/* Access Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Key className="w-4 h-4" />
-              Access Code
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Access Code</label>
             <div className="relative">
               <input
-                type={showAccessCode ? 'text' : 'password'}
+                type="password"
                 name="accessCode"
                 value={formData.accessCode}
                 onChange={handleChange}
@@ -126,25 +120,14 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowAccessCode(!showAccessCode)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showAccessCode ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-              </button>
             </div>
           </div>
 
-          {/* Secret Key */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              Secret Key
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
             <div className="relative">
               <input
-                type={showSecretKey ? 'text' : 'password'}
+                type="password"
                 name="secretKey"
                 value={formData.secretKey}
                 onChange={handleChange}
@@ -152,17 +135,9 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowSecretKey(!showSecretKey)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showSecretKey ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-              </button>
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -172,7 +147,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
             </div>
           )}
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -202,11 +176,10 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel, co
           </div>
         </form>
 
-        {/* Footer */}
         <div className="px-6 pb-6">
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs text-gray-600 text-center">
-              🔒 This is a secure login for system administrators only. Unauthorized access attempts will be logged and
+              This is a secure login for system administrators only. Unauthorized access attempts will be logged and
               reported.
             </p>
           </div>

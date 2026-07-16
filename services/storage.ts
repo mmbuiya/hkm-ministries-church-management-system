@@ -330,7 +330,10 @@ export const storage = {
   },
 };
 
-// Database Service Interface (Replaces fbService)
+// Database Service Interface — DEPRECATED: local auth is no longer the primary path.
+// All admin authentication now goes through Clerk.
+// This remains for legacy first-run / offline scenarios only.
+// TODO: Remove when Clerk is the exclusive auth path.
 export const dbService = {
   auth: {
     login: async (email: string, pass: string) => {

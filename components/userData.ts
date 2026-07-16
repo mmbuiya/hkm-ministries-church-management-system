@@ -76,18 +76,11 @@ export interface User {
   assignedSections?: AccessibleSection[]; // For Data Personnel - which sections they can access
   createdBy?: string; // User ID who created this user
   isActive?: boolean;
-  // Super Admin specific fields
-  isSuperAdmin?: boolean; // Flag to identify the main super admin
-  superAdminCode?: string; // Special code for super admin login
 }
 
-// Super Admin Configuration
-export interface SuperAdminConfig {
-  email: string;
-  username: string;
-  accessCode: string; // Special code required for super admin login
-  secretKey: string; // Additional security key
-}
+// Super admin authentication is handled through Clerk.
+// No super admin credentials are stored in the client bundle.
+// See supabase_schema.sql for the users table with role-based access.
 
 // Recycle Bin Item
 export interface RecycleBinItem {
@@ -112,16 +105,11 @@ export interface RecycleBinItem {
 // No hardcoded users - admin is created during first-run setup
 export const initialUsers: User[] = [];
 
-// Super Admin Configuration - Simple values for testing
-// IMPORTANT: Change these values for your production deployment!
-export const SUPER_ADMIN_CONFIG: SuperAdminConfig = {
-  email: import.meta.env.VITE_SUPER_ADMIN_EMAIL || '',
-  username: 'HKM Super Admin',
-  accessCode: import.meta.env.VITE_SUPER_ADMIN_ACCESS_CODE || '',
-  secretKey: import.meta.env.VITE_SUPER_ADMIN_SECRET_KEY || '',
-};
+// REMOVED: SUPER_ADMIN_CONFIG with client-side secrets.
+// All admin authentication is handled through Clerk.
+// Role-based access (Super Admin / Admin) is enforced server-side via RLS policies.
 
-// Check if this is first run (no users exist)
+// Check if this is first run (no users exist) — DEPRECATED: local auth removed
 export function isFirstRun(): boolean {
   const users = localStorage.getItem('hkm_users');
   if (!users) return true;

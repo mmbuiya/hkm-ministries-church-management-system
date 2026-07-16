@@ -333,14 +333,35 @@ const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_MS = 30 * 60 * 1000; // 30 minutes lockout
 
-const rateLimitData: Record<string, RateLimitEntry> = {};
-
 function getRateLimitData(): Record<string, RateLimitEntry> {
-  return rateLimitData;
+  try {
+    const stored = localStorage.getItem(RATE_LIMIT_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Record<string, RateLimitEntry>;
+      // Clean expired entries while reading
+      const now = Date.now();
+      for (const key of Object.keys(parsed)) {
+        const entry = parsed[key];
+        if (entry.lockedUntil && now >= entry.lockedUntil) {
+          delete parsed[key];
+        } else if (now - entry.firstAttempt > WINDOW_MS) {
+          delete parsed[key];
+        }
+      }
+      return parsed;
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {};
 }
 
 function saveRateLimitData(data: Record<string, RateLimitEntry>): void {
-  // In-memory storage, no need to save
+  try {
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
+  } catch {
+    // storage full or unavailable — rate limiting degrades gracefully
+  }
 }
 
 export function checkRateLimit(identifier: string): {

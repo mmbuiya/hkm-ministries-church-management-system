@@ -1,5 +1,12 @@
 import { gql } from '@apollo/client';
 
+// SECURITY NOTE: This query compares the PBKDF2 hash client-side generated hash
+// against the stored hash in the database. While hashing is now PBKDF2 with
+// 600,000 iterations, the pass-the-hash risk remains: an attacker with DB access
+// can login with the stored hash directly.
+// MITIGATION: PIN hashes are derived from memberId + pin with PBKDF2 (not raw SHA-256).
+// FUTURE: Replace with a Supabase Edge Function (RPC) that performs the comparison
+// server-side and adds a server-generated salt layer.
 export const PORTAL_LOGIN_QUERY = gql`
   query PortalLogin($id: String!, $pin: String!) {
     membersCollection(filter: { id: { eq: $id }, pin: { eq: $pin }, is_portal_active: { eq: true } }, first: 1) {

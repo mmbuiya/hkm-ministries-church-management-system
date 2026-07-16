@@ -12,6 +12,7 @@ import {
 } from './Icons';
 import { Member } from './memberData';
 import { Transaction } from './financeData';
+import { User } from './userData';
 import { useTheme } from './ThemeContext';
 import PageHeader from './PageHeader';
 

@@ -26,14 +26,9 @@ export interface LoginAttempt {
   location?: string;
 }
 
-// System-level Super Admin credentials (unchangeable)
-export const SYSTEM_SUPER_ADMIN = {
-  email: 'system.admin@hkm.internal',
-  username: 'HKM System Administrator',
-  accessKey: 'HKM_SA_2024_SECURE_KEY',
-  secretToken: 'HKM_ADMIN_TOKEN_2024_INTERNAL',
-  masterCode: 'HKM_MASTER_ACCESS_2024',
-} as const;
+// REMOVED: Hardcoded SYSTEM_SUPER_ADMIN credentials (security fix)
+// Super admin authentication is now handled exclusively through Clerk.
+// No credentials exist in client-side code.
 
 // Helper functions
 export function createSessionId(): string {
