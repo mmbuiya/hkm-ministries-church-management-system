@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     include: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    exclude: ['node_modules', 'dist', 'hkm-sms-backend', 'electron'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

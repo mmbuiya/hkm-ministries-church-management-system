@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/dist/**', '.husky/**', '.eslintrc.cjs', 'eslint.config.js', '**/*.js', '**/*.cjs', '**/*.mjs'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', '.husky/**', '.eslintrc.cjs', 'eslint.config.js', '**/*.js', '**/*.cjs', '**/*.mjs', 'hkm-sms-backend/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
