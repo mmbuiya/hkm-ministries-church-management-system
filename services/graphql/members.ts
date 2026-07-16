@@ -16,6 +16,7 @@ export const GET_MEMBERS_QUERY = gql`
           status
           dob
           gender
+          avatar
           avatar_transform
           address
           joined_at
@@ -47,6 +48,7 @@ export const GET_MEMBERS_SUBSCRIPTION = gql`
           status
           dob
           gender
+          avatar
           avatar_transform
           address
           joined_at

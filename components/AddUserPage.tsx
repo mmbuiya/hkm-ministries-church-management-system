@@ -225,8 +225,8 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
     }
   };
 
-  const handleAvatarTransformSave = (transform: AvatarTransform) => {
-    setFormState((prev) => ({ ...prev, avatarTransform: transform }));
+  const handleAvatarTransformSave = (croppedImageUrl: string, transform: AvatarTransform) => {
+    setFormState((prev) => ({ ...prev, avatar: croppedImageUrl, avatarTransform: transform }));
     setShowAvatarEditor(false);
   };
 

@@ -56,6 +56,7 @@ create table if not exists members (
   dob              date,
   gender           text not null default 'Male',
   avatar_transform text,
+  avatar           text,
   address          text,
   joined_at        date default current_date,
   occupation       text,

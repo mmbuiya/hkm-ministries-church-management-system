@@ -106,9 +106,23 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (JPEG, PNG, etc.).');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be under 5MB. Please choose a smaller file.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormState((prev) => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.onerror = () => {
+        alert('Failed to read the image file. Please try again.');
       };
       reader.readAsDataURL(file);
     }
@@ -332,8 +346,12 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
             <AvatarEditor
               imageUrl={formState.avatar}
               initialTransform={formState.avatarTransform}
-              onSave={(transform) => {
-                setFormState((prev) => ({ ...prev, avatarTransform: transform }));
+              onSave={(croppedImageUrl, transform) => {
+                setFormState((prev) => ({
+                  ...prev,
+                  avatar: croppedImageUrl,
+                  avatarTransform: transform,
+                }));
                 setShowAvatarEditor(false);
               }}
               onCancel={() => setShowAvatarEditor(false)}
