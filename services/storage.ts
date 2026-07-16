@@ -33,8 +33,9 @@ export interface ChurchInfo {
 }
 
 export interface SmsConfig {
-  apiKey: string;
-  senderId: string;
+  apiKey: string; // Africa's Talking API Key
+  atUsername?: string; // Africa's Talking Username (e.g. 'hkmministries' or 'sandbox')
+  senderId: string; // Custom Sender Name (e.g. 'HKM MIN')
   textbeeApiKey?: string;
   textbeeDeviceId?: string;
   welcomeMessage: string;
@@ -70,6 +71,7 @@ const initialSettings: AppSettings = {
   },
   smsConfig: {
     apiKey: '',
+    atUsername: 'sandbox',
     senderId: 'HKM MIN',
     textbeeApiKey: '',
     textbeeDeviceId: '',

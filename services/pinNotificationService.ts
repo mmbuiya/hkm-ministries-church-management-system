@@ -2,7 +2,8 @@
  * PIN Notification Service
  *
  * Sends the auto-generated Member Portal PIN to a member via:
- *   1. SMS  — using Arkesel (https://arkesel.com) — Kenya/Africa focused
+ *   1. SMS  — using Africa's Talking (https://africastalking.com) — Kenya/Africa native
+ *   2. SMS  — using Textbee (https://textbee.dev) — Free Android phone gateway (fallback)
  *   2. Email — using Resend  (https://resend.com) — transactional email
  *
  * API keys are stored in the CMS Settings page (Settings → SMS Config / Email Config)
@@ -16,8 +17,9 @@
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface NotificationSettings {
-  arkeselApiKey: string; // Arkesel SMS API key (Settings → SMS Config)
-  arkeselSenderId: string; // Alphanumeric sender ID, e.g. "HKM MIN"
+  atApiKey: string; // Africa's Talking API key (Settings → SMS Config)
+  atUsername: string; // Africa's Talking username (e.g. "hkmministries" or "sandbox")
+  atSenderId: string; // Alphanumeric sender ID, e.g. "HKM MIN" (must be registered)
   textbeeApiKey?: string; // Textbee API Key
   textbeeDeviceId?: string; // Textbee Device ID
   resendApiKey: string; // Resend email API key (Settings → Email Config)
@@ -44,6 +46,7 @@ export interface NotificationResult {
 function loadNotificationSettings(): NotificationSettings {
   let smsKey = '';
   let smsFrom = 'HKM MIN';
+  let atUsername = 'sandbox';
   let textbeeApiKey = '';
   let textbeeDeviceId = '';
   let emailKey = '';
@@ -57,6 +60,7 @@ function loadNotificationSettings(): NotificationSettings {
       if (parsed.smsConfig) {
         smsKey = parsed.smsConfig.apiKey || '';
         smsFrom = parsed.smsConfig.senderId || 'HKM MIN';
+        atUsername = parsed.smsConfig.atUsername || 'sandbox';
         textbeeApiKey = parsed.smsConfig.textbeeApiKey || '';
         textbeeDeviceId = parsed.smsConfig.textbeeDeviceId || '';
       }
@@ -71,8 +75,9 @@ function loadNotificationSettings(): NotificationSettings {
   }
 
   return {
-    arkeselApiKey: smsKey,
-    arkeselSenderId: smsFrom,
+    atApiKey: smsKey,
+    atUsername,
+    atSenderId: smsFrom,
     textbeeApiKey,
     textbeeDeviceId,
     resendApiKey: emailKey,
@@ -159,17 +164,20 @@ async function sendSmsViaTextbee(
   }
 }
 
-// ─── SMS via Arkesel ─────────────────────────────────────────────────────────
+// ─── SMS via Africa's Talking ────────────────────────────────────────────────
+// Africa's Talking is the industry standard for Kenya.
+// It natively supports Safaricom, Airtel Kenya, and custom alphanumeric Sender IDs.
+// Sign up at: https://africastalking.com | Docs: https://developers.africastalking.com/docs/sms
 
-async function sendSmsViaArkesel(
+async function sendSmsViaAfricasTalking(
   payload: PinNotificationPayload,
   settings: NotificationSettings,
 ): Promise<{ sent: boolean; error?: string }> {
   if (!payload.phone) {
     return { sent: false, error: 'Member has no phone number on file.' };
   }
-  if (!settings.arkeselApiKey) {
-    return { sent: false, error: 'Arkesel API key not configured. Go to Settings → SMS Config.' };
+  if (!settings.atApiKey) {
+    return { sent: false, error: "Africa's Talking API key not configured. Go to Settings → SMS Config." };
   }
 
   const message =
@@ -177,37 +185,51 @@ async function sendSmsViaArkesel(
     `Your Member ID: ${payload.memberId} | PIN: ${payload.pin} ` +
     `Login at: ${settings.portalUrl} — Keep your PIN private.`;
 
+  // Format phone number to E.164 format (e.g. +254712345678)
+  let phone = payload.phone!.replace(/\s+/g, '');
+  if (phone.startsWith('0')) {
+    phone = '+254' + phone.substring(1);
+  } else if (!phone.startsWith('+')) {
+    phone = '+' + phone;
+  }
+
   try {
     const response = await withRetry(async () => {
-      const res = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
+      // Africa's Talking uses URL-encoded form data
+      const params = new URLSearchParams();
+      params.append('username', settings.atUsername || 'sandbox');
+      params.append('to', phone);
+      params.append('message', message);
+      if (settings.atSenderId) {
+        params.append('from', settings.atSenderId);
+      }
+
+      const res = await fetch('https://api.africastalking.com/version1/messaging', {
         method: 'POST',
         headers: {
-          'api-key': settings.arkeselApiKey,
-          'Content-Type': 'application/json',
+          apiKey: settings.atApiKey,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
         },
-        body: JSON.stringify({
-          sender: settings.arkeselSenderId,
-          message,
-          recipients: [payload.phone!.replace(/\s+/g, '')],
-        }),
+        body: params.toString(),
       });
       if (!res.ok && res.status >= 500) {
-        // Trigger retry on 5xx errors
-        throw new Error(`Arkesel API returned ${res.status}`);
+        throw new Error(`Africa's Talking API returned ${res.status}`);
       }
       return res;
     });
 
     const result = await response.json();
+    const recipients = result?.SMSMessageData?.Recipients;
 
-    if (response.ok && result.status === 'success') {
-      console.log(`[PinNotification] SMS sent to ${payload.phone} via Arkesel.`);
+    if (response.ok && recipients?.length > 0 && recipients[0].status === 'Success') {
+      console.log(`[PinNotification] SMS sent to ${phone} via Africa's Talking.`);
       return { sent: true };
     }
 
-    const errMsg = result.message || result.error || `HTTP ${response.status}`;
-    console.error('[PinNotification] Arkesel error:', result);
-    return { sent: false, error: `Arkesel: ${errMsg}` };
+    const errMsg = recipients?.[0]?.status || result?.SMSMessageData?.Message || `HTTP ${response.status}`;
+    console.error("[PinNotification] Africa's Talking error:", result);
+    return { sent: false, error: `Africa's Talking: ${errMsg}` };
   } catch (err: any) {
     console.error('[PinNotification] SMS network error:', err);
     return { sent: false, error: `Network error: ${err.message}` };
@@ -406,13 +428,16 @@ export async function sendPinNotification(payload: PinNotificationPayload): Prom
     email: { sent: false, error: 'Not attempted' },
   };
 
-  // 1. Send SMS
+  // 1. Send SMS — Priority: Textbee (free) → Africa's Talking (paid, custom sender name)
   if (settings.textbeeApiKey && settings.textbeeDeviceId) {
     results.sms = await sendSmsViaTextbee(payload, settings);
-  } else if (settings.arkeselApiKey) {
-    results.sms = await sendSmsViaArkesel(payload, settings);
+  } else if (settings.atApiKey) {
+    results.sms = await sendSmsViaAfricasTalking(payload, settings);
   } else {
-    results.sms = { sent: false, error: 'Neither Textbee nor Arkesel are configured' };
+    results.sms = {
+      sent: false,
+      error: "Neither Textbee nor Africa's Talking are configured. Go to Settings → SMS Config.",
+    };
   }
 
   // 2. Send Email

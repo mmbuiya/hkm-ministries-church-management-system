@@ -257,31 +257,69 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
                     <p className="text-sm text-gray-500 mt-1">Configure your bulk SMS provider details here.</p>
                   </div>
                   <div className="p-4 border rounded-lg space-y-4 bg-gray-50">
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-700">
+                        Africa's Talking (Premium — Custom Sender Name)
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Kenya's leading SMS gateway. Supports Safaricom &amp; Airtel. Allows custom sender names like
+                        "HKM MIN". Sign up free at{' '}
+                        <a
+                          href="https://africastalking.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          africastalking.com
+                        </a>
+                        . Leave API key blank to use Textbee instead.
+                      </p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <InputField
                         name="apiKey"
-                        label="SMS API Key"
+                        label="Africa's Talking API Key"
                         type="password"
                         value={settings.smsConfig.apiKey}
                         onChange={updateSmsConfig}
-                        required
                         icon={LockIcon}
                       />
                       <InputField
+                        name="atUsername"
+                        label="Africa's Talking Username"
+                        type="text"
+                        value={settings.smsConfig.atUsername || ''}
+                        onChange={updateSmsConfig}
+                        placeholder="e.g., hkmministries (or 'sandbox' for testing)"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <InputField
                         name="senderId"
-                        label="Sender ID"
+                        label="Sender ID (Custom Name)"
                         type="text"
                         value={settings.smsConfig.senderId}
                         onChange={updateSmsConfig}
-                        required
-                        placeholder="e.g., HKM MIN"
+                        placeholder="e.g., HKM MIN (must be registered with AT)"
                       />
                     </div>
 
                     <div className="mt-4 border-t pt-4">
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Textbee (Free Android SMS Gateway)</h3>
+                      <h3 className="text-base font-semibold text-gray-700 mb-2">
+                        Textbee (Free — Android Phone Gateway)
+                      </h3>
                       <p className="text-xs text-gray-500 mb-4">
-                        Leave Arkesel API key blank to use Textbee as the primary SMS gateway.
+                        Routes SMS through your Android phone's SIM card for free. No custom sender name supported. Sign
+                        up at{' '}
+                        <a
+                          href="https://textbee.dev"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          textbee.dev
+                        </a>
+                        . If both are configured, Textbee takes priority.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputField
