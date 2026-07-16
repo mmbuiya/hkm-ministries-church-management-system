@@ -7,8 +7,9 @@ export default defineConfig(({ mode }) => {
   // Only apply strict CSP in production, allow inline scripts in development for Vite/React
   const isDev = mode === 'development';
 
-  // Root base for custom domain deployment
-  const base = '/';
+  // GitHub Pages deployment configuration
+  const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
+  const base = isGitHubPages ? '/hkm-ministries-church-management-system/' : './';
 
   return {
     base: base,
