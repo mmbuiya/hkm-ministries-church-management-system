@@ -74,8 +74,8 @@ serve(async (req) => {
     }
 
     // Generate custom JWT
-    const secret = Deno.env.get('SUPABASE_JWT_SECRET');
-    if (!secret) throw new Error('SUPABASE_JWT_SECRET is not set');
+    const secret = Deno.env.get('PORTAL_JWT_SECRET');
+    if (!secret) throw new Error('PORTAL_JWT_SECRET is not set');
 
     const secretKey = new TextEncoder().encode(secret);
 
