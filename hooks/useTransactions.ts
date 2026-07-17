@@ -81,7 +81,10 @@ export function useTransactions() {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }, { query: GET_MEMBERS_QUERY }],
     awaitRefetchQueries: true,
   });
-  const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
+  const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION, {
+    refetchQueries: [{ query: GET_MEMBERS_QUERY }],
+    awaitRefetchQueries: true,
+  });
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
   const [addNotificationLogMutation] = useMutation(ADD_NOTIFICATION_LOG_MUTATION);
   const [addProvisioningQueueMutation] = useMutation(ADD_PROVISIONING_QUEUE_MUTATION);
