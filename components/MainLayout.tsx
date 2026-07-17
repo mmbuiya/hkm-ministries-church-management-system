@@ -402,19 +402,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   };
 
   const handleDeleteTransaction = async (id: number) => {
-    if (window.confirm('Delete transaction?')) {
-      try {
-        const transactionToDelete = transactions.find((t) => t.id === id);
-        if (transactionToDelete && currentUser) {
-          // Move to recycle bin first
-          await moveToRecycleBin('Transaction', id, transactionToDelete, currentUser.id, 'Deleted by user');
-        }
-        await deleteTransaction(id);
-        showToast('Transaction moved to recycle bin.', 'info');
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-        showToast('Failed to delete transaction', 'error');
+    try {
+      await deleteTransaction(id);
+      showToast('Transaction deleted successfully.', 'success');
+
+      const transactionToDelete = transactions.find((t) => t.id === id);
+      if (transactionToDelete && currentUser) {
+        moveToRecycleBin('Transaction', id, transactionToDelete, currentUser.id, 'Deleted by user').catch((err) =>
+          console.warn('Recycle bin entry failed (non-blocking):', err),
+        );
       }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      showToast(`Failed to delete transaction: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 

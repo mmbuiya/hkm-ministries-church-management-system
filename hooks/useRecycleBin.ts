@@ -48,7 +48,7 @@ export function useRecycleBin() {
           id,
           original_id: originalId.toString(),
           type,
-          data: itemData,
+          data: JSON.parse(JSON.stringify(itemData)),
           deleted_by: deletedBy,
           reason,
           deleted_at: new Date().toISOString(),
