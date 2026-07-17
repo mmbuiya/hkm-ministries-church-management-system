@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
           "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://accounts.google.com https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
           "img-src 'self' data: https: blob: https://*.clerk.accounts.dev https://img.clerk.com",
-          "connect-src 'self' https://*.googleapis.com https://generativelanguage.googleapis.com ws://localhost:* http://localhost:* https://www.google-analytics.com https://accounts.google.com https://apis.google.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://*.supabase.co wss://*.supabase.co https://*.supabase.in wss://*.supabase.in https://challenges.clerk.com https://api.ipify.org",
+          "connect-src 'self' https://*.googleapis.com https://generativelanguage.googleapis.com ws://localhost:* http://localhost:* https://www.google-analytics.com https://accounts.google.com https://apis.google.com https://*.clerk.accounts.dev https://clerk.com https://*.clerk.com https://*.supabase.co wss://*.supabase.co https://*.supabase.in wss://*.supabase.in https://challenges.clerk.com https://api.ipify.org https://api.improvmx.com https://api.resend.com",
           "frame-src 'self' https://accounts.google.com https://*.clerk.accounts.dev https://challenges.clerk.com",
           "form-action 'self'",
           "base-uri 'self'",
