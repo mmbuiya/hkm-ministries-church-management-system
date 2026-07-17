@@ -80,6 +80,10 @@ export const UPDATE_MEMBER_MUTATION = gql`
     updatemembersCollection(filter: { id: { eq: $id } }, set: $updates) {
       records {
         id
+        status
+        pin
+        is_portal_active
+        org_email
       }
     }
   }
