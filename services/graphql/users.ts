@@ -46,6 +46,16 @@ export const UPSERT_USER_MUTATION = gql`
   }
 `;
 
+export const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser($id: String!, $changes: usersUpdateInput!) {
+    updateusersCollection(filter: { id: { eq: $id } }, set: $changes) {
+      records {
+        id
+      }
+    }
+  }
+`;
+
 export const GET_USER_QUERY = gql`
   query GetUser($id: String!) {
     usersCollection(filter: { id: { eq: $id } }) {

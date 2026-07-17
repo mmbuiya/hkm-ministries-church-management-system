@@ -1,7 +1,12 @@
 import { useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { User as AppUser } from '../components/userData';
-import { GET_USERS_QUERY, UPSERT_USER_MUTATION, DELETE_USER_MUTATION } from '../services/graphql/users';
+import {
+  GET_USERS_QUERY,
+  UPSERT_USER_MUTATION,
+  UPDATE_USER_MUTATION,
+  DELETE_USER_MUTATION,
+} from '../services/graphql/users';
 import { toTitleCase } from '../utils/stringFormatter';
 
 export function useUsers() {
@@ -14,6 +19,9 @@ export function useUsers() {
     errorPolicy: 'all',
   });
   const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION, {
+    refetchQueries: [{ query: GET_USERS_QUERY }],
+  });
+  const [updateUserMutation] = useMutation(UPDATE_USER_MUTATION, {
     refetchQueries: [{ query: GET_USERS_QUERY }],
   });
   const [deleteUserMutation] = useMutation(DELETE_USER_MUTATION, {
@@ -39,19 +47,36 @@ export function useUsers() {
   const upsertUser = async (user: Partial<AppUser>) => {
     if (!user.id || !user.email) return;
 
-    await upsertUserMutation({
-      variables: {
-        object: {
+    const isExistingUser = users.some((u) => u.id === user.id);
+    const roleValue = toTitleCase(user.role || 'Data Personnel');
+
+    if (isExistingUser) {
+      await updateUserMutation({
+        variables: {
           id: user.id,
-          username: user.username || user.email.split('@')[0],
-          email: user.email,
-          role: toTitleCase(user.role || 'Data Personnel'),
-          avatar: user.avatar,
-          last_login: user.lastLogin || new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          changes: {
+            username: user.username || user.email.split('@')[0],
+            role: roleValue,
+            avatar: user.avatar,
+            updated_at: new Date().toISOString(),
+          },
         },
-      },
-    });
+      });
+    } else {
+      await upsertUserMutation({
+        variables: {
+          object: {
+            id: user.id,
+            username: user.username || user.email.split('@')[0],
+            email: user.email,
+            role: roleValue,
+            avatar: user.avatar,
+            last_login: user.lastLogin || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        },
+      });
+    }
   };
 
   const deleteUser = async (id: string) => {
