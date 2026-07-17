@@ -14,7 +14,7 @@ import { ADD_PROVISIONING_QUEUE_MUTATION } from '../services/graphql/provisionin
 import { sendPinNotification } from '../services/pinNotificationService';
 import { hashPin } from '../utils/hashPin';
 import { generateOrgEmail, createAlias, loadImprovMXConfig, checkAliasExists } from '../services/improvmxService';
-import { computeRegistrationStatus, createOrgEmailForMember } from '../services/provisioning';
+import { computeRegistrationStatus } from '../services/provisioning';
 interface SupabaseMember {
   id: string;
   first_name: string;

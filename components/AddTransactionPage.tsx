@@ -138,7 +138,6 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       : 0;
   const currentAmount = parseFloat(amount) || 0;
   const projectedTotal = pastRegistrationFees + currentAmount;
-  const registrationBalance = Math.max(0, registrationThreshold - pastRegistrationFees);
   const thresholdMetOnSave = projectedTotal >= registrationThreshold;
   const hasEmail = !!selectedMemberObj?.email;
   const hasPhone = !!selectedMemberObj?.phone;

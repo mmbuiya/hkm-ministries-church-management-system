@@ -1,5 +1,4 @@
 import { hashPin } from '../utils/hashPin';
-import { sendPinNotification } from './pinNotificationService';
 import { generateOrgEmail, createAlias, checkAliasExists, loadImprovMXConfig } from './improvmxService';
 
 const REGISTRATION_THRESHOLD = 500;
