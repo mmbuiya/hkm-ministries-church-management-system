@@ -176,7 +176,9 @@ async function secureGetItem(key: string): Promise<string | null> {
           .split('')
           .map((c) => c.charCodeAt(0)),
       );
-      return await (window as unknown as WindowWithElectron).electronAPI!.secure.decrypt(encryptedBuffer);
+      return await (window as unknown as WindowWithElectron).electronAPI!.secure.decrypt(
+        encryptedBuffer.buffer as ArrayBuffer,
+      );
     } catch (e) {
       console.error('Decryption failed', e);
       return null;
