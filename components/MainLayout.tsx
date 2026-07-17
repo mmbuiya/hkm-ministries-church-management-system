@@ -53,6 +53,7 @@ import { useUsers } from '../hooks/useUsers';
 import { useBranches } from '../hooks/useBranches';
 import { useRecycleBin } from '../hooks/useRecycleBin';
 import { usePermissionRequests } from '../hooks/usePermissionRequests';
+import { useProvisioningQueue } from '../hooks/useProvisioningQueue';
 
 interface MainLayoutProps {
   currentUser: User | null;
@@ -138,6 +139,28 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     deleteRequest,
     loading: permissionRequestsLoading,
   } = usePermissionRequests();
+
+  const { processRetries } = useProvisioningQueue();
+
+  // Process provisioning queue retries on startup (non-blocking, runs once)
+  useEffect(() => {
+    const run = async () => {
+      const result = await processRetries();
+      if (result.activated.length > 0) {
+        showToast(`Auto-activated ${result.activated.length} member(s) from provisioning queue.`, 'success');
+      }
+      if (result.stillBlocked.length > 0) {
+        showToast(
+          `${result.stillBlocked.length} member(s) still blocked — missing contact details. Update profiles and retry.`,
+          'info',
+        );
+      }
+      if (result.errors.length > 0) {
+        console.warn('[ProvisioningQueue] Retry errors:', result.errors);
+      }
+    };
+    run();
+  }, []);
 
   // Combined loading state
   const isLoading =
