@@ -79,11 +79,13 @@ serve(async (req) => {
 
     const secretKey = new TextEncoder().encode(secret);
 
-    // Setting role to "portal_member" ensures that only specific RLS policies apply
+    // Setting role to "authenticated" matches the existing RLS policies on the members table
     const jwt = await new jose.SignJWT({
       sub: member.id,
-      role: 'portal_member',
+      role: 'authenticated',
       email: member.email,
+      iss: 'supabase',
+      ref: 'tkzxzriivbbzdvjgrdhk',
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
