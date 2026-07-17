@@ -29,6 +29,7 @@ import {
 import { generateCSV } from '../utils/giving';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { compressImage } from '../../utils/imageUtils';
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface MemberData {
   id: string;
@@ -527,23 +528,24 @@ const MemberDashboard: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file (JPEG, PNG, etc.).');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be under 5MB. Please choose a smaller file.');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image size must be under 10MB. Please choose a smaller file.');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileForm((prev) => ({ ...prev, avatar: reader.result as string }));
-      };
-      reader.onerror = () => alert('Failed to read the image file.');
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file, 400, 400, 0.7);
+        setProfileForm((prev) => ({ ...prev, avatar: compressedBase64 }));
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        alert('Failed to process the image. Please try again.');
+      }
     }
   };
 

@@ -15,6 +15,7 @@ import { InputField, SelectField } from './FormControls';
 import { Member, AvatarTransform, EmailTier } from './memberData';
 import AvatarEditor, { TransformedAvatar } from './AvatarEditor';
 import { Settings2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { compressImage } from '../utils/imageUtils';
 import { useTheme } from './ThemeContext';
 
 interface AddMemberPageProps {
@@ -103,28 +104,26 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
       if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file (JPEG, PNG, etc.).');
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be under 5MB. Please choose a smaller file.');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image size must be under 10MB. Please choose a smaller file.');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormState((prev) => ({ ...prev, avatar: reader.result as string }));
-      };
-      reader.onerror = () => {
-        alert('Failed to read the image file. Please try again.');
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file, 600, 600, 0.7);
+        setFormState((prev) => ({ ...prev, avatar: compressedBase64 }));
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        alert('Failed to process the image. Please try again.');
+      }
     }
   };
 
