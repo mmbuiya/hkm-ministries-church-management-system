@@ -204,7 +204,11 @@ export function useTransactions() {
               return { pin: p, hashedPin: await hashPin(transaction.memberId!, p) };
             })();
 
-            await updateMemberMutation({
+            console.warn('[useTransactions] Executing updateMemberMutation for top-up...', {
+              id: transaction.memberId,
+              status: 'Active',
+            });
+            const updateRes = await updateMemberMutation({
               variables: {
                 id: transaction.memberId,
                 updates: {
@@ -214,6 +218,21 @@ export function useTransactions() {
                 },
               },
             });
+            console.warn('[useTransactions] Top-up update response:', updateRes);
+            if (updateRes.errors && updateRes.errors.length > 0) {
+              console.error('[useTransactions] Error updating member for top-up:', updateRes.errors);
+              throw new Error(
+                'Database error activating member portal: ' + updateRes.errors.map((e) => e.message).join(', '),
+              );
+            } else if (updateRes.data?.updatemembersCollection?.records?.length === 0) {
+              console.error(
+                '[useTransactions] Top-up mutation returned 0 records! The member ID was not found or RLS blocked it.',
+                transaction.memberId,
+              );
+              throw new Error(
+                `Failed to activate member portal: Member ID ${transaction.memberId} not found or blocked.`,
+              );
+            }
             console.warn('[useTransactions] Member activated with new PIN.');
 
             try {
@@ -430,7 +449,7 @@ export function useTransactions() {
           .reduce((sum, t) => sum + t.amount, 0);
 
         if (remainingTotal < 500) {
-          await updateMemberMutation({
+          const updateRes = await updateMemberMutation({
             variables: {
               id: transaction.memberId,
               updates: {
@@ -441,6 +460,25 @@ export function useTransactions() {
               },
             },
           });
+
+          console.warn('[useTransactions] Downgrade mutation response:', updateRes);
+
+          if (updateRes.errors && updateRes.errors.length > 0) {
+            console.error('Error downgrading member status:', updateRes.errors);
+            throw new Error(
+              'Database error downgrading member status: ' + updateRes.errors.map((e) => e.message).join(', '),
+            );
+          } else if (updateRes.data?.updatemembersCollection?.records?.length === 0) {
+            console.error(
+              '[useTransactions] Downgrade mutation returned 0 records! The member ID was not found or RLS blocked it.',
+              transaction.memberId,
+            );
+            throw new Error(
+              `Failed to downgrade member status: Member ID ${transaction.memberId} not found or blocked.`,
+            );
+          } else {
+            console.warn(`[useTransactions] Successfully downgraded member ${transaction.memberId} to Pending Fee.`);
+          }
 
           try {
             await addAuditLogMutation({
