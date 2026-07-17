@@ -157,6 +157,11 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       return;
     }
 
+    if (category === 'Welfare' && (!description || !description.trim())) {
+      alert('Please provide a reason for the welfare contribution.');
+      return;
+    }
+
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       alert('Please enter a valid positive amount.');
@@ -520,12 +525,22 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
             />
           </div>
 
-          <TextAreaField
-            label="Description"
-            placeholder="Optional notes about the transaction"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          {category === 'Welfare' ? (
+            <TextAreaField
+              label="Reason for Welfare"
+              placeholder="Required: Please enter the specific reason for this welfare contribution..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
+          ) : (
+            <TextAreaField
+              label="Description"
+              placeholder="Optional notes about the transaction"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          )}
 
           <div className="flex justify-end pt-6 border-t">
             <button
