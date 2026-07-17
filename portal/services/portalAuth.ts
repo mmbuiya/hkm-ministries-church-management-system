@@ -13,11 +13,16 @@ export const portalAuthService = {
    * is recorded. `is_portal_active` is set to true at that same moment.
    */
   async loginWithMembership(membershipNumber: string, pin: string) {
-    const hashedPin = await hashPin(membershipNumber.trim(), pin.trim());
+    // Normalize: accept both "HKM004" and "HKM-004" formats
+    const normalized = membershipNumber
+      .trim()
+      .toUpperCase()
+      .replace(/^([A-Z]+)(\d+)$/, '$1-$2');
+    const hashedPin = await hashPin(normalized, pin.trim());
 
     const { data, errors } = await portalApolloClient.query({
       query: PORTAL_LOGIN_QUERY,
-      variables: { id: membershipNumber.trim(), pin: hashedPin },
+      variables: { id: normalized, pin: hashedPin },
       fetchPolicy: 'network-only',
     });
 

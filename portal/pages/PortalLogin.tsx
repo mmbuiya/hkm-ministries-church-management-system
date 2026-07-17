@@ -99,7 +99,7 @@ const PortalLogin: React.FC = () => {
                       type="text"
                       required
                       autoComplete="username"
-                      placeholder="e.g. HKM-1234"
+                      placeholder="e.g. HKM-004 or HKM004"
                       className="portal-input"
                       value={membershipNumber}
                       onChange={(e) => setMembershipNumber(e.target.value)}
