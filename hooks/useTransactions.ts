@@ -157,7 +157,8 @@ export function useTransactions() {
             (e: { node: MemberContact }) => e.node.id === transaction.memberId,
           )?.node;
 
-          const status = computeRegistrationStatus(transaction.memberId, transactions, memberNode);
+          const updatedTransactions = [...transactions, transaction];
+          const status = computeRegistrationStatus(transaction.memberId, updatedTransactions, memberNode);
 
           if (!status.canProvision) {
             console.warn('[useTransactions] Provisioning blocked — missing contact details.');
