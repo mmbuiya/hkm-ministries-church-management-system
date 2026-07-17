@@ -133,7 +133,7 @@ export function useMembers() {
         phone: member.phone || null,
         department: member.department || '',
         status: member.status || 'Pending Fee',
-        dob: member.dob || null,
+        dob: member.dob || null, // empty string -> null (Postgres date rejects "")
         gender: member.gender || 'Male',
         avatar: member.avatar || null,
         avatar_transform: member.avatarTransform ? JSON.stringify(member.avatarTransform) : null,
@@ -194,7 +194,7 @@ export function useMembers() {
     if (updates.phone !== undefined) SupabaseUpdates.phone = updates.phone || null;
     if (updates.department !== undefined) SupabaseUpdates.department = updates.department;
     if (updates.status !== undefined) SupabaseUpdates.status = updates.status;
-    if (updates.dob !== undefined) SupabaseUpdates.dob = updates.dob;
+    if (updates.dob !== undefined) SupabaseUpdates.dob = updates.dob || null; // empty string -> null (Postgres date rejects "")
     if (updates.gender !== undefined) SupabaseUpdates.gender = updates.gender;
     if (updates.avatar !== undefined) SupabaseUpdates.avatar = updates.avatar || null;
     if (updates.avatarTransform !== undefined)
