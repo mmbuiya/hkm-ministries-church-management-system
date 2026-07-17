@@ -63,7 +63,7 @@ Object.defineProperty(globalThis, 'Clerk', {
 });
 
 // Mock fetch for tests that use it
-globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+globalThis.fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.includes('api.ipify.org')) {
     return new Response(JSON.stringify({ ip: '203.0.113.42' }), {

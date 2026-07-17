@@ -1,6 +1,5 @@
 import React from 'react';
 import { Edit, Trash2, Eye } from 'lucide-react';
-import { PencilIcon, TrashIcon, EyeIcon } from './Icons';
 import ConfirmationModal from './ConfirmationModal';
 import { useConfirmation } from '../hooks/useConfirmation';
 
@@ -10,7 +9,7 @@ interface ActionButtonsProps {
   onView?: () => void;
   itemName: string;
   itemType: string;
-  itemDetails?: { [key: string]: any };
+  itemDetails?: { [key: string]: unknown };
   editLabel?: string;
   deleteLabel?: string;
   viewLabel?: string;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserRole, AccessibleSection } from './userData';
 import { TransformedAvatar } from './AvatarEditor';
-import { SearchIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon, MailIcon, UserIcon } from './Icons';
+import { SearchIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon } from './Icons';
 import { Shield, ShieldCheck, Users, Save, X } from 'lucide-react';
 import { useUserSessions } from '../hooks/useUserSessions';
 
@@ -11,60 +11,6 @@ interface DataPersonnelManagementPageProps {
   onUpdateUser: (user: User) => void;
   onDeleteUser: (id: string) => void;
 }
-
-const allSections: AccessibleSection[] = [
-  // Members Module
-  'Members',
-  'Add Member',
-  'Member Details',
-  'Birthdays',
-  'Manage Groups',
-
-  // Attendance Module
-  'Attendance',
-  'Mark Attendance',
-  'Attendance Reports',
-  'Attendance Patterns',
-  'Department Attendance',
-  'All Attendance Records',
-  'Compare Periods',
-
-  // Finance Module
-  'Finance',
-  'Add Transaction',
-  'Transactions List',
-  'Tithe Tracking',
-  'Tithe History',
-  'Generate Report',
-  'Weekly Reports',
-  'Welfare Tracking',
-
-  // Equipment Module
-  'Equipment',
-  'Add Equipment',
-  'Equipment Inventory',
-  'Add Maintenance',
-  'Equipment Reports',
-
-  // Visitors Module
-  'Visitors',
-  'Add Visitor',
-  'Visitor Details',
-  'Visitor Management',
-
-  // Branches Module
-  'Branches',
-  'Add Branch',
-
-  // SMS Module
-  'SMS Broadcast',
-  'Compose SMS',
-  'Send SMS',
-  'SMS History',
-  'SMS Settings',
-  'Send Visitor SMS',
-  'AI Generate SMS',
-];
 
 const roleColors: Record<UserRole, string> = {
   'Super Admin': 'bg-purple-100 text-purple-800',

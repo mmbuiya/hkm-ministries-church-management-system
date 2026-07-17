@@ -52,7 +52,8 @@ export function useProvisioningQueue() {
     [],
   );
 
-  const queueItems: QueueItem[] = data?.provisioning_queueCollection?.edges?.map((e: any) => e.node) ?? [];
+  const queueItems: QueueItem[] =
+    data?.provisioning_queueCollection?.edges?.map((e: { node: QueueItem }) => e.node) ?? [];
 
   const processRetries = useCallback(async (): Promise<ProcessingResult> => {
     setProcessing(true);
@@ -75,7 +76,17 @@ export function useProvisioningQueue() {
         });
 
         const memberNode = memberResult.data?.membersCollection?.edges?.find(
-          (e: any) => e.node.id === item.member_id,
+          (e: {
+            node: {
+              id: string;
+              email?: string;
+              phone?: string;
+              first_name?: string;
+              last_name?: string;
+              email_tier?: string;
+              org_email?: string;
+            };
+          }) => e.node.id === item.member_id,
         )?.node;
 
         if (!memberNode) {
@@ -231,8 +242,8 @@ export function useProvisioningQueue() {
         }
 
         result.activated.push(item.member_id);
-      } catch (err: any) {
-        const errorMsg = err?.message || 'Unknown error';
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
         await updateQueueItem({
           variables: {
             id: item.id,

@@ -35,31 +35,62 @@ export function useVisitors() {
 
   const visitors: Visitor[] = useMemo(() => {
     if (!data?.visitors) return [];
-    return data.visitors.map((v: any) => ({
-      id: v.id,
-      name: v.name,
-      initials: v.initials || '',
-      phone: v.phone,
-      email: v.email || undefined,
-      heardFrom: v.heard_from || '',
-      firstVisit: v.first_visit || '',
-      registeredDate: v.registered_date || '',
-      status: v.status as VisitorStatus,
-      followUps:
-        v.follow_ups?.map((f: any) => ({
-          id: f.id,
-          visitorId: f.visitor_id,
-          date: f.date,
-          interactionType: f.interaction_type,
-          notes: f.notes || '',
-          nextFollowUpDate: f.next_follow_up_date || undefined,
-          outcome: f.outcome || '',
-        })) || [],
-    }));
+    return data.visitors.map(
+      (v: {
+        id: number;
+        name: string;
+        initials?: string;
+        phone?: string;
+        email?: string;
+        heard_from?: string;
+        first_visit?: string;
+        registered_date?: string;
+        status: string;
+        follow_ups?: Array<{
+          id: number;
+          visitor_id: number;
+          date: string;
+          interaction_type: string;
+          notes?: string;
+          next_follow_up_date?: string;
+          outcome?: string;
+        }>;
+      }) => ({
+        id: v.id,
+        name: v.name,
+        initials: v.initials || '',
+        phone: v.phone,
+        email: v.email || undefined,
+        heardFrom: v.heard_from || '',
+        firstVisit: v.first_visit || '',
+        registeredDate: v.registered_date || '',
+        status: v.status as VisitorStatus,
+        followUps:
+          v.follow_ups?.map(
+            (f: {
+              id: number;
+              visitor_id: number;
+              date: string;
+              interaction_type: string;
+              notes?: string;
+              next_follow_up_date?: string;
+              outcome?: string;
+            }) => ({
+              id: f.id,
+              visitorId: f.visitor_id,
+              date: f.date,
+              interactionType: f.interaction_type,
+              notes: f.notes || '',
+              nextFollowUpDate: f.next_follow_up_date || undefined,
+              outcome: f.outcome || '',
+            }),
+          ) || [],
+      }),
+    );
   }, [data]);
 
   const addVisitor = async (visitor: Partial<Visitor>) => {
-    const { id, followUps, initials, registeredDate, ...rest } = visitor;
+    const { initials, registeredDate, ...rest } = visitor;
     await addVisitorMutation({
       variables: {
         object: {
@@ -85,8 +116,8 @@ export function useVisitors() {
   };
 
   const updateVisitor = async (id: number, updates: Partial<Visitor>) => {
-    const { id: _, followUps, ...rest } = updates;
-    const set: any = {};
+    const { ...rest } = updates;
+    const set: Record<string, unknown> = {};
     if (rest.name) set.name = rest.name;
     if (rest.phone) set.phone = rest.phone;
     if (rest.email !== undefined) set.email = rest.email;
@@ -122,7 +153,7 @@ export function useVisitors() {
   };
 
   const updateFollowUp = async (id: number, updates: Partial<FollowUp>) => {
-    const set: any = {};
+    const set: Record<string, unknown> = {};
     if (updates.date) set.date = updates.date;
     if (updates.interactionType) set.interaction_type = updates.interactionType;
     if (updates.notes) set.notes = updates.notes;

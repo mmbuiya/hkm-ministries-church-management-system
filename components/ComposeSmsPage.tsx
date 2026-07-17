@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeftIcon, PaperAirplaneIcon, UsersIcon, UserIcon, CollectionIcon, AiIcon } from './Icons';
+import { ArrowLeftIcon, PaperAirplaneIcon, AiIcon } from './Icons';
 import { Member } from './memberData';
 import { Group } from './GroupsManagementPage';
 import { SmsRecord } from './smsData';
@@ -24,10 +24,10 @@ const messageTemplates = {
     'Greetings! Our special event is happening this Saturday. Check the church website for more details.',
 };
 
-const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack, onLogSms }) => {
+const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups: _groups, onBack, onLogSms }) => {
   const [activeTab, setActiveTab] = useState<'individual' | 'group' | 'all'>('individual');
   const [selectedMembers, setSelectedMembers] = useState(new Set<string>());
-  const [selectedGroups, setSelectedGroups] = useState(new Set<number>());
+
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
   const [template, setTemplate] = useState('');
@@ -68,7 +68,7 @@ const ComposeSmsPage: React.FC<ComposeSmsPageProps> = ({ members, groups, onBack
     if (activeTab === 'all') return members.length;
     if (activeTab === 'group') return '...'; // Needs logic to count members in selected groups
     return selectedMembers.size;
-  }, [activeTab, selectedMembers, selectedGroups, members]);
+  }, [activeTab, selectedMembers, members]);
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;

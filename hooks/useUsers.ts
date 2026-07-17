@@ -21,15 +21,17 @@ export function useUsers() {
 
   const users: AppUser[] = useMemo(() => {
     if (!queryData?.users) return [];
-    return queryData.users.map((u: any) => ({
-      id: u.id,
-      username: u.username,
-      email: u.email,
-      role: u.role,
-      avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.username}`,
-      lastLogin: u.last_login || '',
-      passwordHash: 'MANAGED_BY_FIREBASE',
-    }));
+    return queryData.users.map(
+      (u: { id: string; username?: string; email?: string; role?: string; avatar?: string; last_login?: string }) => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.username}`,
+        lastLogin: u.last_login || '',
+        passwordHash: 'MANAGED_BY_FIREBASE',
+      }),
+    );
   }, [queryData]);
 
   const upsertUser = async (user: Partial<AppUser>) => {

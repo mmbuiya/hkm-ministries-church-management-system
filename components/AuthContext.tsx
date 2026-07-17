@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
-import { User } from './userData';
+import { User, UserRole } from './userData';
 import { client } from './AuthorizedApolloProvider';
 import { UPSERT_USER_MUTATION, GET_USER_QUERY } from '../services/graphql/users';
 
+interface ClerkUserLike {
+  id: string;
+  primaryEmailAddress?: { emailAddress?: string } | null;
+  imageUrl?: string;
+}
+
 interface AuthContextType {
   user: User | null;
-  clerkUser: any | null;
+  clerkUser: ClerkUserLike | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -71,7 +77,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchAndSyncProfile = async (cUser: any) => {
+  const fetchAndSyncProfile = async (cUser: ClerkUserLike) => {
     if (!cUser) return null;
 
     const email = cUser.primaryEmailAddress?.emailAddress;
@@ -91,7 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: hUser.id,
           username: hUser.username,
           email: hUser.email,
-          role: hUser.role as any,
+          role: hUser.role as UserRole,
           avatar: hUser.avatar,
           lastLogin: hUser.last_login,
           permissionLevel: hUser.role === 'Admin' || hUser.role === 'Super Admin' ? 'Editor' : 'Viewer',
@@ -103,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: uid,
         username: email?.split('@')[0] || 'User',
         email: email || '',
-        role: 'Guest' as any,
+        role: 'Guest' as UserRole,
         permissionLevel: 'Viewer',
         passwordHash: 'MANAGED_BY_CLERK',
         lastLogin: new Date().toISOString(),
@@ -131,7 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: uid,
         username: email?.split('@')[0] || 'User',
         email: email || '',
-        role: 'Guest' as any,
+        role: 'Guest' as UserRole,
         permissionLevel: 'Viewer',
         passwordHash: 'MANAGED_BY_CLERK',
         lastLogin: new Date().toISOString(),
@@ -173,15 +179,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         return { success: false, error: 'Additional steps required (2FA, etc.)' };
       }
-    } catch (error: any) {
-      return { success: false, error: error.errors?.[0]?.message || 'Login failed' };
+    } catch (error: unknown) {
+      const clerkError = error as { errors?: Array<{ message?: string }> };
+      return { success: false, error: clerkError.errors?.[0]?.message || 'Login failed' };
     }
   };
 
   const register = async (
     email: string,
     password: string,
-    avatar?: string,
+    _avatar?: string,
   ): Promise<{ success: boolean; error?: string; user?: User }> => {
     if (!signUpLoaded) return { success: false, error: 'Auth not ready' };
 
@@ -196,8 +203,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         return { success: false, error: 'Registration incomplete (verification needed)' };
       }
-    } catch (error: any) {
-      return { success: false, error: error.errors?.[0]?.message || 'Registration failed' };
+    } catch (error: unknown) {
+      const clerkError = error as { errors?: Array<{ message?: string }> };
+      return { success: false, error: clerkError.errors?.[0]?.message || 'Registration failed' };
     }
   };
 
@@ -215,7 +223,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const value: AuthContextType = {
     user: userProfile,
-    clerkUser: clerkUser,
+    clerkUser: clerkUser ?? null,
     loading: loading || !isLoaded,
     isAuthenticated: isSignedIn ?? false,
     login,

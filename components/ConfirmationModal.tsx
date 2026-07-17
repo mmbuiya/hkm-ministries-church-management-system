@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertTriangle, Trash2, Edit, X } from 'lucide-react';
+import { AlertTriangle, Trash2, Edit } from 'lucide-react';
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ export interface ConfirmationModalProps {
   title: string;
   message: string;
   itemName: string;
-  itemDetails?: { [key: string]: any };
+  itemDetails?: { [key: string]: unknown };
   type: 'edit' | 'delete';
   isLoading?: boolean;
 }
@@ -64,7 +64,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   <div className={`mt-2 space-y-1 text-sm ${isDelete ? 'text-red-600' : 'text-blue-600'}`}>
                     {Object.entries(itemDetails).map(([key, value]) => (
                       <p key={key}>
-                        <strong>{key}:</strong> {value}
+                        <strong>{key}:</strong> {String(value)}
                       </p>
                     ))}
                   </div>

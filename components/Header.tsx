@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UserIcon, LogoutIcon, ChevronRightIcon } from './Icons';
 import { User } from './userData';
-import { useTheme } from './ThemeContext';
+import { useTheme, ThemeName } from './ThemeContext';
 import { Sun, Moon, ArrowLeft } from 'lucide-react';
 
 interface HeaderProps {
@@ -167,7 +167,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, user, onLogout, onNavigate,
             <span className="text-sm font-medium text-white">Theme:</span>
             <select
               value={theme}
-              onChange={(e) => setTheme(e.target.value as any)}
+              onChange={(e) => setTheme(e.target.value as ThemeName)}
               className="px-3 py-1 text-sm border border-white/30 rounded-md bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
               style={{
                 colorScheme: 'dark',
@@ -230,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, user, onLogout, onNavigate,
                   <label className="block text-xs font-medium text-gray-700 mb-1">Theme:</label>
                   <select
                     value={theme}
-                    onChange={(e) => setTheme(e.target.value as any)}
+                    onChange={(e) => setTheme(e.target.value as ThemeName)}
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700"
                   >
                     {themes.map((t) => (

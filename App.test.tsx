@@ -12,10 +12,8 @@ vi.mock('@clerk/clerk-react', () => ({
 
 // Mock child components
 vi.mock('./components/MainLayout', () => ({
-  default: ({ currentUser }: any) => (
-    <div data-testid="main-layout">
-      {currentUser ? `Logged in as ${currentUser.email}` : 'Not logged in'}
-    </div>
+  default: ({ currentUser }: { currentUser?: { email: string } }) => (
+    <div data-testid="main-layout">{currentUser ? `Logged in as ${currentUser.email}` : 'Not logged in'}</div>
   ),
 }));
 

@@ -50,7 +50,7 @@ const AddBranchPage: React.FC<AddBranchPageProps> = ({ onBack, onSave, branchToE
   const [givingRecords, setGivingRecords] = useState<BranchGivingRecord[]>([]);
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingBranchData, setPendingBranchData] = useState<any>(null);
+  const [pendingBranchData, setPendingBranchData] = useState<Partial<Branch> | null>(null);
 
   // New giving record form
   const [newGiving, setNewGiving] = useState({
@@ -539,13 +539,13 @@ const AddBranchPage: React.FC<AddBranchPageProps> = ({ onBack, onSave, branchToE
                         </p>
                       )}
                       <p>
-                        <strong>Pastor:</strong> {pendingBranchData.pastor.name}
+                        <strong>Pastor:</strong> {pendingBranchData.pastor?.name}
                       </p>
                       <p>
-                        <strong>Pastor Email:</strong> {pendingBranchData.pastor.email}
+                        <strong>Pastor Email:</strong> {pendingBranchData.pastor?.email}
                       </p>
                       <p>
-                        <strong>Pastor Phone:</strong> {pendingBranchData.pastor.phone}
+                        <strong>Pastor Phone:</strong> {pendingBranchData.pastor?.phone}
                       </p>
                       {pendingBranchData.establishedDate && (
                         <p>
@@ -554,7 +554,7 @@ const AddBranchPage: React.FC<AddBranchPageProps> = ({ onBack, onSave, branchToE
                         </p>
                       )}
                       <p>
-                        <strong>Total Members:</strong> {pendingBranchData.memberCount.total}
+                        <strong>Total Members:</strong> {pendingBranchData.memberCount?.total}
                       </p>
                     </div>
                   </div>

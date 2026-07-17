@@ -24,7 +24,11 @@ const getStartOfWeek = (date: Date) => {
 
 const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, attendanceRecords }) => {
   const [view, setView] = useState<'dashboard' | 'generate' | 'viewer'>('dashboard');
-  const [reportContent, setReportContent] = useState<{ title: string; columns: any[]; data: any[] }>({
+  const [reportContent, setReportContent] = useState<{
+    title: string;
+    columns: { Header: string; accessor: string }[];
+    data: unknown[];
+  }>({
     title: '',
     columns: [],
     data: [],
@@ -35,7 +39,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, at
   const handleViewReport = (reportId: string) => {
     let title: string;
     let columns: { Header: string; accessor: string }[];
-    let data: any[];
+    let data: unknown[];
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
@@ -51,7 +55,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, at
           { Header: 'Email', accessor: 'email' },
           { Header: 'Date Added', accessor: 'dateAdded' },
         ];
-        data = members.filter((m) => new Date(m.dateAdded) >= thirtyDaysAgo);
+        data = members.filter((m) => new Date(m.dateAdded) >= thirtyDaysAgo) as unknown as Member[];
         break;
 
       case 'members_birthdays':
@@ -62,7 +66,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, at
           { Header: 'Birthday', accessor: 'dob' },
           { Header: 'Department', accessor: 'department' },
         ];
-        data = members.filter((m) => new Date(m.dob).getMonth() === currentMonth);
+        data = members.filter((m) => new Date(m.dob).getMonth() === currentMonth) as unknown as Member[];
         break;
 
       case 'members_by_dept': {
@@ -335,7 +339,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, at
   const handleGenerateReport = (config: { type: string; start?: string; end?: string }) => {
     let title: string;
     let columns: { Header: string; accessor: string }[];
-    let data: any[];
+    let data: unknown[];
     const { type, start, end } = config;
 
     switch (type) {
@@ -352,7 +356,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ members, transactions, at
         data = members.filter((m) => {
           if (!start || !end) return true;
           return m.dateAdded >= start && m.dateAdded <= end;
-        });
+        }) as unknown as Member[];
         break;
 
       case 'Attendance Summary':

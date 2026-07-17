@@ -58,16 +58,17 @@ async function createAlias(orgEmail: string, forwardTo: string): Promise<{ succe
     const result = await response.json();
 
     if (response.ok) {
-      console.log(`[ImprovMX] Alias ${orgEmail} -> ${forwardTo} created successfully.`);
+      console.warn(`[ImprovMX] Alias ${orgEmail} -> ${forwardTo} created successfully.`);
       return { success: true };
     }
 
     const errMsg = result.error || result.message || `HTTP ${response.status}`;
     console.error('[ImprovMX] Create alias failed:', result);
     return { success: false, error: `ImprovMX: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[ImprovMX] Network error:', err);
-    return { success: false, error: `Network error: ${err.message}` };
+    return { success: false, error: `Network error: ${msg}` };
   }
 }
 
@@ -90,7 +91,7 @@ async function deleteAlias(orgEmail: string): Promise<{ success: boolean; error?
     });
 
     if (response.ok) {
-      console.log(`[ImprovMX] Alias ${orgEmail} deleted successfully.`);
+      console.warn(`[ImprovMX] Alias ${orgEmail} deleted successfully.`);
       return { success: true };
     }
 
@@ -98,9 +99,10 @@ async function deleteAlias(orgEmail: string): Promise<{ success: boolean; error?
     const errMsg = result.error || result.message || `HTTP ${response.status}`;
     console.error('[ImprovMX] Delete alias failed:', result);
     return { success: false, error: `ImprovMX: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[ImprovMX] Network error:', err);
-    return { success: false, error: `Network error: ${err.message}` };
+    return { success: false, error: `Network error: ${msg}` };
   }
 }
 
@@ -134,9 +136,10 @@ async function checkAliasExists(orgEmail: string): Promise<{ exists: boolean; er
     const errMsg = result.error || result.message || `HTTP ${response.status}`;
     console.error('[ImprovMX] Check alias failed:', result);
     return { exists: false, error: `ImprovMX: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[ImprovMX] Network error:', err);
-    return { exists: false, error: `Network error: ${err.message}` };
+    return { exists: false, error: `Network error: ${msg}` };
   }
 }
 
@@ -167,16 +170,17 @@ async function updateAlias(orgEmail: string, forwardTo: string): Promise<{ succe
     const result = await response.json();
 
     if (response.ok) {
-      console.log(`[ImprovMX] Alias ${orgEmail} updated to forward to ${forwardTo}.`);
+      console.warn(`[ImprovMX] Alias ${orgEmail} updated to forward to ${forwardTo}.`);
       return { success: true };
     }
 
     const errMsg = result.error || result.message || `HTTP ${response.status}`;
     console.error('[ImprovMX] Update alias failed:', result);
     return { success: false, error: `ImprovMX: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[ImprovMX] Network error:', err);
-    return { success: false, error: `Network error: ${err.message}` };
+    return { success: false, error: `Network error: ${msg}` };
   }
 }
 

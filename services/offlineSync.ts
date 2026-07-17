@@ -4,17 +4,17 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 interface HKMDatabase extends DBSchema {
   members: {
     key: string;
-    value: any;
+    value: Record<string, unknown>;
     indexes: { 'by-sync': number };
   };
   transactions: {
     key: number;
-    value: any;
+    value: Record<string, unknown>;
     indexes: { 'by-sync': number };
   };
   attendance: {
     key: number;
-    value: any;
+    value: Record<string, unknown>;
     indexes: { 'by-sync': number };
   };
   pendingSync: {
@@ -23,7 +23,7 @@ interface HKMDatabase extends DBSchema {
       id: number;
       type: string;
       action: 'create' | 'update' | 'delete';
-      data: any;
+      data: Record<string, unknown>;
       timestamp: number;
     };
   };
@@ -41,19 +41,19 @@ class OfflineSyncService {
           const memberStore = db.createObjectStore('members', { keyPath: 'id' });
           memberStore.createIndex('by-sync', 'lastSync');
         }
-        
+
         // Transactions store
         if (!db.objectStoreNames.contains('transactions')) {
           const txStore = db.createObjectStore('transactions', { keyPath: 'id' });
           txStore.createIndex('by-sync', 'lastSync');
         }
-        
+
         // Attendance store
         if (!db.objectStoreNames.contains('attendance')) {
           const attStore = db.createObjectStore('attendance', { keyPath: 'id' });
           attStore.createIndex('by-sync', 'lastSync');
         }
-        
+
         // Pending sync queue
         if (!db.objectStoreNames.contains('pendingSync')) {
           db.createObjectStore('pendingSync', { keyPath: 'id', autoIncrement: true });
@@ -63,11 +63,11 @@ class OfflineSyncService {
   }
 
   // Cache data locally
-  async cacheData(storeName: 'members' | 'transactions' | 'attendance', data: any[]) {
+  async cacheData(storeName: 'members' | 'transactions' | 'attendance', data: Record<string, unknown>[]) {
     if (!this.db) await this.init();
     const tx = this.db!.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
-    
+
     for (const item of data) {
       await store.put({ ...item, lastSync: Date.now() });
     }
@@ -81,14 +81,14 @@ class OfflineSyncService {
   }
 
   // Queue operation for sync
-  async queueOperation(type: string, action: 'create' | 'update' | 'delete', data: any) {
+  async queueOperation(type: string, action: 'create' | 'update' | 'delete', data: Record<string, unknown>) {
     if (!this.db) await this.init();
     await this.db!.add('pendingSync', {
       type,
       action,
       data,
       timestamp: Date.now(),
-    } as any);
+    } as unknown as HKMDatabase['pendingSync']['value']);
   }
 
   // Get pending operations
@@ -111,7 +111,7 @@ class OfflineSyncService {
   // Start auto-sync
   startAutoSync(syncCallback: () => Promise<void>, intervalMs: number = 30000) {
     if (this.syncInterval) return;
-    
+
     this.syncInterval = setInterval(async () => {
       if (this.isOnline()) {
         try {

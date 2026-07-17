@@ -147,7 +147,7 @@ export function useMembers() {
         org_email: member.org_email || null,
       };
 
-      const result = await addMemberMutation({
+      await addMemberMutation({
         variables: {
           object: memberData,
         },
@@ -181,7 +181,7 @@ export function useMembers() {
       throw new Error('A member with this name, phone, or email already exists.');
     }
 
-    const SupabaseUpdates: any = {};
+    const SupabaseUpdates: Record<string, unknown> = {};
 
     if (updates.name) {
       const [firstName, ...lastNameParts] = updates.name.split(' ');
@@ -247,7 +247,7 @@ export function useMembers() {
 
   return {
     data: members,
-    setData: (newMembers: Member[]) => {
+    setData: (_newMembers: Member[]) => {
       console.warn('setData called on Supabase subscription - data is managed by GraphQL');
     },
     loading,

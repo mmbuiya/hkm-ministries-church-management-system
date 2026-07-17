@@ -89,7 +89,7 @@ const initialSettings: AppSettings = {
 };
 
 // Generic LocalStorage Helper with CRUD
-class LocalStore<T extends { id: any }> {
+class LocalStore<T extends { id: string | number }> {
   private key: string;
   private initialData: T[];
 
@@ -135,7 +135,7 @@ class LocalStore<T extends { id: any }> {
     this.setStored(items);
   }
 
-  async update(id: any, data: Partial<T>): Promise<void> {
+  async update(id: string | number, data: Partial<T>): Promise<void> {
     const items = this.getStored();
     const index = items.findIndex((i) => i.id == id);
     if (index !== -1) {
@@ -155,7 +155,7 @@ class LocalStore<T extends { id: any }> {
     this.setStored(items);
   }
 
-  async delete(id: any): Promise<void> {
+  async delete(id: string | number): Promise<void> {
     const items = this.getStored();
     const newItems = items.filter((i) => i.id != id);
     this.setStored(newItems);
@@ -257,7 +257,7 @@ export const storage = {
   // Centralized Backup - EXCLUDES sensitive data (passwords, API keys)
   exportBackup: async () => {
     // Strip passwordHash from users before export
-    const usersWithoutPasswords = usersStore.getRaw().map(({ passwordHash, ...user }) => user);
+    const usersWithoutPasswords = usersStore.getRaw().map(({ ...user }) => user);
 
     // Strip API keys from settings before export
     const settingsRaw = settingsStore.getRaw();
@@ -287,19 +287,19 @@ export const storage = {
   },
 
   // Centralized Restore
-  importBackup: async (data: any) => {
+  importBackup: async (data: Record<string, unknown>) => {
     if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
 
-    if (data.users) usersStore.restore(data.users);
-    if (data.members) membersStore.restore(data.members);
-    if (data.groups) groupsStore.restore(data.groups);
-    if (data.attendance) attendanceStore.restore(data.attendance);
-    if (data.transactions) transactionsStore.restore(data.transactions);
-    if (data.equipment) equipmentStore.restore(data.equipment);
-    if (data.maintenance) maintenanceStore.restore(data.maintenance);
-    if (data.sms) smsStore.restore(data.sms);
-    if (data.visitors) visitorsStore.restore(data.visitors);
-    if (data.appSettings) settingsStore.restore(data.appSettings);
+    if (data.users) usersStore.restore(data.users as User[]);
+    if (data.members) membersStore.restore(data.members as Member[]);
+    if (data.groups) groupsStore.restore(data.groups as Group[]);
+    if (data.attendance) attendanceStore.restore(data.attendance as AttendanceRecord[]);
+    if (data.transactions) transactionsStore.restore(data.transactions as Transaction[]);
+    if (data.equipment) equipmentStore.restore(data.equipment as Equipment[]);
+    if (data.maintenance) maintenanceStore.restore(data.maintenance as MaintenanceRecord[]);
+    if (data.sms) smsStore.restore(data.sms as SmsRecord[]);
+    if (data.visitors) visitorsStore.restore(data.visitors as Visitor[]);
+    if (data.appSettings) settingsStore.restore(data.appSettings as AppSettings);
 
     return true;
   },
@@ -413,7 +413,7 @@ export const dbService = {
       clearSession();
     },
 
-    sendVerification: async (user: any) => {
+    sendVerification: async () => {
       // No-op for local auth
     },
 

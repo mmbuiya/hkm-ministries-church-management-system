@@ -28,7 +28,7 @@ export function useSms() {
   const smsRecords: SmsRecord[] = useMemo(() => {
     const rawData = queryData?.sms_records;
     if (!rawData) return [];
-    return rawData.map((s: any) => ({
+    return rawData.map((s: { id: number; recipient_count: number; message: string; status: string; date: string }) => ({
       id: s.id,
       recipientCount: s.recipient_count,
       message: s.message,

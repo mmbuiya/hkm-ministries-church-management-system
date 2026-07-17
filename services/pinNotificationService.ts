@@ -97,9 +97,10 @@ async function withRetry<T>(
   while (attempt < maxRetries) {
     try {
       return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
       attempt++;
-      console.warn(`[PinNotification] Attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[PinNotification] Attempt ${attempt}/${maxRetries} failed: ${msg}`);
       if (attempt >= maxRetries) {
         throw error;
       }
@@ -156,11 +157,12 @@ async function sendSmsViaTextbee(
       return { sent: false, error: `SMS Backend API returned ${response.status}: ${JSON.stringify(result)}` };
     }
 
-    console.log(`[PinNotification] SMS successfully queued on backend for ${payload.phone}.`);
+    console.warn(`[PinNotification] SMS successfully queued on backend for ${payload.phone}.`);
     return { sent: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[PinNotification] Unexpected error calling SMS Backend API:', err);
-    return { sent: false, error: err.message };
+    return { sent: false, error: msg };
   }
 }
 
@@ -223,16 +225,17 @@ async function sendSmsViaAfricasTalking(
     const recipients = result?.SMSMessageData?.Recipients;
 
     if (response.ok && recipients?.length > 0 && recipients[0].status === 'Success') {
-      console.log(`[PinNotification] SMS sent to ${phone} via Africa's Talking.`);
+      console.warn(`[PinNotification] SMS sent to ${phone} via Africa's Talking.`);
       return { sent: true };
     }
 
     const errMsg = recipients?.[0]?.status || result?.SMSMessageData?.Message || `HTTP ${response.status}`;
     console.error("[PinNotification] Africa's Talking error:", result);
     return { sent: false, error: `Africa's Talking: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[PinNotification] SMS network error:', err);
-    return { sent: false, error: `Network error: ${err.message}` };
+    return { sent: false, error: `Network error: ${msg}` };
   }
 }
 
@@ -389,16 +392,17 @@ async function sendEmailViaResend(
     const result = await response.json();
 
     if (response.ok && result.id) {
-      console.log(`[PinNotification] Email sent to ${payload.email} via Resend. ID: ${result.id}`);
+      console.warn(`[PinNotification] Email sent to ${payload.email} via Resend. ID: ${result.id}`);
       return { sent: true };
     }
 
     const errMsg = result.message || result.name || `HTTP ${response.status}`;
     console.error('[PinNotification] Resend error:', result);
     return { sent: false, error: `Resend: ${errMsg}` };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[PinNotification] Email network error:', err);
-    return { sent: false, error: `Network error: ${err.message}` };
+    return { sent: false, error: `Network error: ${msg}` };
   }
 }
 
@@ -443,6 +447,6 @@ export async function sendPinNotification(payload: PinNotificationPayload): Prom
   // 2. Send Email
   results.email = await sendEmailViaResend(payload, settings);
 
-  console.log('[PinNotification] Results:', results);
+  console.warn('[PinNotification] Results:', results);
   return results;
 }

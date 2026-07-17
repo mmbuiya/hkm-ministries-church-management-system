@@ -80,7 +80,7 @@ async function indexedDBSetItem(key: string, value: string): Promise<void> {
     return;
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transaction = db.transaction(['secure_storage'], 'readwrite');
     const store = transaction.objectStore('secure_storage');
 

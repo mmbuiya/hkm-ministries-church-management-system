@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RecycleBinItem, User } from './userData';
-import { TransformedAvatar } from './AvatarEditor';
-import { SearchIcon, TrashIcon, EyeIcon, CalendarIcon, UserIcon, UsersIcon, CurrencyDollarIcon } from './Icons';
-import { Trash2, RotateCcw, Eye, Calendar, AlertTriangle } from 'lucide-react';
+import { SearchIcon, TrashIcon, CalendarIcon, UserIcon, UsersIcon, CurrencyDollarIcon } from './Icons';
+import { Trash2, RotateCcw, Eye, AlertTriangle } from 'lucide-react';
 import { useToast } from './ToastContext';
 
 interface RecycleBinPageProps {
@@ -64,7 +63,7 @@ const getItemColor = (type: string) => {
 };
 
 const RecycleBinPage: React.FC<RecycleBinPageProps> = ({
-  currentUser,
+  currentUser: _currentUser,
   recycleBinItems: initialRecycleBinItems,
   onRestore,
   onPermanentlyDelete,
@@ -72,7 +71,7 @@ const RecycleBinPage: React.FC<RecycleBinPageProps> = ({
 }) => {
   const { showToast } = useToast();
   const [recycleBinItems, setRecycleBinItems] = useState<RecycleBinItem[]>(initialRecycleBinItems);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
   const [selectedItem, setSelectedItem] = useState<RecycleBinItem | null>(null);
@@ -85,7 +84,8 @@ const RecycleBinPage: React.FC<RecycleBinPageProps> = ({
 
   // Filter items
   const filteredItems = recycleBinItems.filter((item) => {
-    const itemSearchText = (item.data.name || item.data.memberName || item.data.username || item.type).toLowerCase();
+    const d = item.data as Record<string, unknown>;
+    const itemSearchText = String(d.name || d.memberName || d.username || item.type).toLowerCase();
 
     const matchesSearch = itemSearchText.includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'All' || item.type === filterType;
@@ -141,20 +141,29 @@ const RecycleBinPage: React.FC<RecycleBinPageProps> = ({
   };
 
   const formatItemPreview = (item: RecycleBinItem) => {
-    const data = item.data;
     switch (item.type) {
-      case 'Member':
-        return `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nDepartment: ${data.department}`;
-      case 'Transaction':
-        return `Amount: ${data.amount}\nType: ${data.type}\nCategory: ${data.category}\nDate: ${data.date}`;
-      case 'Equipment':
-        return `Name: ${data.name}\nCategory: ${data.category}\nStatus: ${data.status}\nLocation: ${data.location}`;
-      case 'Visitor':
-        return `Name: ${data.name}\nPhone: ${data.phone}\nEmail: ${data.email || 'N/A'}\nFirst Visit: ${data.firstVisit}`;
-      case 'User':
-        return `Username: ${data.username}\nEmail: ${data.email}\nRole: ${data.role}\nLast Login: ${data.lastLogin}`;
+      case 'Member': {
+        const d = item.data as { name: string; email: string; phone: string; department: string };
+        return `Name: ${d.name}\nEmail: ${d.email}\nPhone: ${d.phone}\nDepartment: ${d.department}`;
+      }
+      case 'Transaction': {
+        const d = item.data as { amount: number; type: string; category: string; date: string };
+        return `Amount: ${d.amount}\nType: ${d.type}\nCategory: ${d.category}\nDate: ${d.date}`;
+      }
+      case 'Equipment': {
+        const d = item.data as { name: string; category: string; status: string; location: string };
+        return `Name: ${d.name}\nCategory: ${d.category}\nStatus: ${d.status}\nLocation: ${d.location}`;
+      }
+      case 'Visitor': {
+        const d = item.data as { name: string; phone: string; email?: string; firstVisit: string };
+        return `Name: ${d.name}\nPhone: ${d.phone}\nEmail: ${d.email || 'N/A'}\nFirst Visit: ${d.firstVisit}`;
+      }
+      case 'User': {
+        const d = item.data as { username: string; email: string; role: string; lastLogin: string };
+        return `Username: ${d.username}\nEmail: ${d.email}\nRole: ${d.role}\nLast Login: ${d.lastLogin}`;
+      }
       default:
-        return JSON.stringify(data, null, 2);
+        return JSON.stringify(item.data, null, 2);
     }
   };
 
@@ -297,13 +306,16 @@ const RecycleBinPage: React.FC<RecycleBinPageProps> = ({
                       <div className={`p-2 rounded-lg ${getItemColor(item.type)}`}>{getItemIcon(item.type)}</div>
                       <div>
                         <p className="font-medium text-gray-800">
-                          {item.data.name ||
-                            item.data.memberName ||
-                            item.data.username ||
+                          {((item.data as Record<string, unknown>).name as string) ||
+                            ((item.data as Record<string, unknown>).memberName as string) ||
+                            ((item.data as Record<string, unknown>).username as string) ||
                             `${item.type} #${item.originalId}`}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {item.data.email || item.data.category || item.data.type || 'No description'}
+                          {((item.data as Record<string, unknown>).email as string) ||
+                            ((item.data as Record<string, unknown>).category as string) ||
+                            ((item.data as Record<string, unknown>).type as string) ||
+                            'No description'}
                         </p>
                       </div>
                     </div>

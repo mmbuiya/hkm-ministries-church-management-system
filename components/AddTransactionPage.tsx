@@ -67,7 +67,9 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   const [isNonMember, setIsNonMember] = useState(false);
   const [nonMemberName, setNonMemberName] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingTransactionData, setPendingTransactionData] = useState<any>(null);
+  const [pendingTransactionData, setPendingTransactionData] = useState<
+    (Omit<Transaction, 'id'> & { id?: number }) | null
+  >(null);
 
   useEffect(() => {
     if (isEditMode && transactionToEdit) {
@@ -80,10 +82,10 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       setIsNonMember(!!transactionToEdit.nonMemberName);
       setNonMemberName(transactionToEdit.nonMemberName || '');
 
-      console.log('Edit mode - loaded transaction with memberId:', transactionToEdit.memberId);
+      console.warn('Edit mode - loaded transaction with memberId:', transactionToEdit.memberId);
     } else {
       // Reset form when not in edit mode
-      console.log('Form reset - clearing memberId');
+      console.warn('Form reset - clearing memberId');
       setMemberId('');
     }
   }, [transactionToEdit, isEditMode]);
@@ -293,7 +295,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
               options={type === 'Income' ? incomeCategories : expenseCategories}
               disabledOptions={type === 'Income' ? disabledIncomeCategories : []}
               value={category}
-              onChange={(e) => setCategory(e.target.value as any)}
+              onChange={(e) => setCategory(e.target.value as IncomeCategory | ExpenseCategory)}
               required
             />
 
@@ -380,20 +382,90 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
                               }`}
                             >
                               <strong>Registration Status:</strong>
-                              <ul className="mt-1 space-y-1 list-disc list-inside">
-                                <li>
-                                  Paid: KSH {pastRegistrationFees} / KSH {registrationThreshold}
+                              <ul className="mt-2 space-y-2 list-none">
+                                {/* Paid status */}
+                                <li className="flex items-center gap-2">
+                                  {pastRegistrationFees >= registrationThreshold ? (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                      <svg
+                                        className="w-3 h-3 text-white"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={3}
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </span>
+                                  ) : (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    </span>
+                                  )}
+                                  <span
+                                    className={
+                                      pastRegistrationFees >= registrationThreshold ? 'text-green-700 font-medium' : ''
+                                    }
+                                  >
+                                    Paid: KSH {pastRegistrationFees} / KSH {registrationThreshold}
+                                  </span>
                                 </li>
+                                {/* After this entry */}
                                 {currentAmount > 0 && (
-                                  <li>
-                                    After this entry: KSH {projectedTotal} / KSH {registrationThreshold}
+                                  <li className="flex items-center gap-2">
+                                    {projectedTotal >= registrationThreshold ? (
+                                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                        <svg
+                                          className="w-3 h-3 text-white"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                          strokeWidth={3}
+                                        >
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </span>
+                                    ) : (
+                                      <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                      </span>
+                                    )}
+                                    <span
+                                      className={
+                                        projectedTotal >= registrationThreshold ? 'text-green-700 font-medium' : ''
+                                      }
+                                    >
+                                      After this entry: KSH {projectedTotal} / KSH {registrationThreshold}
+                                    </span>
                                   </li>
                                 )}
-                                <li>
-                                  Contact:{' '}
-                                  {missingContactFields.length === 0
-                                    ? 'Complete'
-                                    : `Missing: ${missingContactFields.join(', ')}`}
+                                {/* Contact status */}
+                                <li className="flex items-center gap-2">
+                                  {missingContactFields.length === 0 ? (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                      <svg
+                                        className="w-3 h-3 text-white"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={3}
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </span>
+                                  ) : (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    </span>
+                                  )}
+                                  <span
+                                    className={missingContactFields.length === 0 ? 'text-green-700 font-medium' : ''}
+                                  >
+                                    Contact:{' '}
+                                    {missingContactFields.length === 0
+                                      ? 'Complete'
+                                      : `Missing: ${missingContactFields.join(', ')}`}
+                                  </span>
                                 </li>
                               </ul>
                             </div>

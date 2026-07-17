@@ -23,21 +23,33 @@ export function useRecycleBin() {
   const items: RecycleBinItem[] = useMemo(() => {
     const edges = data?.recycle_binCollection?.edges;
     if (!edges) return [];
-    return edges.map((item: any) => ({
-      id: item.node.id,
-      originalId: item.node.original_id,
-      type: item.node.type,
-      data: item.node.data,
-      deletedBy: item.node.deleted_by,
-      deletedAt: item.node.deleted_at,
-      reason: item.node.reason,
-    }));
+    return edges.map(
+      (item: {
+        node: {
+          id: string;
+          original_id: string;
+          type: string;
+          data: unknown;
+          deleted_by: string;
+          deleted_at: string;
+          reason?: string;
+        };
+      }) => ({
+        id: item.node.id,
+        originalId: item.node.original_id,
+        type: item.node.type,
+        data: item.node.data,
+        deletedBy: item.node.deleted_by,
+        deletedAt: item.node.deleted_at,
+        reason: item.node.reason,
+      }),
+    );
   }, [data]);
 
   const moveToRecycleBin = async (
     type: string,
     originalId: string | number,
-    itemData: any,
+    itemData: unknown,
     deletedBy: string,
     reason?: string,
   ) => {

@@ -1,7 +1,7 @@
 import React from 'react';
-import { PencilIcon, LockIcon } from './Icons';
-import { Edit, Lock, Clock } from 'lucide-react';
-import { User, needsPermissionRequest } from './userData';
+import { PencilIcon } from './Icons';
+import { Edit, Lock } from 'lucide-react';
+import { User } from './userData';
 import { PermissionRequest, PermissionRequestModal } from './PermissionRequest';
 import { usePermissionRequest } from '../hooks/usePermissionRequest';
 

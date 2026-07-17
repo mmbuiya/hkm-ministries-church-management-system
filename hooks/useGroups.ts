@@ -21,14 +21,24 @@ export function useGroups(members: Member[] = []) {
   const groups: Group[] = useMemo(() => {
     const raw = data?.groups;
     if (!raw) return [];
-    return raw.map((g: any) => ({
-      id: g.id,
-      name: g.name,
-      leader: g.leader?.email || g.leader_id || '', // Maintain email-based leader for UI compatibility
-      members: g.member_count || 0,
-      created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
-      category: g.category || 'General',
-    }));
+    return raw.map(
+      (g: {
+        id: number;
+        name: string;
+        leader?: { email?: string } | null;
+        leader_id?: string;
+        member_count?: number;
+        created_at?: string;
+        category?: string;
+      }) => ({
+        id: g.id,
+        name: g.name,
+        leader: g.leader?.email || g.leader_id || '',
+        members: g.member_count || 0,
+        created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
+        category: g.category || 'General',
+      }),
+    );
   }, [data]);
 
   const addGroup = async (groupData: Partial<Group>) => {
@@ -48,7 +58,7 @@ export function useGroups(members: Member[] = []) {
   };
 
   const updateGroup = async (id: number, updates: Partial<Group>) => {
-    const set: any = {};
+    const set: Record<string, unknown> = {};
     if (updates.name) set.name = updates.name;
     if (updates.leader) {
       const leaderMember = members.find((m) => m.email === updates.leader);

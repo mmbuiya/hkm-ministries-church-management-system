@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { PermissionRequest } from '../components/PermissionRequest';
 import { User, needsPermissionRequest } from '../components/userData';
 import { usePermissionRequests } from './usePermissionRequests';

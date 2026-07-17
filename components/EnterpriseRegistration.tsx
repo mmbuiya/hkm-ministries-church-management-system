@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  MailIcon,
-  LockIcon,
-  UserIcon,
-  EyeIcon,
-  EyeOffIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationIcon,
-  CameraIcon,
-  ArrowLeftIcon,
-  UserPlusIcon,
-  ArrowRightIcon,
-} from './Icons';
+import { ArrowLeftIcon, UserPlusIcon, ArrowRightIcon } from './Icons';
 import {
   Shield,
   AlertTriangle,
@@ -24,12 +11,9 @@ import {
   Lock,
   User,
   Camera,
-  Clock,
-  Zap,
   AlertCircle,
 } from 'lucide-react';
 import { User as AppUser } from './userData';
-import { useTheme } from './ThemeContext';
 
 export interface RegistrationData {
   email: string;
@@ -86,8 +70,6 @@ const EnterpriseRegistration: React.FC<EnterpriseRegistrationProps> = ({
   onBack,
   onResendVerification,
 }) => {
-  const { colors } = useTheme();
-
   // Form state
   const [formData, setFormData] = useState<RegistrationData>({
     email: '',
@@ -120,8 +102,8 @@ const EnterpriseRegistration: React.FC<EnterpriseRegistrationProps> = ({
     noCommonPatterns: false,
   });
   const [passwordsMatch, setPasswordsMatch] = useState(false);
-  const [emailExists, setEmailExists] = useState(false);
-  const [checkingEmail, setCheckingEmail] = useState(false);
+  const emailExists = false;
+  const checkingEmail = false;
 
   // Email verification state
   const [verificationSent, setVerificationSent] = useState(false);
@@ -272,8 +254,9 @@ const EnterpriseRegistration: React.FC<EnterpriseRegistrationProps> = ({
       } else {
         setError(result.message || 'Registration failed. Please try again.');
       }
-    } catch (error: any) {
-      setError(error.message || 'An unexpected error occurred. Please try again.');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      setError(msg || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +285,7 @@ const EnterpriseRegistration: React.FC<EnterpriseRegistrationProps> = ({
       } else {
         setError('Failed to send verification email. Please try again.');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to send verification email. Please try again.');
     } finally {
       setIsLoading(false);

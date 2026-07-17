@@ -14,7 +14,6 @@ import {
 } from './Icons';
 import { User as AppUser } from './userData';
 import { useTheme } from './ThemeContext';
-import GoogleSignInButton from './GoogleSignInButton';
 import EnterpriseRegistration, { RegistrationData, RegistrationResult } from './EnterpriseRegistration';
 
 export interface LoginResult {
@@ -66,51 +65,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
         setAvatar(reader.result as string);
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setSuccessMessage('');
-    setIsLoading(true);
-
-    try {
-      if (onGoogleLogin) {
-        // The onGoogleLogin handler will trigger Firebase Google Sign-In
-        // The email, displayName, and photoURL will be obtained from the Firebase user
-        const loginResult = await onGoogleLogin(
-          '', // Email determined by Firebase
-          '', // Display name determined by Firebase
-          '', // Photo URL determined by Firebase
-        );
-
-        if (!loginResult.success) {
-          setError(loginResult.message || 'Google sign-in failed. Please try again.');
-        }
-      }
-    } catch (err: any) {
-      console.error('Google sign-in error:', err);
-
-      // Enhanced error handling based on Firebase error codes
-      let errorMessage = 'Google sign-in failed. Please try again later.';
-
-      if (err.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Sign-in was cancelled.';
-      } else if (err.code === 'auth/popup-blocked') {
-        errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site.';
-      } else if (err.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Google Sign-In is not enabled. Please contact support.';
-      } else if (err.code === 'auth/network-request-failed') {
-        errorMessage = 'Network error. Please check your connection and try again.';
-      } else if (err.message?.includes('Firebase configuration error')) {
-        errorMessage = 'Firebase configuration issue. Please refresh the page and try again.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -168,7 +122,7 @@ const LoginPage: React.FC<LoginPageProps> = ({
           }
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred.');
     } finally {
       setIsLoading(false);
@@ -441,22 +395,6 @@ const LoginPage: React.FC<LoginPageProps> = ({
                     <span className="px-2 bg-white text-gray-500">Or continue with</span>
                   </div>
                 </div>
-
-                {/* Google Sign-In temporarily disabled - domain authorization issues */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-                  <p className="text-sm text-yellow-700">
-                    🔧 Google Sign-In is temporarily unavailable. Please use email/password login.
-                  </p>
-                </div>
-
-                {/* <GoogleSignInButton
-                  onClick={handleGoogleSignIn}
-                  isLoading={isLoading}
-                  disabled={isLoading}
-                  size="medium"
-                  theme="light"
-                  text="signin_with"
-                /> */}
               </>
             )}
           </form>

@@ -1,9 +1,8 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
   // Only apply strict CSP in production, allow inline scripts in development for Vite/React
   const isDev = mode === 'development';
 

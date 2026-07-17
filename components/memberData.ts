@@ -32,8 +32,6 @@ export interface Member {
   org_email?: string;
 }
 
-const formatMemberId = (id: number): string => `HKM-${String(id).padStart(3, '0')}`;
-
 export const calculateAgeGroup = (dob: string): AgeGroup => {
   const birthDate = new Date(dob);
   const today = new Date();

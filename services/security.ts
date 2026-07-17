@@ -3,6 +3,16 @@
  * Provides password hashing, encryption, session management, rate limiting, and audit logging
  */
 
+interface WindowWithElectron {
+  electronAPI?: {
+    isElectron?: boolean;
+    secure: {
+      encrypt: (value: string) => Promise<ArrayBuffer>;
+      decrypt: (buffer: ArrayBuffer) => Promise<string>;
+    };
+  };
+}
+
 // ============================================
 // PASSWORD HASHING (using Web Crypto API)
 // ============================================
@@ -136,7 +146,7 @@ const SESSION_KEY = 'hkm_session_secure';
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
 
 // Electron secure storage simulation
-const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron;
+const isElectron = typeof window !== 'undefined' && (window as unknown as WindowWithElectron).electronAPI?.isElectron;
 
 function generateToken(): string {
   const array = crypto.getRandomValues(new Uint8Array(32));
@@ -148,7 +158,7 @@ function generateToken(): string {
 // Secure storage abstraction for Electron
 async function secureSetItem(key: string, value: string): Promise<void> {
   if (isElectron) {
-    const encryptedValue = await (window as any).electronAPI.secure.encrypt(value);
+    const encryptedValue = await (window as unknown as WindowWithElectron).electronAPI!.secure.encrypt(value);
     localStorage.setItem(key, btoa(String.fromCharCode(...new Uint8Array(encryptedValue))));
   } else {
     localStorage.setItem(key, value);
@@ -166,7 +176,7 @@ async function secureGetItem(key: string): Promise<string | null> {
           .split('')
           .map((c) => c.charCodeAt(0)),
       );
-      return await (window as any).electronAPI.secure.decrypt(encryptedBuffer);
+      return await (window as unknown as WindowWithElectron).electronAPI!.secure.decrypt(encryptedBuffer);
     } catch (e) {
       console.error('Decryption failed', e);
       return null;
@@ -637,8 +647,8 @@ export function sanitizeInput(input: string): string {
     .replace(/\//g, '&#x2F;');
 }
 
-export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
-  const sanitized: any = {};
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+  const sanitized: Record<string, unknown> = {};
 
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -646,14 +656,14 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
       if (typeof value === 'string') {
         sanitized[key] = sanitizeInput(value);
       } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        sanitized[key] = sanitizeObject(value);
+        sanitized[key] = sanitizeObject(value as Record<string, unknown>);
       } else {
         sanitized[key] = value;
       }
     }
   }
 
-  return sanitized;
+  return sanitized as T;
 }
 
 // Validate email format
@@ -709,7 +719,9 @@ export async function generateTOTP(secret: string, timeOffset: number = 0): Prom
   }
 
   const keyBytes = base32Decode(secret);
-  const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBytes), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBytes), { name: 'HMAC', hash: 'SHA-1' }, false, [
+    'sign',
+  ]);
 
   const signature = await crypto.subtle.sign('HMAC', key, counterBytes);
   const hash = new Uint8Array(signature);

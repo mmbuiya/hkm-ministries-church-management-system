@@ -10,13 +10,6 @@ import {
 import { Member } from '../components/memberData';
 
 export function useAttendance(members: Member[] = []) {
-  // Calculate the date 6 months ago to limit data fetched
-  const sixMonthsAgo = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 6);
-    return d.toISOString().split('T')[0];
-  }, []);
-
   const { data, loading, error } = useQuery(GET_ATTENDANCE_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
@@ -34,13 +27,21 @@ export function useAttendance(members: Member[] = []) {
 
   const attendanceRecords: AttendanceRecord[] = useMemo(() => {
     if (!data?.attendance_records) return [];
-    return data.attendance_records.map((record: any) => ({
-      id: record.id,
-      date: record.date,
-      service: record.service,
-      memberName: `${record.member?.first_name || ''} ${record.member?.last_name || ''}`.trim() || 'Unknown Member',
-      status: record.status as AttendanceStatus,
-    }));
+    return data.attendance_records.map(
+      (record: {
+        id: number;
+        date: string;
+        service: string;
+        member?: { first_name?: string; last_name?: string } | null;
+        status: string;
+      }) => ({
+        id: record.id,
+        date: record.date,
+        service: record.service,
+        memberName: `${record.member?.first_name || ''} ${record.member?.last_name || ''}`.trim() || 'Unknown Member',
+        status: record.status as AttendanceStatus,
+      }),
+    );
   }, [data]);
 
   const batchSaveAttendance = async (

@@ -72,7 +72,7 @@ export function useMessages() {
   };
 
   const updateMessage = async (id: string, updates: Partial<Message>) => {
-    const SupabaseUpdates: any = {};
+    const SupabaseUpdates: Record<string, unknown> = {};
     if (updates.status) SupabaseUpdates.status = updates.status;
     if (updates.body) SupabaseUpdates.body = updates.body;
     if (updates.receiverId !== undefined) SupabaseUpdates.receiver_id = updates.receiverId;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { PermissionRequest, PermissionStatusBadge } from './PermissionRequest';
 import { User } from './userData';
-import { SearchIcon, CheckCircleIcon, XCircleIcon, EyeIcon, ClockIcon } from './Icons';
-import { Shield, Search, CheckCircle, XCircle, Eye, Clock, AlertTriangle, MessageSquare } from 'lucide-react';
+
+import { Shield, Search, CheckCircle, XCircle, Eye, Clock } from 'lucide-react';
 import { useToast } from './ToastContext';
 
 interface PermissionRequestsPageProps {
@@ -12,13 +12,13 @@ interface PermissionRequestsPageProps {
 }
 
 const PermissionRequestsPage: React.FC<PermissionRequestsPageProps> = ({
-  currentUser,
+  currentUser: _currentUser,
   permissionRequests: initialRequests,
   onReview,
 }) => {
   const { showToast } = useToast();
   const [requests, setRequests] = useState<PermissionRequest[]>(initialRequests);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedRequest, setSelectedRequest] = useState<PermissionRequest | null>(null);

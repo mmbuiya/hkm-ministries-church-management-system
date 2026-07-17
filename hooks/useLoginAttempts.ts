@@ -37,7 +37,15 @@ export function useLoginAttempts() {
 
   const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
 
-  const logLoginAttempt = async (attempt: any) => {
+  const logLoginAttempt = async (attempt: {
+    ipAddress?: string;
+    email?: string;
+    timestamp?: string;
+    success?: boolean;
+    failureReason?: string;
+    userAgent?: string;
+    location?: string;
+  }) => {
     try {
       const ip = attempt.ipAddress || (await detectIp());
       const id = Date.now().toString();

@@ -17,21 +17,35 @@ function daysAgoISO(days: number): string {
   return d.toISOString();
 }
 
-function mapSession(s: any): UserSession {
+function mapSession(s: {
+  id: string;
+  user_id: string;
+  user_email?: string;
+  user_name?: string;
+  user_role?: string;
+  login_time?: string;
+  logout_time?: string;
+  is_active?: boolean;
+  ip_address?: string;
+  user_agent?: string;
+  location?: string;
+  session_duration?: number;
+  last_activity?: string;
+}): UserSession {
   return {
     id: s.id,
     userId: s.user_id,
-    userEmail: s.user_email,
-    userName: s.user_name,
-    userRole: s.user_role,
-    loginTime: s.login_time,
+    userEmail: s.user_email ?? '',
+    userName: s.user_name ?? '',
+    userRole: s.user_role ?? '',
+    loginTime: s.login_time ?? '',
     logoutTime: s.logout_time,
-    isActive: s.is_active,
+    isActive: s.is_active ?? false,
     ipAddress: s.ip_address,
     userAgent: s.user_agent,
     location: s.location,
     sessionDuration: s.session_duration,
-    lastActivity: s.last_activity,
+    lastActivity: s.last_activity ?? '',
   };
 }
 
@@ -146,16 +160,27 @@ export function useLoginAttempts() {
   const attempts: LoginAttempt[] = useMemo(() => {
     const raw = queryData?.login_attempts;
     if (!raw) return [];
-    return raw.map((a: any) => ({
-      id: a.id,
-      email: a.email,
-      timestamp: a.timestamp,
-      success: a.success,
-      failureReason: a.failure_reason,
-      ipAddress: a.ip_address,
-      userAgent: a.user_agent,
-      location: a.location,
-    }));
+    return raw.map(
+      (a: {
+        id: string;
+        email?: string;
+        timestamp?: string;
+        success?: boolean;
+        failure_reason?: string;
+        ip_address?: string;
+        user_agent?: string;
+        location?: string;
+      }) => ({
+        id: a.id,
+        email: a.email,
+        timestamp: a.timestamp,
+        success: a.success,
+        failureReason: a.failure_reason,
+        ipAddress: a.ip_address,
+        userAgent: a.user_agent,
+        location: a.location,
+      }),
+    );
   }, [queryData]);
 
   const loadMoreAttempts = () => setDaysBack((prev) => prev + 30);

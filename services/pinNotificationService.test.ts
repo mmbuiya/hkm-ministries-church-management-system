@@ -68,10 +68,12 @@ describe('pinNotificationService', () => {
   });
 
   it('includes org_email in Resend API request body', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let requestBody: any = null;
 
     vi.stubGlobal(
       'fetch',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.fn().mockImplementation(async (url: string, options?: any) => {
         if (url.includes('api.resend.com')) {
           requestBody = JSON.parse(options.body);
@@ -103,10 +105,12 @@ describe('pinNotificationService', () => {
   });
 
   it('does not include org_email section when orgEmail is empty', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let requestBody: any = null;
 
     vi.stubGlobal(
       'fetch',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.fn().mockImplementation(async (url: string, options?: any) => {
         if (url.includes('api.resend.com')) {
           requestBody = JSON.parse(options.body);

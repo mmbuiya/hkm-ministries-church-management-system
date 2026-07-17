@@ -112,7 +112,7 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
 
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingUserData, setPendingUserData] = useState<any>(null);
+  const [pendingUserData, setPendingUserData] = useState<Partial<User> | null>(null);
 
   const [validation, setValidation] = useState({
     minLength: false,

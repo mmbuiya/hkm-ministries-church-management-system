@@ -77,13 +77,17 @@ describe('Data Encryption', () => {
 
 describe('Input Sanitization', () => {
   it('should escape HTML special characters', () => {
-    expect(sanitizeInput('<script>alert("xss")</script>'))
-      .toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;&#x2F;script&gt;');
+    expect(sanitizeInput('<script>alert("xss")</script>')).toBe(
+      '&lt;script&gt;alert(&quot;xss&quot;)&lt;&#x2F;script&gt;',
+    );
   });
 
   it('should handle non-string input', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(sanitizeInput(123 as any)).toBe('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(sanitizeInput(null as any)).toBe('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(sanitizeInput(undefined as any)).toBe('');
   });
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useApolloClient } from '@apollo/client';
-import { Transaction } from '../components/financeData';
+import { Transaction, TransactionCategory } from '../components/financeData';
 import {
   GET_TRANSACTIONS_QUERY,
   ADD_TRANSACTION_MUTATION,
@@ -14,7 +14,7 @@ import { ADD_PROVISIONING_QUEUE_MUTATION } from '../services/graphql/provisionin
 import { sendPinNotification } from '../services/pinNotificationService';
 import { hashPin } from '../utils/hashPin';
 import { generateOrgEmail, createAlias, loadImprovMXConfig, checkAliasExists } from '../services/improvmxService';
-import { computeRegistrationStatus } from '../services/provisioning';
+import { computeRegistrationStatus, MemberContact } from '../services/provisioning';
 interface SupabaseMember {
   id: string;
   first_name: string;
@@ -51,7 +51,7 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
   return {
     id: SupabaseTx.id,
     date: SupabaseTx.date,
-    category: SupabaseTx.category as any,
+    category: SupabaseTx.category as TransactionCategory,
     type: SupabaseTx.type,
     amount: parseFloat(SupabaseTx.amount.toString()),
     description: SupabaseTx.description || '',
@@ -64,18 +64,22 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
 
 export function useTransactions() {
   const { data, loading, error } = useQuery(GET_TRANSACTIONS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-and-network',
     errorPolicy: 'all',
   });
   const apolloClient = useApolloClient();
   const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION, {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+    awaitRefetchQueries: true,
   });
   const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION, {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+    awaitRefetchQueries: true,
   });
   const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION, {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }, { query: GET_MEMBERS_QUERY }],
+    awaitRefetchQueries: true,
   });
   const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
@@ -83,19 +87,19 @@ export function useTransactions() {
   const [addProvisioningQueueMutation] = useMutation(ADD_PROVISIONING_QUEUE_MUTATION);
 
   const transactions: Transaction[] = useMemo(() => {
-    console.log('[useTransactions] Query data:', data, 'Error:', error);
+    console.warn('[useTransactions] Query data:', data, 'Error:', error);
     if (!data?.transactionsCollection?.edges) {
       console.warn('[useTransactions] No transactions in data', { data, loading, error });
       return [];
     }
-    console.log('[useTransactions] Transactions count:', data.transactionsCollection.edges.length);
+    console.warn('[useTransactions] Transactions count:', data.transactionsCollection.edges.length);
     return data.transactionsCollection.edges.map((edge: { node: SupabaseTransaction }) =>
       transformTransaction(edge.node),
     );
   }, [data, error, loading]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'> | Transaction) => {
-    console.log('[useTransactions] addTransaction called', {
+    console.warn('[useTransactions] addTransaction called', {
       date: transaction.date,
       category: transaction.category,
       type: transaction.type,
@@ -103,7 +107,7 @@ export function useTransactions() {
       memberId: transaction.memberId,
     });
     try {
-      console.log('[useTransactions] Sending GraphQL mutation...');
+      console.warn('[useTransactions] Sending GraphQL mutation...');
       const result = await addTransactionMutation({
         variables: {
           object: {
@@ -118,7 +122,7 @@ export function useTransactions() {
         },
       });
 
-      console.log('[useTransactions] Mutation result:', result);
+      console.warn('[useTransactions] Mutation result:', result);
 
       if (result.errors && result.errors.length > 0) {
         const errorMessages = result.errors.map((e) => e.message).join('; ');
@@ -141,7 +145,7 @@ export function useTransactions() {
         const totalRegistrationPaid = previousRegistrationFees + transaction.amount;
 
         if (totalRegistrationPaid >= 500) {
-          console.log('[useTransactions] Registration threshold met.');
+          console.warn('[useTransactions] Registration threshold met.');
 
           // Fetch member details to validate contact info before provisioning
           const memberResult = await apolloClient.query({
@@ -150,13 +154,13 @@ export function useTransactions() {
           });
 
           const memberNode = memberResult.data?.membersCollection?.edges?.find(
-            (e: any) => e.node.id === transaction.memberId,
+            (e: { node: MemberContact }) => e.node.id === transaction.memberId,
           )?.node;
 
           const status = computeRegistrationStatus(transaction.memberId, transactions, memberNode);
 
           if (!status.canProvision) {
-            console.log('[useTransactions] Provisioning blocked — missing contact details.');
+            console.warn('[useTransactions] Provisioning blocked — missing contact details.');
 
             await addProvisioningQueueMutation({
               variables: {
@@ -190,7 +194,7 @@ export function useTransactions() {
               console.error('Failed to write audit log', auditErr);
             }
           } else {
-            console.log('[useTransactions] Contact details valid. Activating member portal...');
+            console.warn('[useTransactions] Contact details valid. Activating member portal...');
 
             const { pin: generatedPin, hashedPin } = await (async () => {
               const p = Math.floor(100000 + Math.random() * 900000).toString();
@@ -207,7 +211,7 @@ export function useTransactions() {
                 },
               },
             });
-            console.log('[useTransactions] Member activated with new PIN.');
+            console.warn('[useTransactions] Member activated with new PIN.');
 
             try {
               await addAuditLogMutation({
@@ -259,7 +263,7 @@ export function useTransactions() {
                         updates: { org_email: orgEmail },
                       },
                     });
-                    console.log(`[useTransactions] Org email ${orgEmail} created and saved.`);
+                    console.warn(`[useTransactions] Org email ${orgEmail} created and saved.`);
                   } else {
                     console.error('[useTransactions] Failed to create alias:', aliasResult.error);
                   }
@@ -329,7 +333,7 @@ export function useTransactions() {
             }
           }
         } else {
-          console.log(
+          console.warn(
             `[useTransactions] Partial Registration Fee. Total paid: ${totalRegistrationPaid}. Pending 500 threshold.`,
           );
           try {
@@ -349,13 +353,15 @@ export function useTransactions() {
         }
       }
 
-      console.log('[useTransactions] Mutation succeeded');
-    } catch (error: any) {
+      console.warn('[useTransactions] Mutation succeeded');
+    } catch (error: unknown) {
       console.error('[useTransactions] Error adding transaction:', error);
-      const message =
-        error.graphQLErrors?.[0]?.message ||
-        error.message ||
-        'Failed to save transaction. Please check your connection and try again.';
+      const graphQLError =
+        error instanceof Error && 'graphQLErrors' in error
+          ? (error as { graphQLErrors?: Array<{ message?: string }> }).graphQLErrors?.[0]?.message
+          : undefined;
+      const msg = error instanceof Error ? error.message : String(error);
+      const message = graphQLError || msg || 'Failed to save transaction. Please check your connection and try again.';
       console.error('[useTransactions] Throwing error:', message);
       throw new Error(message, { cause: error });
     }
@@ -363,7 +369,7 @@ export function useTransactions() {
 
   const updateTransaction = async (id: number, updates: Partial<Transaction>) => {
     try {
-      const SupabaseUpdates: any = {};
+      const SupabaseUpdates: Record<string, unknown> = {};
 
       if (updates.date !== undefined) SupabaseUpdates.date = updates.date;
       if (updates.category !== undefined) SupabaseUpdates.category = updates.category;
@@ -391,12 +397,15 @@ export function useTransactions() {
       }
 
       // Real-time subscription will update UI automatically
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating transaction:', error);
+      const graphQLError =
+        error instanceof Error && 'graphQLErrors' in error
+          ? (error as { graphQLErrors?: Array<{ message?: string }> }).graphQLErrors?.[0]?.message
+          : undefined;
+      const msg = error instanceof Error ? error.message : String(error);
       const message =
-        error.graphQLErrors?.[0]?.message ||
-        error.message ||
-        'Failed to update transaction. Please check your connection and try again.';
+        graphQLError || msg || 'Failed to update transaction. Please check your connection and try again.';
       throw new Error(message, { cause: error });
     }
   };
@@ -450,9 +459,10 @@ export function useTransactions() {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
       console.error('Error deleting transaction:', error);
-      throw new Error(error.message || 'Failed to delete transaction. Please check your connection and try again.', {
+      throw new Error(msg || 'Failed to delete transaction. Please check your connection and try again.', {
         cause: error,
       });
     }
@@ -465,7 +475,7 @@ export function useTransactions() {
 
   return {
     data: transactions,
-    setData: (newTransactions: Transaction[]) => {
+    setData: (_newTransactions: Transaction[]) => {
       console.warn('setData called on Supabase subscription - data is managed by GraphQL');
     },
     loading,

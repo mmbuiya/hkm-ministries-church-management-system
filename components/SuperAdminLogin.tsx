@@ -20,8 +20,6 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel }) 
     secretKey: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showAccessCode, setShowAccessCode] = useState(false);
-  const [showSecretKey, setShowSecretKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,8 +34,9 @@ const SuperAdminLogin: React.FC<SuperAdminLoginProps> = ({ onLogin, onCancel }) 
       if (!success) {
         setError('Invalid Super Admin credentials. Please check all fields.');
       }
-    } catch (error: any) {
-      setError(error.message || 'Login failed. Please try again.');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      setError(msg || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }

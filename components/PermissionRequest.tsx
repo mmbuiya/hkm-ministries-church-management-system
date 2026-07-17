@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User } from './userData';
-import { LockIcon, PaperAirplaneIcon, XCircleIcon, ClockIcon } from './Icons';
+import { PaperAirplaneIcon, XCircleIcon, ClockIcon } from './Icons';
 import { AlertTriangle, Lock, Send, Clock } from 'lucide-react';
 
 export interface PermissionRequest {

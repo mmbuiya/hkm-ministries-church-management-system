@@ -24,7 +24,6 @@ const StatCard: React.FC<{
   color: string;
   onViewClick?: () => void;
 }> = ({ title, value, subtext, icon: Icon, color, onViewClick }) => {
-  const { modeColors } = useTheme();
   return (
     <div className={`p-6 rounded-xl text-white shadow-md ${color}`}>
       <div className="flex justify-between items-start">

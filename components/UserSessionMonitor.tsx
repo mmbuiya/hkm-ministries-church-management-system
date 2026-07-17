@@ -272,7 +272,7 @@ const UserSessionMonitor: React.FC<UserSessionMonitorProps> = ({ currentUser }) 
             {selectedTab === 'sessions' && (
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
+                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'inactive')}
                 className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Sessions</option>

@@ -96,7 +96,7 @@ export interface RecycleBinItem {
     | 'User'
     | 'AttendanceRecord'
     | 'MaintenanceRecord';
-  data: any; // Original data
+  data: unknown; // Original data
   deletedBy: string; // User ID who deleted it
   deletedAt: string; // ISO timestamp
   reason?: string; // Optional deletion reason

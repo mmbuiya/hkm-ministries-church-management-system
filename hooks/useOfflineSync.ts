@@ -28,25 +28,28 @@ export const useOfflineSync = () => {
     updatePendingCount();
   }, [updatePendingCount]);
 
-  const syncPendingOperations = useCallback(async (syncCallback: (operations: any[]) => Promise<void>) => {
-    if (!isOnline) return;
-    
-    setIsSyncing(true);
-    try {
-      const pending = await offlineSyncService.getPendingOperations();
-      if (pending.length > 0) {
-        await syncCallback(pending);
-        for (const op of pending) {
-          await offlineSyncService.clearSyncedOperation(op.id);
+  const syncPendingOperations = useCallback(
+    async (syncCallback: (operations: unknown[]) => Promise<void>) => {
+      if (!isOnline) return;
+
+      setIsSyncing(true);
+      try {
+        const pending = await offlineSyncService.getPendingOperations();
+        if (pending.length > 0) {
+          await syncCallback(pending);
+          for (const op of pending) {
+            await offlineSyncService.clearSyncedOperation(op.id);
+          }
+          await updatePendingCount();
         }
-        await updatePendingCount();
+      } catch (error) {
+        console.error('Sync failed:', error);
+      } finally {
+        setIsSyncing(false);
       }
-    } catch (error) {
-      console.error('Sync failed:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isOnline, updatePendingCount]);
+    },
+    [isOnline, updatePendingCount],
+  );
 
   return {
     isOnline,

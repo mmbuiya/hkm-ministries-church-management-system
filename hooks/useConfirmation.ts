@@ -4,7 +4,7 @@ export interface ConfirmationConfig {
   title: string;
   message: string;
   itemName: string;
-  itemDetails?: { [key: string]: any };
+  itemDetails?: Record<string, unknown>;
   type: 'edit' | 'delete';
   onConfirm: () => void | Promise<void>;
 }

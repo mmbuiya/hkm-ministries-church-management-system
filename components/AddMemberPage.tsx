@@ -74,7 +74,7 @@ const AddMemberPage: React.FC<AddMemberPageProps> = ({ onBack, onSave, memberToE
   });
   const [showAvatarEditor, setShowAvatarEditor] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingMemberData, setPendingMemberData] = useState<any>(null);
+  const [pendingMemberData, setPendingMemberData] = useState<Partial<Member> | null>(null);
 
   useEffect(() => {
     if (isEditMode && memberToEdit) {

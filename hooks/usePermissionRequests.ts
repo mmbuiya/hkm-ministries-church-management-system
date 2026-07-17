@@ -24,23 +24,41 @@ export function usePermissionRequests() {
   const requests: PermissionRequest[] = useMemo(() => {
     const raw = queryData?.permission_requests;
     if (!raw) return [];
-    return raw.map((r: any) => ({
-      id: r.id,
-      requesterId: r.requester_id,
-      requesterName: r.requester_name,
-      requesterEmail: r.requester_email,
-      requestType: r.request_type,
-      dataType: r.data_type,
-      dataId: r.data_id,
-      dataName: r.data_name,
-      reason: r.reason,
-      requestedAt: r.requested_at,
-      status: r.status,
-      reviewedBy: r.reviewed_by,
-      reviewedAt: r.reviewed_at,
-      reviewNotes: r.review_notes,
-      expiresAt: r.expires_at,
-    }));
+    return raw.map(
+      (r: {
+        id: string;
+        requester_id: string;
+        requester_name: string;
+        requester_email: string;
+        request_type: string;
+        data_type: string;
+        data_id: string;
+        data_name: string;
+        reason: string;
+        requested_at: string;
+        status: string;
+        reviewed_by?: string;
+        reviewed_at?: string;
+        review_notes?: string;
+        expires_at?: string;
+      }) => ({
+        id: r.id,
+        requesterId: r.requester_id,
+        requesterName: r.requester_name,
+        requesterEmail: r.requester_email,
+        requestType: r.request_type,
+        dataType: r.data_type,
+        dataId: r.data_id,
+        dataName: r.data_name,
+        reason: r.reason,
+        requestedAt: r.requested_at,
+        status: r.status,
+        reviewedBy: r.reviewed_by,
+        reviewedAt: r.reviewed_at,
+        reviewNotes: r.review_notes,
+        expiresAt: r.expires_at,
+      }),
+    );
   }, [queryData]);
 
   const addRequest = async (request: Omit<PermissionRequest, 'id' | 'requestedAt' | 'status'>) => {
@@ -66,7 +84,7 @@ export function usePermissionRequests() {
   };
 
   const updateRequest = async (id: string, changes: Partial<PermissionRequest>) => {
-    const mappedChanges: any = {};
+    const mappedChanges: Record<string, unknown> = {};
     if (changes.status) mappedChanges.status = changes.status;
     if (changes.reviewedBy) mappedChanges.reviewed_by = changes.reviewedBy;
     if (changes.reviewedAt) mappedChanges.reviewed_at = changes.reviewedAt;

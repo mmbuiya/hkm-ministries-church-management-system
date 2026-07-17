@@ -1,5 +1,4 @@
-import { OAuth2Client } from 'google-auth-library';
-import { SecureStorage } from './SecureStorage';
+import { OAuth2Client, Credentials } from 'google-auth-library';
 import { logAuditEvent, sanitizeInput } from './security';
 
 // Define OAuth-specific audit actions since they don't exist in the base AuditActions
@@ -189,7 +188,7 @@ export function generateGoogleAuthUrl(state: string): string {
 
 // Exchange authorization code for tokens
 export async function exchangeCodeForTokens(code: string): Promise<{
-  tokens: any;
+  tokens: Credentials;
   userInfo: GoogleUserInfo;
 }> {
   const client = getOAuthClient();

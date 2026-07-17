@@ -38,36 +38,69 @@ export function useEquipment() {
 
   const equipment: Equipment[] = useMemo(() => {
     if (!data?.equipment) return [];
-    return data.equipment.map((e: any) => ({
-      id: e.id,
-      name: e.name,
-      category: e.category || 'Other',
-      purchaseDate: e.purchase_date || undefined,
-      purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
-      condition: e.condition as EquipmentCondition,
-      location: e.location || '',
-      description: e.description || '',
-    }));
+    return data.equipment.map(
+      (e: {
+        id: number;
+        name: string;
+        category?: string;
+        purchase_date?: string;
+        purchase_price?: number;
+        condition: string;
+        location?: string;
+        description?: string;
+      }) => ({
+        id: e.id,
+        name: e.name,
+        category: e.category || 'Other',
+        purchaseDate: e.purchase_date || undefined,
+        purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
+        condition: e.condition as EquipmentCondition,
+        location: e.location || '',
+        description: e.description || '',
+      }),
+    );
   }, [data]);
 
   const maintenanceRecords: MaintenanceRecord[] = useMemo(() => {
     if (!data?.equipment) return [];
     const allRecords: MaintenanceRecord[] = [];
-    data.equipment.forEach((e: any) => {
-      if (e.maintenance_records) {
-        e.maintenance_records.forEach((m: any) => {
-          allRecords.push({
-            id: m.id,
-            equipmentId: m.equipment_id,
-            date: m.date,
-            type: m.type as MaintenanceType,
-            cost: m.cost ? Number(m.cost) : 0,
-            description: m.description || '',
-            status: m.status as MaintenanceStatus,
-          });
-        });
-      }
-    });
+    data.equipment.forEach(
+      (e: {
+        maintenance_records?: Array<{
+          id: number;
+          equipment_id: number;
+          date: string;
+          type: string;
+          cost?: number;
+          description?: string;
+          status: string;
+        }>;
+      }) => {
+        if (e.maintenance_records) {
+          e.maintenance_records.forEach(
+            (m: {
+              id: number;
+              equipment_id: number;
+              date: string;
+              type: string;
+              cost?: number;
+              description?: string;
+              status: string;
+            }) => {
+              allRecords.push({
+                id: m.id,
+                equipmentId: m.equipment_id,
+                date: m.date,
+                type: m.type as MaintenanceType,
+                cost: m.cost ? Number(m.cost) : 0,
+                description: m.description || '',
+                status: m.status as MaintenanceStatus,
+              });
+            },
+          );
+        }
+      },
+    );
     return allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [data]);
 
@@ -88,7 +121,7 @@ export function useEquipment() {
   };
 
   const updateEquipment = async (id: number, updates: Partial<Equipment>) => {
-    const set: any = {};
+    const set: Record<string, unknown> = {};
     if (updates.name) set.name = updates.name;
     if (updates.category) set.category = updates.category;
     if (updates.purchaseDate) set.purchase_date = updates.purchaseDate;
@@ -124,7 +157,7 @@ export function useEquipment() {
   };
 
   const updateMaintenance = async (id: number, updates: Partial<MaintenanceRecord>) => {
-    const set: any = {};
+    const set: Record<string, unknown> = {};
     if (updates.date) set.date = updates.date;
     if (updates.type) set.type = updates.type;
     if (updates.cost !== undefined) set.cost = updates.cost;

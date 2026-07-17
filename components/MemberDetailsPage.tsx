@@ -4,8 +4,6 @@ import { Transaction } from './financeData';
 import { AttendanceRecord } from './attendanceData';
 import {
   ArrowLeftIcon,
-  PencilIcon,
-  TrashIcon,
   UserIcon,
   MailIcon,
   PhoneIcon,
@@ -19,7 +17,6 @@ import {
   TrendingUpIcon,
 } from './Icons';
 import { Copy, Check, AtSign } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TransformedAvatar } from './AvatarEditor';
 import ActionButtons from './ActionButtons';
 
@@ -98,17 +95,6 @@ const MemberDetailsPage: React.FC<MemberDetailsPageProps> = ({
     const present = memberAttendance.filter((r) => r.status === 'Present').length;
     const rate = total > 0 ? Math.round((present / total) * 100) : 0;
     return { total, present, rate };
-  }, [memberAttendance]);
-
-  const attendanceChartData = useMemo(() => {
-    // Last 6 entries
-    return memberAttendance
-      .slice(0, 6)
-      .reverse()
-      .map((r) => ({
-        date: new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        status: r.status === 'Present' ? 1 : r.status === 'Late' ? 0.5 : 0,
-      }));
   }, [memberAttendance]);
 
   return (

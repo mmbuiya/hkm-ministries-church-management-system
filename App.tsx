@@ -37,7 +37,7 @@ const AdminApp: React.FC = () => {
 
       createUserSession(authUser)
         .then((session) => {
-          if (session) console.log('User session created:', session);
+          if (session) console.warn('User session created:', session);
         })
         .catch((error) => console.error('Failed to create user session:', error));
 

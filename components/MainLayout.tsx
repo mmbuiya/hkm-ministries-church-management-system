@@ -30,17 +30,17 @@ import RecycleBinPage from './RecycleBinPage';
 import PermissionRequestsPage from './PermissionRequestsPage';
 // REMOVED: SuperAdminLogin import (dead code — component was never rendered)
 import UserSessionMonitor from './UserSessionMonitor';
-import { AttendanceStatus, AttendanceRecord } from './attendanceData';
+import { AttendanceStatus } from './attendanceData';
 import { Transaction } from './financeData';
 import { Member } from './memberData';
 import { Equipment } from './equipmentData';
 import { MaintenanceRecord } from './maintenanceData';
-import { SmsRecord } from './smsData';
+
 import { Visitor, FollowUp } from './visitorData';
 import { User, RecycleBinItem } from './userData';
 import { Branch } from './branchData';
 import { useToast } from './ToastContext';
-import { canAccessSection, canManageUsers, canManageDataPersonnel } from './AccessControl';
+
 import { useTheme } from './ThemeContext';
 import { useMembers } from '../hooks/useMembers';
 import { useTransactions } from '../hooks/useTransactions';
@@ -73,14 +73,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Real-time data hooks
-  const {
-    data: members,
-    setData: setMembers,
-    loading: membersLoading,
-    addMember,
-    updateMember,
-    deleteMember,
-  } = useMembers();
+  const { data: members, loading: membersLoading, addMember, updateMember, deleteMember } = useMembers();
   const {
     data: visitors,
     loading: visitorsLoading,
@@ -99,7 +92,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   } = useAttendance(members);
   const {
     data: transactions,
-    setData: setTransactions,
     loading: transactionsLoading,
     addTransaction,
     updateTransaction,
@@ -132,13 +124,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     upsertUser: onSaveOrUpdateUser,
     deleteUser: onDeleteUser,
   } = useUsers();
-  const {
-    data: permissionRequests,
-    addRequest,
-    updateRequest,
-    deleteRequest,
-    loading: permissionRequestsLoading,
-  } = usePermissionRequests();
+  const { data: permissionRequests, updateRequest, loading: permissionRequestsLoading } = usePermissionRequests();
 
   const { processRetries } = useProvisioningQueue();
 
@@ -240,15 +226,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     if (members.length === 0 || groups.length === 0) return;
 
     const updateGroupStats = async () => {
-      let needsUpdate = false;
-      const updatedGroups = groups.map((group) => {
+      groups.map((group) => {
         const membersInDept = members.filter((m) => m.department === group.name);
         const leader = membersInDept.find((m) => m.role === 'Leader') || membersInDept[0];
         const newMemberCount = membersInDept.length;
         const newLeaderEmail = leader ? leader.email : group.leader;
 
         if (group.members !== newMemberCount || group.leader !== newLeaderEmail) {
-          needsUpdate = true;
           const updatedGroup = { ...group, members: newMemberCount, leader: newLeaderEmail || '' };
           updateGroup(Number(group.id), updatedGroup);
           return updatedGroup;
@@ -348,7 +332,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         await addGroup(groupData);
         showToast('Group created.', 'success');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to save group', 'error');
     }
     setGroupToEdit(null);
@@ -364,7 +348,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         }
         await deleteGroup(id);
         showToast('Group moved to recycle bin.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete group', 'error');
       }
     }
@@ -397,7 +381,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         }
         await deleteAttendanceRecord(id);
         showToast('Attendance record moved to recycle bin.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete record', 'error');
       }
     }
@@ -453,7 +437,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       }
       setEquipmentToEdit(null);
       setActivePage('Equipment');
-    } catch (error) {
+    } catch {
       showToast('Failed to save equipment', 'error');
     }
   };
@@ -468,7 +452,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         }
         await deleteEquipment(id);
         showToast('Equipment moved to recycle bin.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete equipment', 'error');
       }
     }
@@ -486,7 +470,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       }
       setMaintenanceToEdit(null);
       setActivePage('Equipment');
-    } catch (error) {
+    } catch {
       showToast('Failed to save maintenance record', 'error');
     }
   };
@@ -501,7 +485,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         }
         await deleteMaintenance(id);
         showToast('Maintenance record moved to recycle bin.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete record', 'error');
       }
     }
@@ -517,7 +501,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         await addVisitor(visitorData);
         showToast('Visitor registered.', 'success');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to save visitor', 'error');
     }
   };
@@ -532,7 +516,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
         }
         await deleteVisitor(id);
         showToast('Visitor moved to recycle bin.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete visitor', 'error');
       }
     }
@@ -557,7 +541,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       // Update visitor status and last updated if necessary
       await updateVisitor(visitorId, { status: 'In follow up' });
       showToast('Follow-up recorded.', 'success');
-    } catch (error) {
+    } catch {
       showToast('Failed to save follow-up', 'error');
     }
   };
@@ -567,7 +551,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       try {
         await deleteFollowUp(followUpId);
         showToast('Follow-up deleted.', 'info');
-      } catch (error) {
+      } catch {
         showToast('Failed to delete follow-up', 'error');
       }
     }
@@ -623,8 +607,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       showToast(`Branch ${branchToEdit ? 'updated' : 'added'} successfully`, 'success');
       setActivePage('Branches');
       setBranchToEdit(null);
-    } catch (error: any) {
-      showToast(error.message || 'Failed to save branch', 'error');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      showToast(msg || 'Failed to save branch', 'error');
     }
   };
 
@@ -633,8 +618,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
       try {
         await deleteBranch(id);
         showToast('Branch deleted successfully', 'success');
-      } catch (error: any) {
-        showToast(error.message || 'Failed to delete branch', 'error');
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        showToast(msg || 'Failed to delete branch', 'error');
       }
     }
   };
@@ -653,32 +639,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     try {
       switch (item.type) {
         case 'Member':
-          await addMember(item.data);
+          await addMember(item.data as Partial<Member>);
           break;
         case 'Transaction':
-          await addTransaction(item.data);
+          await addTransaction(item.data as Omit<Transaction, 'id'> | Transaction);
           break;
         case 'Equipment':
-          await addEquipment(item.data);
+          await addEquipment(item.data as Partial<Equipment>);
           break;
         case 'Visitor':
-          await addVisitor(item.data);
+          await addVisitor(item.data as Partial<Visitor>);
           break;
         case 'Group':
-          await addGroup(item.data);
+          await addGroup(item.data as Partial<Group>);
           break;
         case 'Branch':
-          await addBranch(item.data);
+          await addBranch(item.data as Branch);
           break;
-        case 'AttendanceRecord':
-          await batchSaveAttendance(
-            { [item.data.memberId]: item.data.status },
-            item.data.serviceName,
-            item.data.serviceDate,
-          );
+        case 'AttendanceRecord': {
+          const attData = item.data as {
+            memberId: string;
+            status: AttendanceStatus;
+            serviceName: string;
+            serviceDate: string;
+          };
+          await batchSaveAttendance({ [attData.memberId]: attData.status }, attData.serviceName, attData.serviceDate);
           break;
+        }
         case 'MaintenanceRecord':
-          await addMaintenance(item.data);
+          await addMaintenance(item.data as Omit<MaintenanceRecord, 'id'>);
           break;
         default:
           throw new Error(`Unknown item type: ${item.type}`);
