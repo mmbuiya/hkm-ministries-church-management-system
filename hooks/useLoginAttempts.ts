@@ -1,10 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
-import {
-  GET_LOGIN_ATTEMPTS_QUERY,
-  GET_LOGIN_ATTEMPTS_SUBSCRIPTION,
-  ADD_LOGIN_ATTEMPT_MUTATION,
-} from '../services/graphql/cleanup';
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_LOGIN_ATTEMPTS_QUERY, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
 
 let cachedIp: string | null = null;
 
@@ -29,19 +25,13 @@ export function useLoginAttempts() {
     return d.toISOString();
   }, [daysBack]);
 
-  // HTTP query fires immediately — works even when Supabase is waking up
-  const { data: queryData, loading: queryLoading } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-    variables: { startDate },
-    fetchPolicy: 'cache-first',
-  });
-
-  // WebSocket subscription takes over once connected
   const {
-    data: subData,
-    loading: subLoading,
+    data: queryData,
+    loading: queryLoading,
     error,
-  } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
+  } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
     variables: { startDate },
+    fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
 
@@ -64,6 +54,7 @@ export function useLoginAttempts() {
             location: attempt.location || 'Unknown',
           },
         },
+        refetchQueries: [{ query: GET_LOGIN_ATTEMPTS_QUERY }],
       });
     } catch (err) {
       console.error('Error logging login attempt:', err);
@@ -73,7 +64,7 @@ export function useLoginAttempts() {
   const loadMoreAttempts = () => setDaysBack((prev) => prev + 30);
 
   return {
-    attempts: subData?.login_attempts || queryData?.login_attempts || [],
+    attempts: queryData?.login_attempts || [],
     loading: queryLoading && !queryData,
     error,
     daysBack,

@@ -1,164 +1,157 @@
-
 import { useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { Equipment, EquipmentCondition } from '../components/equipmentData';
 import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../components/maintenanceData';
 import {
-    GET_EQUIPMENT_SUBSCRIPTION,
-    GET_EQUIPMENT_QUERY,
-    ADD_EQUIPMENT_MUTATION,
-    UPDATE_EQUIPMENT_MUTATION,
-    DELETE_EQUIPMENT_MUTATION,
-    ADD_MAINTENANCE_MUTATION,
-    UPDATE_MAINTENANCE_MUTATION,
-    DELETE_MAINTENANCE_MUTATION
+  GET_EQUIPMENT_QUERY,
+  ADD_EQUIPMENT_MUTATION,
+  UPDATE_EQUIPMENT_MUTATION,
+  DELETE_EQUIPMENT_MUTATION,
+  ADD_MAINTENANCE_MUTATION,
+  UPDATE_MAINTENANCE_MUTATION,
+  DELETE_MAINTENANCE_MUTATION,
 } from '../services/graphql/equipment';
 
 export function useEquipment() {
-    const { data: queryData, loading: queryLoading } = useQuery(GET_EQUIPMENT_QUERY, {
-        fetchPolicy: 'network-only',
-        errorPolicy: 'all'
+  const { data, loading, error } = useQuery(GET_EQUIPMENT_QUERY, {
+    fetchPolicy: 'network-only',
+    errorPolicy: 'all',
+  });
+  const [addEquipmentMutation] = useMutation(ADD_EQUIPMENT_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+  const [updateEquipmentMutation] = useMutation(UPDATE_EQUIPMENT_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+  const [deleteEquipmentMutation] = useMutation(DELETE_EQUIPMENT_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+  const [addMaintenanceMutation] = useMutation(ADD_MAINTENANCE_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+  const [updateMaintenanceMutation] = useMutation(UPDATE_MAINTENANCE_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+  const [deleteMaintenanceMutation] = useMutation(DELETE_MAINTENANCE_MUTATION, {
+    refetchQueries: [{ query: GET_EQUIPMENT_QUERY }],
+  });
+
+  const equipment: Equipment[] = useMemo(() => {
+    if (!data?.equipment) return [];
+    return data.equipment.map((e: any) => ({
+      id: e.id,
+      name: e.name,
+      category: e.category || 'Other',
+      purchaseDate: e.purchase_date || undefined,
+      purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
+      condition: e.condition as EquipmentCondition,
+      location: e.location || '',
+      description: e.description || '',
+    }));
+  }, [data]);
+
+  const maintenanceRecords: MaintenanceRecord[] = useMemo(() => {
+    if (!data?.equipment) return [];
+    const allRecords: MaintenanceRecord[] = [];
+    data.equipment.forEach((e: any) => {
+      if (e.maintenance_records) {
+        e.maintenance_records.forEach((m: any) => {
+          allRecords.push({
+            id: m.id,
+            equipmentId: m.equipment_id,
+            date: m.date,
+            type: m.type as MaintenanceType,
+            cost: m.cost ? Number(m.cost) : 0,
+            description: m.description || '',
+            status: m.status as MaintenanceStatus,
+          });
+        });
+      }
     });
-    const { data: subData, loading: subLoading, error } = useSubscription(GET_EQUIPMENT_SUBSCRIPTION, {
-        errorPolicy: 'all'
+    return allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [data]);
+
+  const addEquipment = async (item: Partial<Equipment>) => {
+    await addEquipmentMutation({
+      variables: {
+        object: {
+          name: item.name || '',
+          category: item.category,
+          purchase_date: item.purchaseDate,
+          purchase_price: item.purchasePrice,
+          condition: item.condition,
+          location: item.location,
+          description: item.description,
+        },
+      },
     });
-    const data = subData ?? queryData;
-    const loading = subData === undefined && queryLoading;
-    const [addEquipmentMutation] = useMutation(ADD_EQUIPMENT_MUTATION);
-    const [updateEquipmentMutation] = useMutation(UPDATE_EQUIPMENT_MUTATION);
-    const [deleteEquipmentMutation] = useMutation(DELETE_EQUIPMENT_MUTATION);
-    const [addMaintenanceMutation] = useMutation(ADD_MAINTENANCE_MUTATION);
-    const [updateMaintenanceMutation] = useMutation(UPDATE_MAINTENANCE_MUTATION);
-    const [deleteMaintenanceMutation] = useMutation(DELETE_MAINTENANCE_MUTATION);
+  };
 
-    const equipment: Equipment[] = useMemo(() => {
-        if (!data?.equipment) return [];
-        return data.equipment.map((e: any) => ({
-            id: e.id,
-            name: e.name,
-            category: e.category || 'Other',
-            purchaseDate: e.purchase_date || undefined,
-            purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
-            condition: e.condition as EquipmentCondition,
-            location: e.location || '',
-            description: e.description || ''
-        }));
-    }, [data]);
+  const updateEquipment = async (id: number, updates: Partial<Equipment>) => {
+    const set: any = {};
+    if (updates.name) set.name = updates.name;
+    if (updates.category) set.category = updates.category;
+    if (updates.purchaseDate) set.purchase_date = updates.purchaseDate;
+    if (updates.purchasePrice !== undefined) set.purchase_price = updates.purchasePrice;
+    if (updates.condition) set.condition = updates.condition;
+    if (updates.location) set.location = updates.location;
+    if (updates.description) set.description = updates.description;
 
-    const maintenanceRecords: MaintenanceRecord[] = useMemo(() => {
-        if (!data?.equipment) return [];
-        const allRecords: MaintenanceRecord[] = [];
-        data.equipment.forEach((e: any) => {
-            if (e.maintenance_records) {
-                e.maintenance_records.forEach((m: any) => {
-                    allRecords.push({
-                        id: m.id,
-                        equipmentId: m.equipment_id,
-                        date: m.date,
-                        type: m.type as MaintenanceType,
-                        cost: m.cost ? Number(m.cost) : 0,
-                        description: m.description || '',
-                        status: m.status as MaintenanceStatus
-                    });
-                });
-            }
-        });
-        return allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [data]);
+    await updateEquipmentMutation({
+      variables: { id, _set: set },
+    });
+  };
 
-    const addEquipment = async (item: Partial<Equipment>) => {
-        await addEquipmentMutation({
-            variables: {
-                object: {
-                    name: item.name || '',
-                    category: item.category,
-                    purchase_date: item.purchaseDate,
-                    purchase_price: item.purchasePrice,
-                    condition: item.condition,
-                    location: item.location,
-                    description: item.description
-                }
-            }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+  const deleteEquipment = async (id: number) => {
+    await deleteEquipmentMutation({
+      variables: { id },
+    });
+  };
 
-    const updateEquipment = async (id: number, updates: Partial<Equipment>) => {
-        const set: any = {};
-        if (updates.name) set.name = updates.name;
-        if (updates.category) set.category = updates.category;
-        if (updates.purchaseDate) set.purchase_date = updates.purchaseDate;
-        if (updates.purchasePrice !== undefined) set.purchase_price = updates.purchasePrice;
-        if (updates.condition) set.condition = updates.condition;
-        if (updates.location) set.location = updates.location;
-        if (updates.description) set.description = updates.description;
+  const addMaintenance = async (record: Omit<MaintenanceRecord, 'id'>) => {
+    await addMaintenanceMutation({
+      variables: {
+        object: {
+          equipment_id: record.equipmentId,
+          date: record.date,
+          type: record.type,
+          cost: record.cost,
+          description: record.description,
+          status: record.status,
+        },
+      },
+    });
+  };
 
-        await updateEquipmentMutation({
-            variables: { id, _set: set }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+  const updateMaintenance = async (id: number, updates: Partial<MaintenanceRecord>) => {
+    const set: any = {};
+    if (updates.date) set.date = updates.date;
+    if (updates.type) set.type = updates.type;
+    if (updates.cost !== undefined) set.cost = updates.cost;
+    if (updates.description) set.description = updates.description;
+    if (updates.status) set.status = updates.status;
 
-    const deleteEquipment = async (id: number) => {
-        await deleteEquipmentMutation({
-            variables: { id }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+    await updateMaintenanceMutation({
+      variables: { id, _set: set },
+    });
+  };
 
-    const addMaintenance = async (record: Omit<MaintenanceRecord, 'id'>) => {
-        await addMaintenanceMutation({
-            variables: {
-                object: {
-                    equipment_id: record.equipmentId,
-                    date: record.date,
-                    type: record.type,
-                    cost: record.cost,
-                    description: record.description,
-                    status: record.status
-                }
-            }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+  const deleteMaintenance = async (id: number) => {
+    await deleteMaintenanceMutation({
+      variables: { id },
+    });
+  };
 
-    const updateMaintenance = async (id: number, updates: Partial<MaintenanceRecord>) => {
-        const set: any = {};
-        if (updates.date) set.date = updates.date;
-        if (updates.type) set.type = updates.type;
-        if (updates.cost !== undefined) set.cost = updates.cost;
-        if (updates.description) set.description = updates.description;
-        if (updates.status) set.status = updates.status;
-
-        await updateMaintenanceMutation({
-            variables: { id, _set: set }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
-
-    const deleteMaintenance = async (id: number) => {
-        await deleteMaintenanceMutation({
-            variables: { id }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
-
-    return {
-        equipment,
-        maintenanceRecords,
-        loading,
-        error,
-        addEquipment,
-        updateEquipment,
-        deleteEquipment,
-        addMaintenance,
-        updateMaintenance,
-        deleteMaintenance
-    };
+  return {
+    equipment,
+    maintenanceRecords,
+    loading,
+    error,
+    addEquipment,
+    updateEquipment,
+    deleteEquipment,
+    addMaintenance,
+    updateMaintenance,
+    deleteMaintenance,
+  };
 }

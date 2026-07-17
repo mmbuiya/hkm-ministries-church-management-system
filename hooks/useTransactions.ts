@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
-import { useSubscription, useMutation, useQuery, useApolloClient } from '@apollo/client';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client';
 import { Transaction } from '../components/financeData';
 import {
   GET_TRANSACTIONS_QUERY,
-  GET_TRANSACTIONS_SUBSCRIPTION,
   ADD_TRANSACTION_MUTATION,
   UPDATE_TRANSACTION_MUTATION,
   DELETE_TRANSACTION_MUTATION,
@@ -62,33 +61,20 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
 }
 
 export function useTransactions() {
-  // Calculate the date 6 months ago to limit data fetched
-  const sixMonthsAgo = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 6);
-    return d.toISOString().split('T')[0];
-  }, []);
-
-  const { data: queryData, loading: queryLoading } = useQuery(GET_TRANSACTIONS_QUERY, {
+  const { data, loading, error } = useQuery(GET_TRANSACTIONS_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
-
-  const {
-    data: subData,
-    loading: subLoading,
-    error,
-  } = useSubscription(GET_TRANSACTIONS_SUBSCRIPTION, {
-    variables: { startDate: sixMonthsAgo },
-    errorPolicy: 'all',
-  });
-
-  const data = subData ?? queryData;
-  const loading = subData === undefined && queryLoading;
   const apolloClient = useApolloClient();
-  const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION);
-  const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION);
-  const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION);
+  const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION, {
+    refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+  });
+  const [updateTransactionMutation] = useMutation(UPDATE_TRANSACTION_MUTATION, {
+    refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+  });
+  const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION, {
+    refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+  });
   const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
   const [addNotificationLogMutation] = useMutation(ADD_NOTIFICATION_LOG_MUTATION);
@@ -390,7 +376,7 @@ export function useTransactions() {
         variables: { id },
       });
 
-      if (!result.data?.delete_transactions_by_pk) {
+      if (!result.data?.deleteFromtransactionsCollection?.records?.length) {
         throw new Error('Failed to delete transaction - no data returned');
       }
 

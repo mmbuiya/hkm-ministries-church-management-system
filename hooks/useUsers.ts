@@ -1,31 +1,27 @@
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { User as AppUser } from '../components/userData';
-import {
-  GET_USERS_QUERY,
-  GET_USERS_SUBSCRIPTION,
-  UPSERT_USER_MUTATION,
-  DELETE_USER_MUTATION,
-} from '../services/graphql/users';
+import { GET_USERS_QUERY, UPSERT_USER_MUTATION, DELETE_USER_MUTATION } from '../services/graphql/users';
 
 export function useUsers() {
-  const { data: queryData, loading: queryLoading } = useQuery(GET_USERS_QUERY, {
-    fetchPolicy: 'cache-first',
-  });
   const {
-    data: subData,
-    loading: subLoading,
+    data: queryData,
+    loading,
     error,
-  } = useSubscription(GET_USERS_SUBSCRIPTION, {
+  } = useQuery(GET_USERS_QUERY, {
+    fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
-  const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION);
-  const [deleteUserMutation] = useMutation(DELETE_USER_MUTATION);
+  const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION, {
+    refetchQueries: [{ query: GET_USERS_QUERY }],
+  });
+  const [deleteUserMutation] = useMutation(DELETE_USER_MUTATION, {
+    refetchQueries: [{ query: GET_USERS_QUERY }],
+  });
 
   const users: AppUser[] = useMemo(() => {
-    const raw = subData?.users || queryData?.users;
-    if (!raw) return [];
-    return raw.map((u: any) => ({
+    if (!queryData?.users) return [];
+    return queryData.users.map((u: any) => ({
       id: u.id,
       username: u.username,
       email: u.email,
@@ -34,7 +30,7 @@ export function useUsers() {
       lastLogin: u.last_login || '',
       passwordHash: 'MANAGED_BY_FIREBASE',
     }));
-  }, [subData, queryData]);
+  }, [queryData]);
 
   const upsertUser = async (user: Partial<AppUser>) => {
     if (!user.id || !user.email) return;
@@ -52,21 +48,17 @@ export function useUsers() {
         },
       },
     });
-
-    // Real-time subscription will update UI automatically
   };
 
   const deleteUser = async (id: string) => {
     await deleteUserMutation({
       variables: { id },
     });
-
-    // Real-time subscription will update UI automatically
   };
 
   return {
     users,
-    loading: queryLoading && !queryData,
+    loading,
     error,
     upsertUser,
     deleteUser,

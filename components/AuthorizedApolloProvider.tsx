@@ -3,7 +3,7 @@ import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@ap
 import { setContext } from '@apollo/client/link/context';
 import { useAuth } from '@clerk/clerk-react';
 
-// Supabase pg_graphql endpoint
+// Supabase pg_graphQL endpoint
 // VITE_SUPABASE_GRAPHQL_URL = https://<project-ref>.supabase.co/graphql/v1
 // VITE_SUPABASE_ANON_KEY    = your supabase anon key
 const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1';
@@ -32,9 +32,11 @@ const authLink = setContext(async (_, { headers }) => {
   };
 });
 
+const cache = new InMemoryCache();
+
 export const client = new ApolloClient({
   link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
+  cache,
 });
 
 export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

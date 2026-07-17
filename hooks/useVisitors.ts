@@ -1,155 +1,155 @@
-
 import { useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { Visitor, FollowUp, VisitorStatus } from '../components/visitorData';
 import {
-    GET_VISITORS_SUBSCRIPTION,
-    GET_VISITORS_QUERY,
-    ADD_VISITOR_MUTATION,
-    UPDATE_VISITOR_MUTATION,
-    DELETE_VISITOR_MUTATION,
-    ADD_FOLLOW_UP_MUTATION,
-    UPDATE_FOLLOW_UP_MUTATION,
-    DELETE_FOLLOW_UP_MUTATION
+  GET_VISITORS_QUERY,
+  ADD_VISITOR_MUTATION,
+  UPDATE_VISITOR_MUTATION,
+  DELETE_VISITOR_MUTATION,
+  ADD_FOLLOW_UP_MUTATION,
+  UPDATE_FOLLOW_UP_MUTATION,
+  DELETE_FOLLOW_UP_MUTATION,
 } from '../services/graphql/visitors';
 
 export function useVisitors() {
-    const { data: queryData, loading: queryLoading } = useQuery(GET_VISITORS_QUERY, {
-        fetchPolicy: 'network-only',
-        errorPolicy: 'all'
+  const { data, loading, error } = useQuery(GET_VISITORS_QUERY, {
+    fetchPolicy: 'network-only',
+    errorPolicy: 'all',
+  });
+  const [addVisitorMutation] = useMutation(ADD_VISITOR_MUTATION, { refetchQueries: [{ query: GET_VISITORS_QUERY }] });
+  const [updateVisitorMutation] = useMutation(UPDATE_VISITOR_MUTATION, {
+    refetchQueries: [{ query: GET_VISITORS_QUERY }],
+  });
+  const [deleteVisitorMutation] = useMutation(DELETE_VISITOR_MUTATION, {
+    refetchQueries: [{ query: GET_VISITORS_QUERY }],
+  });
+  const [addFollowUpMutation] = useMutation(ADD_FOLLOW_UP_MUTATION, {
+    refetchQueries: [{ query: GET_VISITORS_QUERY }],
+  });
+  const [updateFollowUpMutation] = useMutation(UPDATE_FOLLOW_UP_MUTATION, {
+    refetchQueries: [{ query: GET_VISITORS_QUERY }],
+  });
+  const [deleteFollowUpMutation] = useMutation(DELETE_FOLLOW_UP_MUTATION, {
+    refetchQueries: [{ query: GET_VISITORS_QUERY }],
+  });
+
+  const visitors: Visitor[] = useMemo(() => {
+    if (!data?.visitors) return [];
+    return data.visitors.map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      initials: v.initials || '',
+      phone: v.phone,
+      email: v.email || undefined,
+      heardFrom: v.heard_from || '',
+      firstVisit: v.first_visit || '',
+      registeredDate: v.registered_date || '',
+      status: v.status as VisitorStatus,
+      followUps:
+        v.follow_ups?.map((f: any) => ({
+          id: f.id,
+          visitorId: f.visitor_id,
+          date: f.date,
+          interactionType: f.interaction_type,
+          notes: f.notes || '',
+          nextFollowUpDate: f.next_follow_up_date || undefined,
+          outcome: f.outcome || '',
+        })) || [],
+    }));
+  }, [data]);
+
+  const addVisitor = async (visitor: Partial<Visitor>) => {
+    const { id, followUps, initials, registeredDate, ...rest } = visitor;
+    await addVisitorMutation({
+      variables: {
+        object: {
+          ...rest,
+          name: rest.name || '',
+          phone: rest.phone || '',
+          initials:
+            initials ||
+            (rest.name
+              ? rest.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+              : ''),
+          heard_from: rest.heardFrom,
+          first_visit: rest.firstVisit,
+          registered_date: registeredDate || new Date().toISOString().split('T')[0],
+          status: rest.status || 'New',
+        },
+      },
     });
-    const { data: subData, loading: subLoading, error } = useSubscription(GET_VISITORS_SUBSCRIPTION, {
-        errorPolicy: 'all'
+  };
+
+  const updateVisitor = async (id: number, updates: Partial<Visitor>) => {
+    const { id: _, followUps, ...rest } = updates;
+    const set: any = {};
+    if (rest.name) set.name = rest.name;
+    if (rest.phone) set.phone = rest.phone;
+    if (rest.email !== undefined) set.email = rest.email;
+    if (rest.heardFrom) set.heard_from = rest.heardFrom;
+    if (rest.firstVisit) set.first_visit = rest.firstVisit;
+    if (rest.status) set.status = rest.status;
+    if (rest.initials) set.initials = rest.initials;
+
+    await updateVisitorMutation({
+      variables: { id, _set: set },
     });
-    const data = subData ?? queryData;
-    const loading = subData === undefined && queryLoading;
-    const [addVisitorMutation] = useMutation(ADD_VISITOR_MUTATION);
-    const [updateVisitorMutation] = useMutation(UPDATE_VISITOR_MUTATION);
-    const [deleteVisitorMutation] = useMutation(DELETE_VISITOR_MUTATION);
-    const [addFollowUpMutation] = useMutation(ADD_FOLLOW_UP_MUTATION);
-    const [updateFollowUpMutation] = useMutation(UPDATE_FOLLOW_UP_MUTATION);
-    const [deleteFollowUpMutation] = useMutation(DELETE_FOLLOW_UP_MUTATION);
+  };
 
-    const visitors: Visitor[] = useMemo(() => {
-        if (!data?.visitors) return [];
-        return data.visitors.map((v: any) => ({
-            id: v.id,
-            name: v.name,
-            initials: v.initials || '',
-            phone: v.phone,
-            email: v.email || undefined,
-            heardFrom: v.heard_from || '',
-            firstVisit: v.first_visit || '',
-            registeredDate: v.registered_date || '',
-            status: v.status as VisitorStatus,
-            followUps: v.follow_ups?.map((f: any) => ({
-                id: f.id,
-                visitorId: f.visitor_id,
-                date: f.date,
-                interactionType: f.interaction_type,
-                notes: f.notes || '',
-                nextFollowUpDate: f.next_follow_up_date || undefined,
-                outcome: f.outcome || ''
-            })) || []
-        }));
-    }, [data]);
+  const deleteVisitor = async (id: number) => {
+    await deleteVisitorMutation({
+      variables: { id },
+    });
+  };
 
-    const addVisitor = async (visitor: Partial<Visitor>) => {
-        const { id, followUps, initials, registeredDate, ...rest } = visitor;
-        await addVisitorMutation({
-            variables: {
-                object: {
-                    ...rest,
-                    name: rest.name || '',
-                    phone: rest.phone || '',
-                    initials: initials || (rest.name ? rest.name.split(' ').map(n => n[0]).join('').toUpperCase() : ''),
-                    heard_from: rest.heardFrom,
-                    first_visit: rest.firstVisit,
-                    registered_date: registeredDate || new Date().toISOString().split('T')[0],
-                    status: rest.status || 'New'
-                }
-            }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+  const addFollowUp = async (followUp: Omit<FollowUp, 'id'>) => {
+    await addFollowUpMutation({
+      variables: {
+        object: {
+          visitor_id: followUp.visitorId,
+          date: followUp.date,
+          interaction_type: followUp.interactionType,
+          notes: followUp.notes,
+          next_follow_up_date: followUp.nextFollowUpDate,
+          outcome: followUp.outcome,
+        },
+      },
+    });
+  };
 
-    const updateVisitor = async (id: number, updates: Partial<Visitor>) => {
-        const { id: _, followUps, ...rest } = updates;
-        const set: any = {};
-        if (rest.name) set.name = rest.name;
-        if (rest.phone) set.phone = rest.phone;
-        if (rest.email !== undefined) set.email = rest.email;
-        if (rest.heardFrom) set.heard_from = rest.heardFrom;
-        if (rest.firstVisit) set.first_visit = rest.firstVisit;
-        if (rest.status) set.status = rest.status;
-        if (rest.initials) set.initials = rest.initials;
+  const updateFollowUp = async (id: number, updates: Partial<FollowUp>) => {
+    const set: any = {};
+    if (updates.date) set.date = updates.date;
+    if (updates.interactionType) set.interaction_type = updates.interactionType;
+    if (updates.notes) set.notes = updates.notes;
+    if (updates.nextFollowUpDate) set.next_follow_up_date = updates.nextFollowUpDate;
+    if (updates.outcome) set.outcome = updates.outcome;
 
-        await updateVisitorMutation({
-            variables: { id, _set: set }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+    await updateFollowUpMutation({
+      variables: { id, _set: set },
+    });
+  };
 
-    const deleteVisitor = async (id: number) => {
-        await deleteVisitorMutation({
-            variables: { id }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
+  const deleteFollowUp = async (id: number) => {
+    await deleteFollowUpMutation({
+      variables: { id },
+    });
+  };
 
-    const addFollowUp = async (followUp: Omit<FollowUp, 'id'>) => {
-        await addFollowUpMutation({
-            variables: {
-                object: {
-                    visitor_id: followUp.visitorId,
-                    date: followUp.date,
-                    interaction_type: followUp.interactionType,
-                    notes: followUp.notes,
-                    next_follow_up_date: followUp.nextFollowUpDate,
-                    outcome: followUp.outcome
-                }
-            }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
-
-    const updateFollowUp = async (id: number, updates: Partial<FollowUp>) => {
-        const set: any = {};
-        if (updates.date) set.date = updates.date;
-        if (updates.interactionType) set.interaction_type = updates.interactionType;
-        if (updates.notes) set.notes = updates.notes;
-        if (updates.nextFollowUpDate) set.next_follow_up_date = updates.nextFollowUpDate;
-        if (updates.outcome) set.outcome = updates.outcome;
-
-        await updateFollowUpMutation({
-            variables: { id, _set: set }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
-
-    const deleteFollowUp = async (id: number) => {
-        await deleteFollowUpMutation({
-            variables: { id }
-        });
-        
-        // Real-time subscription will update UI automatically
-    };
-
-    return {
-        data: visitors,
-        loading,
-        error,
-        addVisitor,
-        updateVisitor,
-        deleteVisitor,
-        addFollowUp,
-        updateFollowUp,
-        deleteFollowUp,
-        setData: () => { } // Compatibility with old hooks if needed
-    };
+  return {
+    data: visitors,
+    loading,
+    error,
+    addVisitor,
+    updateVisitor,
+    deleteVisitor,
+    addFollowUp,
+    updateFollowUp,
+    deleteFollowUp,
+    setData: () => {}, // Compatibility with old hooks if needed
+  };
 }

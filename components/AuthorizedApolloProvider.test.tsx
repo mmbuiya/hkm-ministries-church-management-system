@@ -16,39 +16,26 @@ const mockClient = {
 };
 
 class MockApolloClient {
-  constructor() { return mockClient; }
+  constructor() {
+    return mockClient;
+  }
 }
-
-class MockGraphQLWsLink {
-  constructor() { return {}; }
-}
-
-function MockCreateClient() { return {}; }
 
 vi.mock('@apollo/client', () => ({
   ApolloClient: MockApolloClient,
   ApolloProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  InMemoryCache: class { constructor() { return {}; } },
+  InMemoryCache: class {
+    constructor() {
+      return {};
+    }
+  },
   createHttpLink: vi.fn().mockReturnValue({}),
-  split: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock('@apollo/client/link/context', () => ({
   setContext: vi.fn().mockReturnValue({
     concat: vi.fn().mockReturnValue({}),
   }),
-}));
-
-vi.mock('@apollo/client/link/subscriptions', () => ({
-  GraphQLWsLink: MockGraphQLWsLink,
-}));
-
-vi.mock('@apollo/client/utilities', () => ({
-  getMainDefinition: vi.fn().mockReturnValue({ kind: 'OperationDefinition', operation: 'query' }),
-}));
-
-vi.mock('graphql-ws', () => ({
-  createClient: MockCreateClient,
 }));
 
 describe('AuthorizedApolloProvider', () => {
@@ -58,7 +45,7 @@ describe('AuthorizedApolloProvider', () => {
     render(
       <AuthorizedApolloProvider>
         <div data-testid="child">Test Child</div>
-      </AuthorizedApolloProvider>
+      </AuthorizedApolloProvider>,
     );
 
     expect(screen.getByTestId('child')).toBeInTheDocument();

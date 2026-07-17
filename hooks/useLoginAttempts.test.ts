@@ -3,14 +3,12 @@ import { renderHook, act } from '@testing-library/react';
 
 vi.mock('@apollo/client', () => ({
   useQuery: vi.fn().mockReturnValue({ data: null, loading: false }),
-  useSubscription: vi.fn().mockReturnValue({ data: null, loading: false, error: null }),
   useMutation: vi.fn().mockReturnValue([vi.fn().mockResolvedValue({})]),
   gql: vi.fn((str: string) => str),
 }));
 
 vi.mock('../services/graphql/cleanup', () => ({
   GET_LOGIN_ATTEMPTS_QUERY: 'query mock',
-  GET_LOGIN_ATTEMPTS_SUBSCRIPTION: 'subscription mock',
   ADD_LOGIN_ATTEMPT_MUTATION: 'mutation mock',
 }));
 

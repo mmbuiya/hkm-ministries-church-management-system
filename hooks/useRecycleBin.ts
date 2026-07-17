@@ -1,37 +1,38 @@
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { RecycleBinItem } from '../components/userData';
 import {
   GET_RECYCLE_BIN_QUERY,
-  GET_RECYCLE_BIN_SUBSCRIPTION,
   ADD_RECYCLE_BIN_MUTATION,
   DELETE_RECYCLE_BIN_MUTATION,
 } from '../services/graphql/cleanup';
 
 export function useRecycleBin() {
-  // HTTP query fires immediately — works even when Supabase is waking up
-  const { data: queryData, loading: queryLoading } = useQuery(GET_RECYCLE_BIN_QUERY, {
-    fetchPolicy: 'cache-first',
+  const { data, loading, error } = useQuery(GET_RECYCLE_BIN_QUERY, {
+    fetchPolicy: 'network-only',
+    errorPolicy: 'all',
   });
 
-  // WebSocket subscription takes over once connected
-  const { data: subData, loading: subLoading, error } = useSubscription(GET_RECYCLE_BIN_SUBSCRIPTION);
-  const [addMutation] = useMutation(ADD_RECYCLE_BIN_MUTATION);
-  const [deleteMutation] = useMutation(DELETE_RECYCLE_BIN_MUTATION);
+  const [addMutation] = useMutation(ADD_RECYCLE_BIN_MUTATION, {
+    refetchQueries: [{ query: GET_RECYCLE_BIN_QUERY }],
+  });
+  const [deleteMutation] = useMutation(DELETE_RECYCLE_BIN_MUTATION, {
+    refetchQueries: [{ query: GET_RECYCLE_BIN_QUERY }],
+  });
 
   const items: RecycleBinItem[] = useMemo(() => {
-    const raw = subData?.recycle_bin || queryData?.recycle_bin;
-    if (!raw) return [];
-    return raw.map((item: any) => ({
-      id: item.id,
-      originalId: item.original_id,
-      type: item.type,
-      data: item.data,
-      deletedBy: item.deleted_by,
-      deletedAt: item.deleted_at,
-      reason: item.reason,
+    const edges = data?.recycle_binCollection?.edges;
+    if (!edges) return [];
+    return edges.map((item: any) => ({
+      id: item.node.id,
+      originalId: item.node.original_id,
+      type: item.node.type,
+      data: item.node.data,
+      deletedBy: item.node.deleted_by,
+      deletedAt: item.node.deleted_at,
+      reason: item.node.reason,
     }));
-  }, [subData, queryData]);
+  }, [data]);
 
   const moveToRecycleBin = async (
     type: string,
@@ -65,7 +66,7 @@ export function useRecycleBin() {
 
   return {
     data: items,
-    loading: queryLoading && !queryData,
+    loading,
     error,
     moveToRecycleBin,
     removeFromRecycleBin,

@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { AttendanceRecord, AttendanceStatus } from '../components/attendanceData';
 import {
-  GET_ATTENDANCE_SUBSCRIPTION,
   GET_ATTENDANCE_QUERY,
   ADD_ATTENDANCE_MUTATION,
   DELETE_ATTENDANCE_MUTATION,
@@ -18,29 +17,20 @@ export function useAttendance(members: Member[] = []) {
     return d.toISOString().split('T')[0];
   }, []);
 
-  // HTTP query fires immediately — wakes Supabase from auto-pause and provides initial data
-  const { data: queryData, loading: queryLoading } = useQuery(GET_ATTENDANCE_QUERY, {
+  const { data, loading, error } = useQuery(GET_ATTENDANCE_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
 
-  // WebSocket subscription takes over for real-time updates once connected
-  const {
-    data: subData,
-    loading: subLoading,
-    error,
-  } = useSubscription(GET_ATTENDANCE_SUBSCRIPTION, {
-    variables: { startDate: sixMonthsAgo },
-    errorPolicy: 'all',
+  const [addAttendanceMutation] = useMutation(ADD_ATTENDANCE_MUTATION, {
+    refetchQueries: [{ query: GET_ATTENDANCE_QUERY }],
   });
-
-  // Prefer live subscription data; fall back to HTTP query data
-  const data = subData ?? queryData;
-  const loading = subLoading || (subData === undefined && queryLoading);
-
-  const [addAttendanceMutation] = useMutation(ADD_ATTENDANCE_MUTATION);
-  const [deleteAttendanceMutation] = useMutation(DELETE_ATTENDANCE_MUTATION);
-  const [deleteByServiceMutation] = useMutation(DELETE_ATTENDANCE_BY_SERVICE_MUTATION);
+  const [deleteAttendanceMutation] = useMutation(DELETE_ATTENDANCE_MUTATION, {
+    refetchQueries: [{ query: GET_ATTENDANCE_QUERY }],
+  });
+  const [deleteByServiceMutation] = useMutation(DELETE_ATTENDANCE_BY_SERVICE_MUTATION, {
+    refetchQueries: [{ query: GET_ATTENDANCE_QUERY }],
+  });
 
   const attendanceRecords: AttendanceRecord[] = useMemo(() => {
     if (!data?.attendance_records) return [];

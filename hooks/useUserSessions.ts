@@ -1,11 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { UserSession, LoginAttempt } from '../components/userSessionData';
 import {
   GET_USER_SESSIONS_QUERY,
-  GET_USER_SESSIONS_SUBSCRIPTION,
   GET_LOGIN_ATTEMPTS_QUERY,
-  GET_LOGIN_ATTEMPTS_SUBSCRIPTION,
   ADD_USER_SESSION_MUTATION,
   UPDATE_USER_SESSION_MUTATION,
   END_USER_SESSION_MUTATION,
@@ -41,19 +39,13 @@ export function useUserSessions() {
   const [daysBack, setDaysBack] = useState(30);
   const startDate = useMemo(() => daysAgoISO(daysBack), [daysBack]);
 
-  // HTTP query fires immediately — works even when Supabase is waking up
-  const { data: queryData, loading: queryLoading } = useQuery(GET_USER_SESSIONS_QUERY, {
-    variables: { startDate },
-    fetchPolicy: 'cache-first',
-  });
-
-  // WebSocket subscription takes over once connected
   const {
-    data: subData,
-    loading: subLoading,
+    data: queryData,
+    loading: queryLoading,
     error,
-  } = useSubscription(GET_USER_SESSIONS_SUBSCRIPTION, {
+  } = useQuery(GET_USER_SESSIONS_QUERY, {
     variables: { startDate },
+    fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
 
@@ -62,10 +54,10 @@ export function useUserSessions() {
   const [endSessionMutation] = useMutation(END_USER_SESSION_MUTATION);
 
   const sessions: UserSession[] = useMemo(() => {
-    const raw = subData?.user_sessions || queryData?.user_sessions;
+    const raw = queryData?.user_sessions;
     if (!raw) return [];
     return raw.map(mapSession);
-  }, [subData, queryData]);
+  }, [queryData]);
 
   const loadMoreSessions = () => setDaysBack((prev) => prev + 30);
 
@@ -89,6 +81,7 @@ export function useUserSessions() {
           last_activity: session.lastActivity,
         },
       },
+      refetchQueries: [{ query: GET_USER_SESSIONS_QUERY }],
     });
   };
 
@@ -111,12 +104,14 @@ export function useUserSessions() {
           last_activity: changes.lastActivity,
         },
       },
+      refetchQueries: [{ query: GET_USER_SESSIONS_QUERY }],
     });
   };
 
   const endSession = async (id: string, logoutTime: string) => {
     await endSessionMutation({
       variables: { id, logout_time: logoutTime },
+      refetchQueries: [{ query: GET_USER_SESSIONS_QUERY }],
     });
   };
 
@@ -136,24 +131,20 @@ export function useLoginAttempts() {
   const [daysBack, setDaysBack] = useState(30);
   const startDate = useMemo(() => daysAgoISO(daysBack), [daysBack]);
 
-  const { data: queryData, loading: queryLoading } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
-    variables: { startDate },
-    fetchPolicy: 'cache-first',
-  });
-
   const {
-    data: subData,
-    loading: subLoading,
+    data: queryData,
+    loading: queryLoading,
     error,
-  } = useSubscription(GET_LOGIN_ATTEMPTS_SUBSCRIPTION, {
+  } = useQuery(GET_LOGIN_ATTEMPTS_QUERY, {
     variables: { startDate },
+    fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
 
   const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
 
   const attempts: LoginAttempt[] = useMemo(() => {
-    const raw = subData?.login_attempts || queryData?.login_attempts;
+    const raw = queryData?.login_attempts;
     if (!raw) return [];
     return raw.map((a: any) => ({
       id: a.id,
@@ -165,7 +156,7 @@ export function useLoginAttempts() {
       userAgent: a.user_agent,
       location: a.location,
     }));
-  }, [subData, queryData]);
+  }, [queryData]);
 
   const loadMoreAttempts = () => setDaysBack((prev) => prev + 30);
 
@@ -184,6 +175,7 @@ export function useLoginAttempts() {
           location: attempt.location,
         },
       },
+      refetchQueries: [{ query: GET_LOGIN_ATTEMPTS_QUERY }],
     });
   };
 

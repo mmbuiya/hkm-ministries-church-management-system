@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useSubscription, useMutation, useQuery } from '@apollo/client';
+import { useMemo } from 'react';
+import { useMutation, useQuery } from '@apollo/client';
 import { Member, EmailTier } from '../components/memberData';
 import {
-  GET_MEMBERS_SUBSCRIPTION,
   GET_MEMBERS_QUERY,
   ADD_MEMBER_MUTATION,
   UPDATE_MEMBER_MUTATION,
@@ -80,27 +79,20 @@ function transformMember(SupabaseMember: SupabaseMember): Member {
 }
 
 export function useMembers() {
-  // HTTP query fires immediately on load — wakes Supabase from auto-pause and provides initial data
-  const { data: queryData, loading: queryLoading } = useQuery(GET_MEMBERS_QUERY, {
+  const { data, loading, error } = useQuery(GET_MEMBERS_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
 
-  // WebSocket subscription takes over for real-time updates once connected
-  const {
-    data: subData,
-    loading: subLoading,
-    error,
-  } = useSubscription(GET_MEMBERS_SUBSCRIPTION, {
-    errorPolicy: 'all',
+  const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION, {
+    refetchQueries: [{ query: GET_MEMBERS_QUERY }],
   });
-
-  // Prefer live subscription data; fall back to HTTP query data
-  const data = subData ?? queryData;
-  const loading = subData === undefined && queryLoading;
-  const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION);
-  const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
-  const [deleteMemberMutation] = useMutation(DELETE_MEMBER_MUTATION);
+  const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION, {
+    refetchQueries: [{ query: GET_MEMBERS_QUERY }],
+  });
+  const [deleteMemberMutation] = useMutation(DELETE_MEMBER_MUTATION, {
+    refetchQueries: [{ query: GET_MEMBERS_QUERY }],
+  });
 
   const members: Member[] = useMemo(() => {
     // Supabase pg_graphql wraps results in membersCollection.edges[].node
@@ -244,11 +236,13 @@ export function useMembers() {
   };
 
   const deleteMember = async (id: string) => {
-    await deleteMemberMutation({
+    const result = await deleteMemberMutation({
       variables: { id },
     });
 
-    // Real-time subscription will update UI automatically
+    if (!result.data?.deleteFrommembersCollection?.records?.length) {
+      throw new Error('Failed to delete member - no data returned');
+    }
   };
 
   return {

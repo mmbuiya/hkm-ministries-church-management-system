@@ -1,7 +1,7 @@
-import { useSubscription, useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import {
-  GET_MESSAGES_SUBSCRIPTION,
+  GET_MESSAGES_QUERY,
   ADD_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
   DELETE_MESSAGE_MUTATION,
@@ -32,7 +32,10 @@ interface SupabaseMessage {
 }
 
 export function useMessages() {
-  const { data, loading, error } = useSubscription(GET_MESSAGES_SUBSCRIPTION);
+  const { data, loading, error } = useQuery(GET_MESSAGES_QUERY, {
+    fetchPolicy: 'network-only',
+    errorPolicy: 'all',
+  });
   const [addMessageMutation] = useMutation(ADD_MESSAGE_MUTATION);
   const [updateMessageMutation] = useMutation(UPDATE_MESSAGE_MUTATION);
   const [deleteMessageMutation] = useMutation(DELETE_MESSAGE_MUTATION);
@@ -64,6 +67,7 @@ export function useMessages() {
           status: msg.status || 'Unread',
         },
       },
+      refetchQueries: [{ query: GET_MESSAGES_QUERY }],
     });
   };
 
@@ -75,11 +79,12 @@ export function useMessages() {
 
     await updateMessageMutation({
       variables: { id, updates: SupabaseUpdates },
+      refetchQueries: [{ query: GET_MESSAGES_QUERY }],
     });
   };
 
   const deleteMessage = async (id: string) => {
-    await deleteMessageMutation({ variables: { id } });
+    await deleteMessageMutation({ variables: { id }, refetchQueries: [{ query: GET_MESSAGES_QUERY }] });
   };
 
   return {

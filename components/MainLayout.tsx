@@ -294,20 +294,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const handleDeleteMember = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this member?')) {
       try {
-        const memberToDelete = members.find((m) => m.id === id);
-        if (memberToDelete && currentUser) {
-          // Move to recycle bin first
-          await moveToRecycleBin('Member', id, memberToDelete, currentUser.id, 'Deleted by user');
-        }
-
         await deleteMember(id);
-        showToast('Member moved to recycle bin.', 'info');
+        showToast('Member deleted successfully.', 'success');
         if (activePage === 'Member Details') {
           setActivePage('Members');
           setMemberToView(null);
         }
+
+        const memberToDelete = members.find((m) => m.id === id);
+        if (memberToDelete && currentUser) {
+          moveToRecycleBin('Member', id, memberToDelete, currentUser.id, 'Deleted by user').catch((err) =>
+            console.warn('Recycle bin entry failed (non-blocking):', err),
+          );
+        }
       } catch (error) {
-        showToast('Failed to delete member', 'error');
+        showToast(`Failed to delete member: ${error instanceof Error ? error.message : String(error)}`, 'error');
       }
     }
   };
