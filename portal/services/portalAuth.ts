@@ -44,6 +44,9 @@ export const portalAuthService = {
 
     localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
 
+    // Reset Apollo cache so subsequent queries use the new JWT token
+    await portalApolloClient.resetStore().catch(() => {});
+
     return session;
   },
 

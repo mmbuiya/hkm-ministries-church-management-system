@@ -13,6 +13,10 @@ import {
   Edit2,
   Save,
   X,
+  Calendar,
+  TrendingUp,
+  Shield,
+  Menu,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { portalAuthService } from '../services/portalAuth';
@@ -56,39 +60,298 @@ interface AttendanceRecord {
   status: string;
 }
 
-// ─── Helper components ───────────────────────────────────────────────────────
-const SkeletonRow = () => <div className="animate-pulse bg-gray-200 h-10 rounded w-full mb-2" />;
+// ─── Brand Colors ────────────────────────────────────────────────────────────
+const BRAND = {
+  darkNavy: '#0f172a',
+  deepPurple: '#1e1a3c',
+  purple: '#2d1a4a',
+  gold: '#d4af37',
+  goldDark: '#b8960c',
+  goldLight: '#f5e27e',
+  white: '#ffffff',
+};
+
+// ─── Inline Styles ───────────────────────────────────────────────────────────
+const S: Record<string, React.CSSProperties> = {
+  root: {
+    minHeight: '100vh',
+    background: '#f1f5f9',
+    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+    display: 'flex',
+  },
+  sidebar: {
+    width: 260,
+    minWidth: 260,
+    background: `linear-gradient(180deg, ${BRAND.darkNavy} 0%, ${BRAND.deepPurple} 60%, ${BRAND.purple} 100%)`,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+    position: 'sticky' as const,
+    top: 0,
+    flexShrink: 0,
+  },
+  sidebarHeader: {
+    padding: '28px 24px 20px',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+  },
+  logoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  logoImg: {
+    width: 44,
+    height: 44,
+    borderRadius: '50%',
+    border: `2px solid ${BRAND.gold}`,
+    objectFit: 'contain' as const,
+    background: '#e0f2fe',
+    padding: 2,
+  },
+  logoText: {
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase' as const,
+    color: BRAND.gold,
+    lineHeight: 1.3,
+  },
+  goldDivider: {
+    height: 1,
+    background: `linear-gradient(90deg, transparent, ${BRAND.gold}, transparent)`,
+    margin: '0 0 16px',
+    opacity: 0.5,
+  },
+  welcomeLabel: {
+    fontSize: '0.7rem',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    marginBottom: 4,
+  },
+  welcomeName: {
+    fontSize: '0.95rem',
+    fontWeight: 700,
+    color: BRAND.white,
+    marginBottom: 2,
+    wordBreak: 'break-all' as const,
+  },
+  memberId: {
+    fontSize: '0.75rem',
+    color: BRAND.gold,
+    fontWeight: 600,
+    letterSpacing: '0.05em',
+  },
+  nav: {
+    flex: 1,
+    padding: '16px 12px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 4,
+  },
+  navFooter: {
+    padding: '12px 12px 24px',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+  },
+  main: {
+    flex: 1,
+    padding: '32px 32px',
+    maxWidth: '100%',
+    overflowX: 'hidden' as const,
+  },
+  pageHeader: {
+    marginBottom: 28,
+  },
+  pageTitle: {
+    fontSize: '1.6rem',
+    fontWeight: 800,
+    color: BRAND.darkNavy,
+    letterSpacing: '-0.02em',
+    margin: 0,
+  },
+  pageSubtitle: {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    margin: '4px 0 0',
+  },
+  cardGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: 20,
+    marginBottom: 24,
+  },
+  statCard: {
+    background: BRAND.white,
+    borderRadius: 16,
+    padding: '20px 22px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.04)',
+    border: '1px solid rgba(0,0,0,0.05)',
+  },
+  statLabel: {
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: '#94a3b8',
+    marginBottom: 10,
+  },
+  statIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statValue: {
+    fontSize: '1.4rem',
+    fontWeight: 800,
+    color: BRAND.darkNavy,
+    letterSpacing: '-0.02em',
+  },
+  statHint: {
+    fontSize: '0.75rem',
+    color: '#64748b',
+    marginTop: 4,
+  },
+  panel: {
+    background: BRAND.white,
+    borderRadius: 16,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.04)',
+    border: '1px solid rgba(0,0,0,0.05)',
+    marginBottom: 20,
+    overflow: 'hidden' as const,
+  },
+  panelHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '18px 24px',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  panelTitle: {
+    fontSize: '0.95rem',
+    fontWeight: 700,
+    color: BRAND.darkNavy,
+    margin: 0,
+  },
+  panelBody: {
+    padding: '20px 24px',
+  },
+  tableHeader: {
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  th: {
+    padding: '10px 16px',
+    textAlign: 'left' as const,
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    letterSpacing: '0.07em',
+    textTransform: 'uppercase' as const,
+    color: '#94a3b8',
+  },
+  td: {
+    padding: '13px 16px',
+    fontSize: '0.875rem',
+    color: '#334155',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  badge: {
+    display: 'inline-block',
+    padding: '3px 10px',
+    borderRadius: 999,
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    letterSpacing: '0.04em',
+  },
+};
+
+const getNavStyle = (isActive: boolean): React.CSSProperties => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  fontSize: '0.875rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  border: 'none',
+  transition: 'all 0.15s',
+  background: isActive ? 'rgba(212,175,55,0.15)' : 'transparent',
+  color: isActive ? BRAND.gold : 'rgba(255,255,255,0.6)',
+  textAlign: 'left' as const,
+  borderLeft: isActive ? `3px solid ${BRAND.gold}` : '3px solid transparent',
+});
+
+const getBadgeStyle = (status: string): React.CSSProperties => {
+  const map: Record<string, { bg: string; color: string }> = {
+    Active: { bg: '#dcfce7', color: '#15803d' },
+    Inactive: { bg: '#f1f5f9', color: '#64748b' },
+    Transferred: { bg: '#fef9c3', color: '#a16207' },
+    'Pending Fee': { bg: '#ffedd5', color: '#c2410c' },
+    Present: { bg: '#dcfce7', color: '#15803d' },
+    Absent: { bg: '#fee2e2', color: '#b91c1c' },
+  };
+  const s = map[status] || { bg: '#f1f5f9', color: '#64748b' };
+  return { ...S.badge, background: s.bg, color: s.color };
+};
+
+const SkeletonBlock = ({ w = '100%', h = 16 }: { w?: string | number; h?: number }) => (
+  <div
+    style={{
+      width: w,
+      height: h,
+      borderRadius: 8,
+      background: 'linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.4s infinite',
+      marginBottom: 8,
+    }}
+  />
+);
 
 const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
-  <div className="flex flex-col items-center justify-center p-6 text-center">
-    <AlertCircle className="text-red-500 mb-2" size={24} />
-    <p className="text-red-600 mb-4">Could not load data. Please try again.</p>
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px',
+      textAlign: 'center',
+    }}
+  >
+    <AlertCircle style={{ color: '#ef4444', marginBottom: 12 }} size={32} />
+    <p style={{ color: '#64748b', marginBottom: 16, fontSize: '0.875rem' }}>Could not load data. Please try again.</p>
     <button
       onClick={onRetry}
-      className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        background: '#fef2f2',
+        color: '#b91c1c',
+        border: '1px solid #fecaca',
+        borderRadius: 8,
+        padding: '8px 16px',
+        cursor: 'pointer',
+        fontSize: '0.825rem',
+        fontWeight: 600,
+      }}
     >
-      <RefreshCw size={16} /> Retry
+      <RefreshCw size={14} /> Retry
     </button>
   </div>
 );
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    Active: 'bg-green-100 text-green-800',
-    Inactive: 'bg-gray-100 text-gray-600',
-    Transferred: 'bg-yellow-100 text-yellow-800',
-    'Pending Fee': 'bg-orange-100 text-orange-700',
-  };
-  return (
-    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-      {status}
-    </span>
-  );
-};
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 const MemberDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const currentUser = portalAuthService.getCurrentUser();
 
@@ -229,440 +492,765 @@ const MemberDashboard: React.FC = () => {
     .filter((t) => new Date(t.date).getFullYear() === new Date().getFullYear())
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // ─── Render Functions ────────────────────────────────────────────────────────
+  // ─── Render: Dashboard ────────────────────────────────────────────────────
   const renderDashboard = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Status</p>
-          <div className="mt-2">
-            {loading ? (
-              <div className="h-6 bg-gray-200 animate-pulse rounded w-24" />
-            ) : (
-              <StatusBadge status={memberData?.status || 'Unknown'} />
-            )}
+    <div>
+      <div style={S.pageHeader}>
+        <h2 style={S.pageTitle}>Dashboard Overview</h2>
+        <p style={S.pageSubtitle}>
+          Welcome back, {memberData?.first_name || currentUser?.full_name?.split(' ')[0] || 'Member'} 👋
+        </p>
+      </div>
+
+      {/* Stat Cards */}
+      <div style={S.cardGrid}>
+        <div style={S.statCard}>
+          <div style={{ ...S.statIconWrap, background: '#eff6ff' }}>
+            <Shield size={20} color="#3b82f6" />
           </div>
-        </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Department</p>
+          <p style={S.statLabel}>Member Status</p>
           {loading ? (
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-32 mt-2" />
+            <SkeletonBlock h={28} w={100} />
           ) : (
-            <p className="text-lg font-bold text-gray-900 mt-1">{memberData?.department || '—'}</p>
+            <span style={getBadgeStyle(memberData?.status || 'Unknown')}>{memberData?.status || 'Unknown'}</span>
           )}
         </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">YTD Giving</p>
+
+        <div style={S.statCard}>
+          <div style={{ ...S.statIconWrap, background: '#faf5ff' }}>
+            <User size={20} color="#8b5cf6" />
+          </div>
+          <p style={S.statLabel}>Department</p>
           {loading ? (
-            <div className="h-6 bg-gray-200 animate-pulse rounded w-28 mt-2" />
+            <SkeletonBlock h={28} w={140} />
           ) : (
-            <p className="text-lg font-bold text-gray-900 mt-1">
-              {ytdTotal.toLocaleString('en-KE', { maximumFractionDigits: 0 })} KES
+            <p style={{ ...S.statValue, fontSize: '1rem' }}>{memberData?.department || '—'}</p>
+          )}
+        </div>
+
+        <div style={{ ...S.statCard, background: `linear-gradient(135deg, ${BRAND.darkNavy}, ${BRAND.deepPurple})` }}>
+          <div style={{ ...S.statIconWrap, background: 'rgba(212,175,55,0.15)' }}>
+            <TrendingUp size={20} color={BRAND.gold} />
+          </div>
+          <p style={{ ...S.statLabel, color: 'rgba(255,255,255,0.5)' }}>YTD Giving</p>
+          {loading ? (
+            <SkeletonBlock h={32} w={120} />
+          ) : (
+            <p style={{ ...S.statValue, color: BRAND.gold }}>
+              KES {ytdTotal.toLocaleString('en-KE', { maximumFractionDigits: 0 })}
             </p>
           )}
-          <p className="text-xs text-green-600 mt-1">Thank you for your faithfulness ❤️</p>
+          <p style={{ ...S.statHint, color: 'rgba(255,255,255,0.4)' }}>Thank you for your faithfulness ❤️</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">My Details</h3>
+      {/* My Details */}
+      <div style={S.panel}>
+        <div style={S.panelHeader}>
+          <h3 style={S.panelTitle}>My Details</h3>
           <button
             onClick={() => setActiveTab('profile')}
-            className="text-sm text-blue-600 flex items-center gap-1 hover:text-blue-800 transition-colors"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              background: 'none',
+              border: 'none',
+              color: BRAND.gold,
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
-            Edit <ChevronRight size={16} />
+            Edit Profile <ChevronRight size={14} />
           </button>
         </div>
-        {loading ? (
-          <SkeletonRow />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-gray-500">Membership No.:</span>{' '}
-              <span className="font-medium">{memberData?.id}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Phone:</span>{' '}
-              <span className="font-medium">{memberData?.phone || '—'}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Email:</span>{' '}
-              <span className="font-medium">{memberData?.email || '—'}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Member Since:</span>{' '}
-              <span className="font-medium">
-                {memberData?.joined_at
+        <div style={{ ...S.panelBody, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
+          {loading ? (
+            <>
+              <SkeletonBlock />
+              <SkeletonBlock />
+              <SkeletonBlock />
+              <SkeletonBlock />
+            </>
+          ) : (
+            [
+              ['Membership No.', memberData?.id],
+              ['Phone', memberData?.phone || '—'],
+              ['Email', memberData?.email || '—'],
+              [
+                'Member Since',
+                memberData?.joined_at
                   ? new Date(memberData.joined_at).toLocaleDateString('en-KE', { year: 'numeric', month: 'long' })
-                  : '—'}
-              </span>
-            </div>
-          </div>
-        )}
+                  : '—',
+              ],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <p
+                  style={{
+                    fontSize: '0.7rem',
+                    color: '#94a3b8',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    marginBottom: 4,
+                  }}
+                >
+                  {label}
+                </p>
+                <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{value}</p>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Recent Giving</h3>
+      {/* Recent Giving */}
+      <div style={S.panel}>
+        <div style={S.panelHeader}>
+          <h3 style={S.panelTitle}>Recent Giving</h3>
           <button
             onClick={() => setActiveTab('giving')}
-            className="text-sm text-blue-600 flex items-center gap-1 hover:text-blue-800 transition-colors"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              background: 'none',
+              border: 'none',
+              color: BRAND.gold,
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
-            View All <ChevronRight size={16} />
+            View All <ChevronRight size={14} />
           </button>
         </div>
-        {loading ? (
-          <>
-            <SkeletonRow />
-            <SkeletonRow />
-          </>
-        ) : error ? (
-          <ErrorState onRetry={fetchDashboard} />
-        ) : transactions.length === 0 ? (
-          <p className="text-gray-500 text-sm">No giving records found.</p>
-        ) : (
-          <div className="space-y-2">
-            {transactions.slice(0, 4).map((t) => (
-              <div key={t.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{t.category}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(t.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-gray-900">{t.amount.toLocaleString('en-KE')} KES</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderGiving = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">My Giving History</h2>
-        <button
-          onClick={handleDownloadStatement}
-          disabled={loading || transactions.length === 0}
-          className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-        >
-          <Download size={16} /> Download Statement
-        </button>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? (
-          <div className="p-6">
-            <SkeletonRow />
-            <SkeletonRow />
-            <SkeletonRow />
-          </div>
-        ) : error ? (
-          <ErrorState onRetry={fetchDashboard} />
-        ) : transactions.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">No giving records found.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Category</th>
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Amount (KES)</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">
+        <div style={S.panelBody}>
+          {loading ? (
+            <>
+              <SkeletonBlock />
+              <SkeletonBlock />
+            </>
+          ) : error ? (
+            <ErrorState onRetry={fetchDashboard} />
+          ) : transactions.length === 0 ? (
+            <p style={{ color: '#94a3b8', fontSize: '0.875rem', textAlign: 'center', padding: '24px 0' }}>
+              No giving records found.
+            </p>
+          ) : (
+            <div>
+              {transactions.slice(0, 4).map((t) => (
+                <div
+                  key={t.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #f1f5f9',
+                  }}
+                >
+                  <div>
+                    <p style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem', marginBottom: 2 }}>
+                      {t.category}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
                       {new Date(t.date).toLocaleDateString('en-KE', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
                       })}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {t.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 text-right font-bold">
-                      {t.amount.toLocaleString('en-KE')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-50">
-                <tr>
-                  <td colSpan={2} className="px-6 py-3 text-sm font-bold text-gray-700">
-                    YTD Total ({new Date().getFullYear()})
-                  </td>
-                  <td className="px-6 py-3 text-sm font-bold text-gray-900 text-right">
-                    {ytdTotal.toLocaleString('en-KE')} KES
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                    </p>
+                  </div>
+                  <p style={{ fontWeight: 700, color: BRAND.darkNavy, fontSize: '0.9rem' }}>
+                    KES {t.amount.toLocaleString('en-KE')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── Render: Giving ───────────────────────────────────────────────────────
+  const renderGiving = () => (
+    <div>
+      <div style={{ ...S.pageHeader, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={S.pageTitle}>My Giving History</h2>
+          <p style={S.pageSubtitle}>A complete record of your contributions</p>
+        </div>
+        <button
+          onClick={handleDownloadStatement}
+          disabled={loading || transactions.length === 0}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: BRAND.darkNavy,
+            color: BRAND.gold,
+            border: 'none',
+            borderRadius: 10,
+            padding: '10px 18px',
+            fontSize: '0.825rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            opacity: loading || transactions.length === 0 ? 0.5 : 1,
+          }}
+        >
+          <Download size={15} /> Download Statement
+        </button>
+      </div>
+      <div style={S.panel}>
+        {loading ? (
+          <div style={{ padding: 24 }}>
+            <SkeletonBlock />
+            <SkeletonBlock />
+            <SkeletonBlock />
           </div>
+        ) : error ? (
+          <ErrorState onRetry={fetchDashboard} />
+        ) : transactions.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px', fontSize: '0.875rem' }}>
+            No giving records found.
+          </p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={S.tableHeader}>
+                <th style={S.th}>Date</th>
+                <th style={S.th}>Category</th>
+                <th style={{ ...S.th, textAlign: 'right' }}>Amount (KES)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((t) => (
+                <tr key={t.id}>
+                  <td style={S.td}>
+                    {new Date(t.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td style={S.td}>
+                    <span style={{ ...S.badge, background: '#eff6ff', color: '#1d4ed8' }}>{t.category}</span>
+                  </td>
+                  <td style={{ ...S.td, textAlign: 'right', fontWeight: 700 }}>{t.amount.toLocaleString('en-KE')}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ background: '#f8fafc', borderTop: '2px solid #e2e8f0' }}>
+                <td colSpan={2} style={{ ...S.td, fontWeight: 700, color: BRAND.darkNavy }}>
+                  YTD Total ({new Date().getFullYear()})
+                </td>
+                <td style={{ ...S.td, textAlign: 'right', fontWeight: 800, color: BRAND.darkNavy, fontSize: '1rem' }}>
+                  {ytdTotal.toLocaleString('en-KE')}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         )}
       </div>
     </div>
   );
 
+  // ─── Render: Attendance ───────────────────────────────────────────────────
   const renderAttendance = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">My Attendance</h2>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div>
+      <div style={S.pageHeader}>
+        <h2 style={S.pageTitle}>My Attendance</h2>
+        <p style={S.pageSubtitle}>Your service attendance records</p>
+      </div>
+      <div style={S.panel}>
         {loading ? (
-          <div className="p-6">
-            <SkeletonRow />
-            <SkeletonRow />
-            <SkeletonRow />
+          <div style={{ padding: 24 }}>
+            <SkeletonBlock />
+            <SkeletonBlock />
+            <SkeletonBlock />
           </div>
         ) : error ? (
           <ErrorState onRetry={fetchDashboard} />
         ) : attendance.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">No attendance records found.</div>
+          <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px', fontSize: '0.875rem' }}>
+            No attendance records found.
+          </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Service</th>
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Status</th>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={S.tableHeader}>
+                <th style={S.th}>Date</th>
+                <th style={S.th}>Service</th>
+                <th style={{ ...S.th, textAlign: 'right' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendance.map((a) => (
+                <tr key={a.id}>
+                  <td style={S.td}>
+                    {new Date(a.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td style={S.td}>{a.service}</td>
+                  <td style={{ ...S.td, textAlign: 'right' }}>
+                    <span style={getBadgeStyle(a.status)}>{a.status}</span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {attendance.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(a.date).toLocaleDateString('en-KE', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{a.service}</td>
-                    <td className="px-6 py-4 text-sm text-right">
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold rounded-full ${a.status === 'Present' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                      >
-                        {a.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
   );
 
+  // ─── Render: Profile ──────────────────────────────────────────────────────
   const renderProfile = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
+    <div>
+      <div style={{ ...S.pageHeader, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={S.pageTitle}>My Profile</h2>
+          <p style={S.pageSubtitle}>View and update your personal information</p>
+        </div>
         {!isEditing ? (
           <button
             onClick={handleStartEdit}
-            className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition-colors"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: BRAND.darkNavy,
+              color: BRAND.gold,
+              border: 'none',
+              borderRadius: 10,
+              padding: '10px 18px',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
-            <Edit2 size={16} /> Edit Details
+            <Edit2 size={15} /> Edit Details
           </button>
         ) : (
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={() => setIsEditing(false)}
-              className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: 'none',
+                borderRadius: 10,
+                padding: '10px 18px',
+                fontSize: '0.825rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
             >
-              <X size={16} /> Cancel
+              <X size={15} /> Cancel
             </button>
             <button
               onClick={handleSaveProfile}
               disabled={savingProfile}
-              className="flex items-center gap-2 text-sm text-white bg-blue-700 px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: BRAND.darkNavy,
+                color: BRAND.gold,
+                border: 'none',
+                borderRadius: 10,
+                padding: '10px 18px',
+                fontSize: '0.825rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                opacity: savingProfile ? 0.7 : 1,
+              }}
             >
-              <Save size={16} /> {savingProfile ? 'Saving…' : 'Save Changes'}
+              <Save size={15} /> {savingProfile ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
         )}
       </div>
 
       {profileSaved && (
-        <div className="flex items-center gap-2 bg-green-50 text-green-700 p-3 rounded-lg text-sm">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#15803d',
+            borderRadius: 10,
+            padding: '12px 16px',
+            marginBottom: 20,
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          }}
+        >
           <CheckCircle size={18} /> Profile updated successfully!
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <p className="text-xs text-gray-400 mb-4 italic">
-          You can only edit your personal contact details. For name changes or other corrections, please contact the
-          church office.
-        </p>
-        {loading ? (
-          <>
-            <SkeletonRow />
-            <SkeletonRow />
-            <SkeletonRow />
-          </>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { label: 'Full Name', value: `${memberData?.first_name} ${memberData?.last_name}`.trim() },
-              { label: 'Membership No.', value: memberData?.id },
-              { label: 'Department', value: memberData?.department },
-              { label: 'Status', value: memberData?.status },
-              { label: 'Gender', value: memberData?.gender },
-              {
-                label: 'Member Since',
-                value: memberData?.joined_at
-                  ? new Date(memberData.joined_at).toLocaleDateString('en-KE', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
-                  : '—',
-              },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
-                <p className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">{value || '—'}</p>
-              </div>
-            ))}
-            {[
-              { label: 'Phone Number', key: 'phone' },
-              { label: 'Email Address', key: 'email' },
-              { label: 'Home Address', key: 'address' },
-              { label: 'Occupation', key: 'occupation' },
-            ].map(({ label, key }) => (
-              <div key={key}>
-                <p className="text-xs font-medium text-gray-500 mb-1">
-                  {label} {isEditing && <span className="text-blue-500">✎</span>}
+      <div style={S.panel}>
+        <div style={S.panelHeader}>
+          <h3 style={S.panelTitle}>Member Information</h3>
+        </div>
+        <div style={{ ...S.panelBody }}>
+          <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: 20 }}>
+            You can only edit your personal contact details. For name changes or other corrections, please contact the
+            church office.
+          </p>
+          {loading ? (
+            <>
+              <SkeletonBlock />
+              <SkeletonBlock />
+              <SkeletonBlock />
+              <SkeletonBlock />
+            </>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px' }}>
+              {[
+                { label: 'Full Name', value: `${memberData?.first_name} ${memberData?.last_name}`.trim() },
+                { label: 'Membership No.', value: memberData?.id },
+                { label: 'Department', value: memberData?.department },
+                { label: 'Gender', value: memberData?.gender },
+                { label: 'Status', value: memberData?.status },
+                {
+                  label: 'Member Since',
+                  value: memberData?.joined_at
+                    ? new Date(memberData.joined_at).toLocaleDateString('en-KE', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })
+                    : '—',
+                },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p
+                    style={{
+                      fontSize: '0.7rem',
+                      color: '#94a3b8',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.07em',
+                      marginBottom: 6,
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      background: '#f8fafc',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {value || '—'}
+                  </p>
+                </div>
+              ))}
+
+              {[
+                { label: 'Phone Number', key: 'phone' },
+                { label: 'Email Address', key: 'email' },
+                { label: 'Home Address', key: 'address' },
+                { label: 'Occupation', key: 'occupation' },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <p
+                    style={{
+                      fontSize: '0.7rem',
+                      color: '#94a3b8',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.07em',
+                      marginBottom: 6,
+                    }}
+                  >
+                    {label} {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
+                  </p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={(profileForm as Record<string, string>)[key] || ''}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        fontSize: '0.875rem',
+                        border: `1.5px solid ${BRAND.gold}`,
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        background: '#fffbeb',
+                      }}
+                    />
+                  ) : (
+                    <p
+                      style={{
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        color: '#1e293b',
+                        background: '#f8fafc',
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                      }}
+                    >
+                      {((memberData as unknown as Record<string, unknown>)?.[key] as string) || '—'}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              <div>
+                <p
+                  style={{
+                    fontSize: '0.7rem',
+                    color: '#94a3b8',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    marginBottom: 6,
+                  }}
+                >
+                  Marital Status {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
                 </p>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={(profileForm as Record<string, string>)[key] || ''}
-                    onChange={(e) => setProfileForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                    className="w-full text-sm border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <select
+                    value={profileForm.marital_status || ''}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, marital_status: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.875rem',
+                      border: `1.5px solid ${BRAND.gold}`,
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                      outline: 'none',
+                      background: '#fffbeb',
+                    }}
+                  >
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Widowed</option>
+                    <option>Divorced</option>
+                  </select>
                 ) : (
-                  <p className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">
-                    {((memberData as unknown as Record<string, unknown>)?.[key] as string) || '—'}
+                  <p
+                    style={{
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      background: '#f8fafc',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {memberData?.marital_status || '—'}
                   </p>
                 )}
               </div>
-            ))}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1">
-                Marital Status {isEditing && <span className="text-blue-500">✎</span>}
-              </p>
-              {isEditing ? (
-                <select
-                  value={profileForm.marital_status || ''}
-                  onChange={(e) => setProfileForm((prev) => ({ ...prev, marital_status: e.target.value }))}
-                  className="w-full text-sm border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="">Select…</option>
-                  <option>Single</option>
-                  <option>Married</option>
-                  <option>Widowed</option>
-                  <option>Divorced</option>
-                </select>
-              ) : (
-                <p className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">
-                  {memberData?.marital_status || '—'}
-                </p>
-              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 
+  // ─── Render: Helpdesk ─────────────────────────────────────────────────────
   const renderHelpdesk = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Contact & Helpdesk</h2>
-      <p className="text-gray-500 text-sm">
-        Have a question, complaint, or compliment? Send a message to our team and we'll get back to you.
-      </p>
+    <div>
+      <div style={S.pageHeader}>
+        <h2 style={S.pageTitle}>Contact & Helpdesk</h2>
+        <p style={S.pageSubtitle}>Have a question or concern? We're here to help.</p>
+      </div>
       {ticketSubmitted ? (
-        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
-          <CheckCircle className="text-green-500 mx-auto mb-4" size={48} />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h3>
-          <p className="text-gray-500 mb-6">
-            Your message has been received. Our team will follow up with you shortly.
+        <div style={{ ...S.panel, textAlign: 'center', padding: '48px 32px' }}>
+          <CheckCircle style={{ color: '#22c55e', marginBottom: 16 }} size={48} />
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: BRAND.darkNavy, marginBottom: 8 }}>
+            Message Sent!
+          </h3>
+          <p style={{ color: '#64748b', marginBottom: 24, fontSize: '0.875rem' }}>
+            Your message has been received. Our team will follow up shortly.
           </p>
           <button
             onClick={() => setTicketSubmitted(false)}
-            className="text-blue-600 font-medium hover:text-blue-800 transition-colors"
+            style={{
+              background: BRAND.darkNavy,
+              color: BRAND.gold,
+              border: 'none',
+              borderRadius: 10,
+              padding: '10px 24px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
             Send Another Message
           </button>
         </div>
       ) : (
-        <form
-          onSubmit={handleSubmitTicket}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5"
-        >
-          {ticketError && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg text-sm">
-              <AlertCircle size={18} /> {ticketError}
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <select
-              value={ticketDepartment}
-              onChange={(e) => setTicketDepartment(e.target.value)}
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            >
-              <option>General</option>
-              <option>Finance</option>
-              <option>Membership</option>
-              <option>Prayer</option>
-              <option>Youth</option>
-              <option>Events</option>
-              <option>Welfare</option>
-            </select>
+        <div style={S.panel}>
+          <div style={S.panelHeader}>
+            <h3 style={S.panelTitle}>Send a Message</h3>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-            <input
-              type="text"
-              required
-              value={ticketSubject}
-              onChange={(e) => setTicketSubject(e.target.value)}
-              placeholder="Brief description of your message"
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
+          <div style={S.panelBody}>
+            <form onSubmit={handleSubmitTicket} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {ticketError && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  <AlertCircle size={16} /> {ticketError}
+                </div>
+              )}
+              {[
+                { label: 'Department', isSelect: true },
+                { label: 'Subject', key: 'subject' },
+              ].map(() => null)}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    marginBottom: 8,
+                  }}
+                >
+                  Department
+                </label>
+                <select
+                  value={ticketDepartment}
+                  onChange={(e) => setTicketDepartment(e.target.value)}
+                  style={{
+                    width: '100%',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                  }}
+                >
+                  <option>General</option>
+                  <option>Finance</option>
+                  <option>Membership</option>
+                  <option>Prayer</option>
+                  <option>Youth</option>
+                  <option>Events</option>
+                  <option>Welfare</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    marginBottom: 8,
+                  }}
+                >
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  placeholder="Brief description of your message"
+                  style={{
+                    width: '100%',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    marginBottom: 8,
+                  }}
+                >
+                  Message
+                </label>
+                <textarea
+                  required
+                  value={ticketBody}
+                  onChange={(e) => setTicketBody(e.target.value)}
+                  rows={5}
+                  placeholder="Write your message here…"
+                  style={{
+                    width: '100%',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    background: '#f8fafc',
+                    resize: 'none',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submittingTicket}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  background: `linear-gradient(135deg, ${BRAND.darkNavy}, ${BRAND.deepPurple})`,
+                  color: BRAND.gold,
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '13px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  opacity: submittingTicket ? 0.7 : 1,
+                }}
+              >
+                <MessageSquare size={18} /> {submittingTicket ? 'Sending…' : 'Send Message'}
+              </button>
+            </form>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-            <textarea
-              required
-              value={ticketBody}
-              onChange={(e) => setTicketBody(e.target.value)}
-              rows={5}
-              placeholder="Write your message here…"
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submittingTicket}
-            className="w-full flex items-center justify-center gap-2 text-white bg-blue-700 hover:bg-blue-800 font-medium py-3 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <MessageSquare size={18} /> {submittingTicket ? 'Sending…' : 'Send Message'}
-          </button>
-        </form>
+        </div>
       )}
     </div>
   );
@@ -686,44 +1274,102 @@ const MemberDashboard: React.FC = () => {
 
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'attendance', label: 'My Attendance', icon: CheckCircle },
+    { key: 'attendance', label: 'My Attendance', icon: Calendar },
     { key: 'giving', label: 'My Giving', icon: Heart },
     { key: 'profile', label: 'My Profile', icon: User },
     { key: 'helpdesk', label: 'Contact Us', icon: MessageSquare },
   ];
 
   return (
-    <div className="bg-gray-50 min-h-screen font-sans">
-      <div className="flex flex-col md:flex-row">
-        {/* Sidebar */}
-        <div className="w-full md:w-64 bg-blue-900 text-white flex-shrink-0 md:min-h-screen">
-          <div className="p-6 border-b border-blue-800">
-            <h1 className="text-xl font-bold text-white">Member Portal</h1>
-            <p className="text-xs text-blue-200 mt-1 truncate">Welcome, {currentUser?.full_name || 'Member'}</p>
-            <p className="text-xs text-blue-400 mt-0.5">{currentUser?.id}</p>
+    <div style={S.root}>
+      <style>{`
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @media (max-width: 768px) {
+          .portal-sidebar { display: none !important; }
+          .portal-sidebar.open { display: flex !important; position: fixed; inset: 0; z-index: 50; width: 260px !important; }
+          .portal-main { padding: 16px !important; }
+          .portal-card-grid { grid-template-columns: 1fr !important; }
+          .portal-detail-grid { grid-template-columns: 1fr !important; }
+          .portal-mobile-header { display: flex !important; }
+        }
+        .portal-mobile-header { display: none; align-items: center; gap: 12px; background: ${BRAND.darkNavy}; padding: 14px 16px; position: sticky; top: 0; z-index: 10; }
+        .portal-nav-btn:hover { background: rgba(212,175,55,0.1) !important; }
+      `}</style>
+
+      {/* Mobile Header */}
+      <div className="portal-mobile-header">
+        <button
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          style={{ background: 'none', border: 'none', color: BRAND.gold, cursor: 'pointer' }}
+        >
+          <Menu size={22} />
+        </button>
+        <span style={{ color: BRAND.white, fontWeight: 700, fontSize: '0.9rem' }}>HKM Member Portal</span>
+      </div>
+
+      {/* Sidebar */}
+      <div className={`portal-sidebar${mobileSidebarOpen ? ' open' : ''}`} style={S.sidebar}>
+        <div style={S.sidebarHeader}>
+          <div style={S.logoRow}>
+            <img src="/hkm-logo.webp" alt="HKM" style={S.logoImg} />
+            <span style={S.logoText}>
+              Heavenly God
+              <br />
+              Kingdom Churches
+            </span>
           </div>
-          <nav className="p-4 space-y-1">
-            {navItems.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === key ? 'bg-blue-800 text-white shadow-lg' : 'text-blue-200 hover:bg-blue-800 hover:text-white'}`}
-              >
-                <Icon size={18} /> {label}
-              </button>
-            ))}
-            <div className="pt-4 mt-4 border-t border-blue-800">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-300 hover:bg-blue-800 hover:text-red-200 transition-colors"
-              >
-                <LogOut size={18} /> Sign Out
-              </button>
-            </div>
-          </nav>
+          <div style={S.goldDivider} />
+          <p style={S.welcomeLabel}>Signed in as</p>
+          <p style={S.welcomeName}>{currentUser?.full_name || 'Member'}</p>
+          <p style={S.memberId}>{currentUser?.id}</p>
         </div>
-        {/* Main Content */}
-        <div className="flex-1 p-4 md:p-8">{renderContent()}</div>
+
+        <nav style={S.nav}>
+          {navItems.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              className="portal-nav-btn"
+              onClick={() => {
+                setActiveTab(key);
+                setMobileSidebarOpen(false);
+              }}
+              style={getNavStyle(activeTab === key)}
+            >
+              <Icon size={17} /> {label}
+            </button>
+          ))}
+        </nav>
+
+        <div style={S.navFooter}>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: 'none',
+              background: 'transparent',
+              color: '#f87171',
+              textAlign: 'left',
+            }}
+          >
+            <LogOut size={17} /> Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="portal-main" style={S.main}>
+        <div className="portal-card-grid" style={S.cardGrid as React.CSSProperties}>
+          {/* This wrapper applies responsive styles for stat cards */}
+        </div>
+        {renderContent()}
       </div>
     </div>
   );
