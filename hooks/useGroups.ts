@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { toTitleCase } from '../utils/stringFormatter';
 import { Group } from '../components/GroupsManagementPage';
 import {
   GET_GROUPS_QUERY,
@@ -48,10 +49,10 @@ export function useGroups(members: Member[] = []) {
     await addGroupMutation({
       variables: {
         object: {
-          name: groupData.name || '',
+          name: toTitleCase(groupData.name),
           leader_id: leaderMember?.id || null,
           member_count: groupData.members || 0,
-          category: groupData.category || 'General',
+          category: toTitleCase(groupData.category) || 'General',
         },
       },
     });
@@ -59,13 +60,13 @@ export function useGroups(members: Member[] = []) {
 
   const updateGroup = async (id: number, updates: Partial<Group>) => {
     const set: Record<string, unknown> = {};
-    if (updates.name) set.name = updates.name;
+    if (updates.name) set.name = toTitleCase(updates.name);
     if (updates.leader) {
       const leaderMember = members.find((m) => m.email === updates.leader);
       set.leader_id = leaderMember?.id || null;
     }
     if (updates.members !== undefined) set.member_count = updates.members;
-    if (updates.category) set.category = updates.category;
+    if (updates.category) set.category = toTitleCase(updates.category);
 
     await updateGroupMutation({
       variables: { id, _set: set },

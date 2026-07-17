@@ -61,10 +61,10 @@ export interface AppSettings {
 
 const initialSettings: AppSettings = {
   churchInfo: {
-    name: 'ICGC Emmanuel Temple',
-    address: '123 Church Street, Accra, Ghana',
-    phone: '+233 123 456 789',
-    email: 'info@icgcemmanueltemple.org',
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
   },
   smsConfig: {
     apiKey: '',

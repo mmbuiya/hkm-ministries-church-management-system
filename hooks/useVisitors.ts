@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { toTitleCase, formatEmail } from '../utils/stringFormatter';
 import { Visitor, FollowUp, VisitorStatus } from '../components/visitorData';
 import {
   GET_VISITORS_QUERY,
@@ -95,8 +96,9 @@ export function useVisitors() {
       variables: {
         object: {
           ...rest,
-          name: rest.name || '',
+          name: toTitleCase(rest.name),
           phone: rest.phone || '',
+          email: rest.email ? formatEmail(rest.email) : undefined,
           initials:
             initials ||
             (rest.name
@@ -106,7 +108,7 @@ export function useVisitors() {
                   .join('')
                   .toUpperCase()
               : ''),
-          heard_from: rest.heardFrom,
+          heard_from: toTitleCase(rest.heardFrom),
           first_visit: rest.firstVisit,
           registered_date: registeredDate || new Date().toISOString().split('T')[0],
           status: rest.status || 'New',
@@ -118,10 +120,10 @@ export function useVisitors() {
   const updateVisitor = async (id: number, updates: Partial<Visitor>) => {
     const { ...rest } = updates;
     const set: Record<string, unknown> = {};
-    if (rest.name) set.name = rest.name;
+    if (rest.name) set.name = toTitleCase(rest.name);
     if (rest.phone) set.phone = rest.phone;
-    if (rest.email !== undefined) set.email = rest.email;
-    if (rest.heardFrom) set.heard_from = rest.heardFrom;
+    if (rest.email !== undefined) set.email = rest.email ? formatEmail(rest.email) : null;
+    if (rest.heardFrom) set.heard_from = toTitleCase(rest.heardFrom);
     if (rest.firstVisit) set.first_visit = rest.firstVisit;
     if (rest.status) set.status = rest.status;
     if (rest.initials) set.initials = rest.initials;

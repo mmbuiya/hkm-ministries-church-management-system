@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useApolloClient } from '@apollo/client';
+import { toTitleCase } from '../utils/stringFormatter';
 import { Transaction, TransactionCategory } from '../components/financeData';
 import {
   GET_TRANSACTIONS_QUERY,
@@ -115,9 +116,9 @@ export function useTransactions() {
             category: transaction.category,
             type: transaction.type,
             amount: transaction.amount.toString(), // BigFloat requires string
-            description: transaction.description || '',
+            description: toTitleCase(transaction.description),
             member_id: transaction.memberId || null,
-            non_member_name: transaction.nonMemberName || null,
+            non_member_name: toTitleCase(transaction.nonMemberName) || null,
           },
         },
       });
@@ -389,20 +390,19 @@ export function useTransactions() {
 
   const updateTransaction = async (id: number, updates: Partial<Transaction>) => {
     try {
-      const SupabaseUpdates: Record<string, unknown> = {};
-
-      if (updates.date !== undefined) SupabaseUpdates.date = updates.date;
-      if (updates.category !== undefined) SupabaseUpdates.category = updates.category;
-      if (updates.type !== undefined) SupabaseUpdates.type = updates.type;
-      if (updates.amount !== undefined) SupabaseUpdates.amount = updates.amount.toString(); // BigFloat requires string
-      if (updates.description !== undefined) SupabaseUpdates.description = updates.description;
-      if (updates.memberId !== undefined) SupabaseUpdates.member_id = updates.memberId;
-      if (updates.nonMemberName !== undefined) SupabaseUpdates.non_member_name = updates.nonMemberName;
+      const payload: Record<string, any> = {};
+      if (updates.date !== undefined) payload.date = updates.date;
+      if (updates.category !== undefined) payload.category = updates.category;
+      if (updates.type !== undefined) payload.type = updates.type;
+      if (updates.amount !== undefined) payload.amount = updates.amount.toString();
+      if (updates.description !== undefined) payload.description = toTitleCase(updates.description);
+      if (updates.memberId !== undefined) payload.member_id = updates.memberId || null;
+      if (updates.nonMemberName !== undefined) payload.non_member_name = toTitleCase(updates.nonMemberName) || null;
 
       const result = await updateTransactionMutation({
         variables: {
           id,
-          updates: SupabaseUpdates,
+          updates: payload,
         },
       });
 

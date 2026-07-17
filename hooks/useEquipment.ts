@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { toTitleCase } from '../utils/stringFormatter';
 import { Equipment, EquipmentCondition } from '../components/equipmentData';
 import { MaintenanceRecord, MaintenanceStatus, MaintenanceType } from '../components/maintenanceData';
 import {
@@ -108,13 +109,13 @@ export function useEquipment() {
     await addEquipmentMutation({
       variables: {
         object: {
-          name: item.name || '',
+          name: toTitleCase(item.name),
           category: item.category,
           purchase_date: item.purchaseDate,
           purchase_price: item.purchasePrice,
           condition: item.condition,
-          location: item.location,
-          description: item.description,
+          location: toTitleCase(item.location),
+          description: toTitleCase(item.description),
         },
       },
     });
@@ -122,13 +123,13 @@ export function useEquipment() {
 
   const updateEquipment = async (id: number, updates: Partial<Equipment>) => {
     const set: Record<string, unknown> = {};
-    if (updates.name) set.name = updates.name;
+    if (updates.name) set.name = toTitleCase(updates.name);
     if (updates.category) set.category = updates.category;
     if (updates.purchaseDate) set.purchase_date = updates.purchaseDate;
     if (updates.purchasePrice !== undefined) set.purchase_price = updates.purchasePrice;
     if (updates.condition) set.condition = updates.condition;
-    if (updates.location) set.location = updates.location;
-    if (updates.description) set.description = updates.description;
+    if (updates.location) set.location = toTitleCase(updates.location);
+    if (updates.description) set.description = toTitleCase(updates.description);
 
     await updateEquipmentMutation({
       variables: { id, _set: set },

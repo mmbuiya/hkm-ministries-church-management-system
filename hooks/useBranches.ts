@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client';
+import { toTitleCase, formatEmail } from '../utils/stringFormatter';
 import { useMemo } from 'react';
 import { Branch, BranchGivingRecord } from '../components/branchData';
 import {
@@ -91,11 +92,11 @@ export function useBranches() {
       variables: {
         object: {
           id,
-          name: branch.name,
-          location: branch.address,
+          name: toTitleCase(branch.name),
+          location: toTitleCase(branch.address),
           manager_id: null, // Set to null to avoid foreign key constraint
           phone: branch.phone,
-          email: branch.email,
+          email: formatEmail(branch.email),
           is_active: branch.isActive,
         },
       },
@@ -103,6 +104,13 @@ export function useBranches() {
   };
 
   const updateBranch = async (id: string, branch: Partial<Branch>) => {
+    const SupabaseUpdates: any = {};
+    if (branch.name !== undefined) SupabaseUpdates.name = toTitleCase(branch.name);
+    if (branch.address !== undefined) SupabaseUpdates.location = toTitleCase(branch.address);
+    if (branch.phone !== undefined) SupabaseUpdates.phone = branch.phone;
+    if (branch.email !== undefined) SupabaseUpdates.email = formatEmail(branch.email);
+    if (branch.isActive !== undefined) SupabaseUpdates.is_active = branch.isActive;
+
     await updateBranchMutation({
       variables: {
         id,

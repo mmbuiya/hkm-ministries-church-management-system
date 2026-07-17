@@ -27,6 +27,7 @@ import {
   GET_MEMBER_DASHBOARD_QUERY,
   UPDATE_MEMBER_PROFILE_MUTATION,
   SUBMIT_HELPDESK_TICKET_MUTATION,
+  GET_CHURCH_SETTINGS_QUERY,
 } from '../services/portalQueries';
 import { generateCSV } from '../utils/giving';
 import jsPDF from 'jspdf';
@@ -364,7 +365,10 @@ const MemberDashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [churchInfo, setChurchInfo] = useState<{ name: string; address: string; phone: string; email: string } | null>(
+    null,
+  );
 
   const [isEditing, setIsEditing] = useState(false);
   const [profileForm, setProfileForm] = useState<Partial<MemberData>>({});
@@ -383,7 +387,7 @@ const MemberDashboard: React.FC = () => {
   const fetchDashboard = useCallback(async () => {
     if (!currentUser?.id) return;
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       const { data } = await portalApolloClient.query({
         query: GET_MEMBER_DASHBOARD_QUERY,
@@ -394,7 +398,7 @@ const MemberDashboard: React.FC = () => {
       setTransactions(data.transactionsCollection?.edges?.map((e: { node: Transaction }) => e.node) ?? []);
       setAttendance(data.attendance_recordsCollection?.edges?.map((e: { node: AttendanceRecord }) => e.node) ?? []);
     } catch {
-      setError(true);
+      setError('Failed to load dashboard. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -403,6 +407,26 @@ const MemberDashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  // Fetch church info from DB (first branch = main church)
+  useEffect(() => {
+    portalApolloClient
+      .query({ query: GET_CHURCH_SETTINGS_QUERY, fetchPolicy: 'network-only' })
+      .then((res) => {
+        const node = res.data?.church_settingsCollection?.edges?.[0]?.node;
+        if (node) {
+          setChurchInfo({
+            name: node.name || '',
+            address: node.address || '',
+            phone: node.phone || '',
+            email: node.email || '',
+          });
+        }
+      })
+      .catch(() => {
+        /* silently fail */
+      });
+  }, []);
 
   const handleLogout = () => {
     portalAuthService.logout();
@@ -421,10 +445,16 @@ const MemberDashboard: React.FC = () => {
     // Add Logo text (placeholder if we can't load image sync)
     doc.setTextColor(212, 175, 55); // Gold
     doc.setFontSize(16);
-    doc.text('HEAVENLY GOD KINGDOM CHURCHES', pageWidth / 2, 20, { align: 'center' });
+    doc.text((churchInfo?.name || 'HKM Ministries').toUpperCase(), pageWidth / 2, 20, { align: 'center' });
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.text('Member Giving Statement', pageWidth / 2, 28, { align: 'center' });
+    if (churchInfo?.address || churchInfo?.phone) {
+      doc.setFontSize(8);
+      doc.text([churchInfo?.address, churchInfo?.phone].filter(Boolean).join('  |  '), pageWidth / 2, 35, {
+        align: 'center',
+      });
+    }
 
     // Member Details
     doc.setTextColor(0, 0, 0);

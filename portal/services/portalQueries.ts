@@ -118,3 +118,53 @@ export const SUBMIT_HELPDESK_TICKET_MUTATION = gql`
     }
   }
 `;
+
+export const GET_CHURCH_SETTINGS_QUERY = gql`
+  query GetChurchSettings {
+    church_settingsCollection(first: 1) {
+      edges {
+        node {
+          id
+          name
+          address
+          phone
+          email
+          website
+          logo_url
+        }
+      }
+    }
+  }
+`;
+
+export const UPSERT_CHURCH_SETTINGS_MUTATION = gql`
+  mutation UpsertChurchSettings(
+    $id: Int!
+    $name: String!
+    $address: String
+    $phone: String
+    $email: String
+    $website: String
+    $logo_url: String
+  ) {
+    upsertIntochurch_settingsCollection(
+      objects: [
+        {
+          id: $id
+          name: $name
+          address: $address
+          phone: $phone
+          email: $email
+          website: $website
+          logo_url: $logo_url
+        }
+      ]
+      onConflict: { constraint: church_settings_pkey, updateColumns: [name, address, phone, email, website, logo_url] }
+    ) {
+      records {
+        id
+        name
+      }
+    }
+  }
+`;

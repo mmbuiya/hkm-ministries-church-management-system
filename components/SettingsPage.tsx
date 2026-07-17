@@ -18,6 +18,37 @@ import { User } from './userData';
 import { storage, AppSettings } from '../services/storage';
 import { useTheme, ThemeName } from './ThemeContext';
 import { Palette, AtSign } from 'lucide-react';
+import { useApolloClient, gql } from '@apollo/client';
+
+const GET_CHURCH_SETTINGS = gql`
+  query GetAdminChurchSettings {
+    church_settingsCollection(first: 1) {
+      edges {
+        node {
+          id
+          name
+          address
+          phone
+          email
+        }
+      }
+    }
+  }
+`;
+
+const UPSERT_CHURCH_SETTINGS = gql`
+  mutation UpsertAdminChurchSettings($id: Int!, $name: String!, $address: String, $phone: String, $email: String) {
+    upsertIntochurch_settingsCollection(
+      objects: [{ id: $id, name: $name, address: $address, phone: $phone, email: $email }]
+      onConflict: { constraint: church_settings_pkey, updateColumns: [name, address, phone, email] }
+    ) {
+      records {
+        id
+        name
+      }
+    }
+  }
+`;
 
 interface SettingsPageProps {
   currentUser: User | null;
@@ -89,20 +120,55 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
+  const apolloClient = useApolloClient();
 
   useEffect(() => {
     const loadSettings = async () => {
       const data = await storage.appSettings.getAll();
+      // Also try to fetch live church info from Supabase and merge it
+      try {
+        const res = await apolloClient.query({
+          query: GET_CHURCH_SETTINGS,
+          fetchPolicy: 'network-only',
+        });
+        const node = res.data?.church_settingsCollection?.edges?.[0]?.node;
+        if (node) {
+          data.churchInfo = {
+            name: node.name || data.churchInfo.name,
+            address: node.address || data.churchInfo.address,
+            phone: node.phone || data.churchInfo.phone,
+            email: node.email || data.churchInfo.email,
+          };
+        }
+      } catch {
+        // DB not reachable - fall back to localStorage
+      }
       setSettings(data);
       setLoading(false);
     };
     loadSettings();
-  }, []);
+  }, [apolloClient]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (settings) {
+      // 1. Always save everything to localStorage for SMS/email services
       await storage.appSettings.save(settings);
+      // 2. Persist church info to Supabase so the member portal can read it
+      try {
+        await apolloClient.mutate({
+          mutation: UPSERT_CHURCH_SETTINGS,
+          variables: {
+            id: 1, // singleton row
+            name: settings.churchInfo.name,
+            address: settings.churchInfo.address,
+            phone: settings.churchInfo.phone,
+            email: settings.churchInfo.email,
+          },
+        });
+      } catch (err) {
+        console.warn('[Settings] Could not sync church info to Supabase:', err);
+      }
       alert('Settings saved successfully!');
     }
   };
