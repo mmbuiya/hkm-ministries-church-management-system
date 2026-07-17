@@ -46,6 +46,7 @@ export const GET_MEMBER_DASHBOARD_QUERY = gql`
           occupation
           dob
           is_portal_active
+          avatar
         }
       }
     }

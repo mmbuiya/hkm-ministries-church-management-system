@@ -44,6 +44,7 @@ interface MemberData {
   address?: string;
   occupation?: string;
   dob?: string;
+  avatar?: string;
 }
 
 interface Transaction {
@@ -466,6 +467,7 @@ const MemberDashboard: React.FC = () => {
       address: memberData.address,
       occupation: memberData.occupation,
       marital_status: memberData.marital_status,
+      avatar: memberData.avatar,
     });
     setIsEditing(true);
   };
@@ -484,6 +486,7 @@ const MemberDashboard: React.FC = () => {
             address: profileForm.address,
             occupation: profileForm.occupation,
             marital_status: profileForm.marital_status,
+            avatar: profileForm.avatar,
           },
         },
       });
@@ -521,6 +524,26 @@ const MemberDashboard: React.FC = () => {
       setTicketError('Failed to submit your message. Please try again.');
     } finally {
       setSubmittingTicket(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (JPEG, PNG, etc.).');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be under 5MB. Please choose a smaller file.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileForm((prev) => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.onerror = () => alert('Failed to read the image file.');
+      reader.readAsDataURL(file);
     }
   };
 
@@ -947,59 +970,167 @@ const MemberDashboard: React.FC = () => {
               <SkeletonBlock />
             </>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px' }}>
-              {[
-                { label: 'Full Name', value: `${memberData?.first_name} ${memberData?.last_name}`.trim() },
-                { label: 'Membership No.', value: memberData?.id },
-                { label: 'Department', value: memberData?.department },
-                { label: 'Gender', value: memberData?.gender },
-                { label: 'Status', value: memberData?.status },
-                {
-                  label: 'Member Since',
-                  value: memberData?.joined_at
-                    ? new Date(memberData.joined_at).toLocaleDateString('en-KE', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })
-                    : '—',
-                },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p
-                    style={{
-                      fontSize: '0.7rem',
-                      color: '#94a3b8',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.07em',
-                      marginBottom: 6,
-                    }}
-                  >
-                    {label}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      background: '#f8fafc',
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                    }}
-                  >
-                    {value || '—'}
-                  </p>
-                </div>
-              ))}
+            <div>
+              {/* Avatar Section */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 28 }}>
+                {isEditing ? (
+                  <>
+                    <div style={{ position: 'relative', width: 80, height: 80 }}>
+                      <img
+                        src={
+                          profileForm.avatar ||
+                          memberData?.avatar ||
+                          `https://ui-avatars.com/api/?name=${memberData?.first_name}+${memberData?.last_name}&background=0f172a&color=d4af37`
+                        }
+                        alt="Avatar"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid #d4af37',
+                        }}
+                      />
+                      <label
+                        style={{
+                          position: 'absolute',
+                          bottom: -5,
+                          right: -5,
+                          background: '#10b981',
+                          color: 'white',
+                          borderRadius: '50%',
+                          padding: 6,
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        <Edit2 size={12} />
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                      </label>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>Profile Photo</p>
+                      <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        Click the icon to upload a new image. Max 5MB.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  memberData?.avatar && (
+                    <img
+                      src={memberData.avatar}
+                      alt="Avatar"
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid #e2e8f0',
+                      }}
+                    />
+                  )
+                )}
+              </div>
 
-              {[
-                { label: 'Phone Number', key: 'phone' },
-                { label: 'Email Address', key: 'email' },
-                { label: 'Home Address', key: 'address' },
-                { label: 'Occupation', key: 'occupation' },
-              ].map(({ label, key }) => (
-                <div key={key}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px' }}>
+                {[
+                  { label: 'Full Name', value: `${memberData?.first_name} ${memberData?.last_name}`.trim() },
+                  { label: 'Membership No.', value: memberData?.id },
+                  { label: 'Department', value: memberData?.department },
+                  { label: 'Gender', value: memberData?.gender },
+                  { label: 'Status', value: memberData?.status },
+                  {
+                    label: 'Member Since',
+                    value: memberData?.joined_at
+                      ? new Date(memberData.joined_at).toLocaleDateString('en-KE', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : '—',
+                  },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#94a3b8',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        marginBottom: 6,
+                      }}
+                    >
+                      {label}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        color: '#1e293b',
+                        background: '#f8fafc',
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                      }}
+                    >
+                      {value || '—'}
+                    </p>
+                  </div>
+                ))}
+
+                {[
+                  { label: 'Phone Number', key: 'phone' },
+                  { label: 'Email Address', key: 'email' },
+                  { label: 'Home Address', key: 'address' },
+                  { label: 'Occupation', key: 'occupation' },
+                ].map(({ label, key }) => (
+                  <div key={key}>
+                    <p
+                      style={{
+                        fontSize: '0.7rem',
+                        color: '#94a3b8',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        marginBottom: 6,
+                      }}
+                    >
+                      {label} {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
+                    </p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={(profileForm as Record<string, string>)[key] || ''}
+                        onChange={(e) => setProfileForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          fontSize: '0.875rem',
+                          border: `1.5px solid ${BRAND.gold}`,
+                          borderRadius: 8,
+                          padding: '8px 12px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          background: '#fffbeb',
+                        }}
+                      />
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          color: '#1e293b',
+                          background: '#f8fafc',
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                        }}
+                      >
+                        {((memberData as unknown as Record<string, unknown>)?.[key] as string) || '—'}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                <div>
                   <p
                     style={{
                       fontSize: '0.7rem',
@@ -1010,13 +1141,12 @@ const MemberDashboard: React.FC = () => {
                       marginBottom: 6,
                     }}
                   >
-                    {label} {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
+                    Marital Status {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
                   </p>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      value={(profileForm as Record<string, string>)[key] || ''}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                    <select
+                      value={profileForm.marital_status || ''}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, marital_status: e.target.value }))}
                       style={{
                         width: '100%',
                         fontSize: '0.875rem',
@@ -1024,10 +1154,15 @@ const MemberDashboard: React.FC = () => {
                         borderRadius: 8,
                         padding: '8px 12px',
                         outline: 'none',
-                        boxSizing: 'border-box',
                         background: '#fffbeb',
                       }}
-                    />
+                    >
+                      <option value="">Select…</option>
+                      <option>Single</option>
+                      <option>Married</option>
+                      <option>Widowed</option>
+                      <option>Divorced</option>
+                    </select>
                   ) : (
                     <p
                       style={{
@@ -1039,59 +1174,10 @@ const MemberDashboard: React.FC = () => {
                         borderRadius: 8,
                       }}
                     >
-                      {((memberData as unknown as Record<string, unknown>)?.[key] as string) || '—'}
+                      {memberData?.marital_status || '—'}
                     </p>
                   )}
                 </div>
-              ))}
-
-              <div>
-                <p
-                  style={{
-                    fontSize: '0.7rem',
-                    color: '#94a3b8',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.07em',
-                    marginBottom: 6,
-                  }}
-                >
-                  Marital Status {isEditing && <span style={{ color: BRAND.gold }}>✎</span>}
-                </p>
-                {isEditing ? (
-                  <select
-                    value={profileForm.marital_status || ''}
-                    onChange={(e) => setProfileForm((prev) => ({ ...prev, marital_status: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      fontSize: '0.875rem',
-                      border: `1.5px solid ${BRAND.gold}`,
-                      borderRadius: 8,
-                      padding: '8px 12px',
-                      outline: 'none',
-                      background: '#fffbeb',
-                    }}
-                  >
-                    <option value="">Select…</option>
-                    <option>Single</option>
-                    <option>Married</option>
-                    <option>Widowed</option>
-                    <option>Divorced</option>
-                  </select>
-                ) : (
-                  <p
-                    style={{
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      background: '#f8fafc',
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                    }}
-                  >
-                    {memberData?.marital_status || '—'}
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -1355,6 +1441,36 @@ const MemberDashboard: React.FC = () => {
             </span>
           </div>
           <div style={S.goldDivider} />
+          {memberData?.avatar ? (
+            <img
+              src={memberData.avatar}
+              alt="Profile"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                marginBottom: 12,
+                border: '2px solid rgba(212, 175, 55, 0.6)',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                marginBottom: 12,
+                border: '2px solid rgba(212, 175, 55, 0.6)',
+                background: '#1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <User size={24} color="#d4af37" />
+            </div>
+          )}
           <p style={S.welcomeLabel}>Signed in as</p>
           <p style={S.welcomeName}>{currentUser?.full_name || 'Member'}</p>
           <p style={S.memberId}>{currentUser?.id}</p>
