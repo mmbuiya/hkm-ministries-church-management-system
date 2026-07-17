@@ -300,6 +300,22 @@ alter table login_attempts enable row level security;
 create policy "Authenticated users can read login_attempts" on login_attempts for select using (auth.role() = 'authenticated');
 create policy "Authenticated users can manage login_attempts" on login_attempts for all using (auth.role() = 'authenticated');
 
+-- ─── Provisioning Queue ─────────────────────────────────────
+-- Tracks members whose portal provisioning is blocked/queued for retry
+create table if not exists provisioning_queue (
+  id          text primary key default gen_random_uuid()::text,
+  member_id   text not null references members(id) on delete cascade,
+  status      text not null default 'queued' check (status in ('queued', 'processing', 'completed', 'failed')),
+  reason      text,
+  retry_count integer default 0,
+  next_retry_at timestamptz,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+alter table provisioning_queue enable row level security;
+create policy "Authenticated users can read provisioning_queue" on provisioning_queue for select using (auth.role() = 'authenticated');
+create policy "Authenticated users can manage provisioning_queue" on provisioning_queue for all using (auth.role() = 'authenticated');
+
 -- ─── DONE ───────────────────────────────────────────────────
 -- All tables created successfully with RLS enabled.
 -- Next: Enable pg_graphql in Extensions tab.

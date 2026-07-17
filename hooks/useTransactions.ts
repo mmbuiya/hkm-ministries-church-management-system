@@ -10,9 +10,11 @@ import {
   ADD_NOTIFICATION_LOG_MUTATION,
 } from '../services/graphql/transactions';
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
+import { ADD_PROVISIONING_QUEUE_MUTATION } from '../services/graphql/provisioning';
 import { sendPinNotification } from '../services/pinNotificationService';
 import { hashPin } from '../utils/hashPin';
 import { generateOrgEmail, createAlias, loadImprovMXConfig, checkAliasExists } from '../services/improvmxService';
+import { computeRegistrationStatus, createOrgEmailForMember } from '../services/provisioning';
 interface SupabaseMember {
   id: string;
   first_name: string;
@@ -78,6 +80,7 @@ export function useTransactions() {
   const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
   const [addNotificationLogMutation] = useMutation(ADD_NOTIFICATION_LOG_MUTATION);
+  const [addProvisioningQueueMutation] = useMutation(ADD_PROVISIONING_QUEUE_MUTATION);
 
   const transactions: Transaction[] = useMemo(() => {
     console.log('[useTransactions] Query data:', data, 'Error:', error);
@@ -138,56 +141,90 @@ export function useTransactions() {
         const totalRegistrationPaid = previousRegistrationFees + transaction.amount;
 
         if (totalRegistrationPaid >= 500) {
-          console.log(
-            '[useTransactions] Registration threshold met (500). Generating PIN and activating member portal...',
-          );
+          console.log('[useTransactions] Registration threshold met.');
 
-          // Generate a random 6-digit PIN
-          const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-          // Hash it before storing to DB
-          const hashedPin = await hashPin(transaction.memberId, generatedPin);
-
-          await updateMemberMutation({
-            variables: {
-              id: transaction.memberId,
-              updates: {
-                status: 'Active',
-                pin: hashedPin,
-                is_portal_active: true,
-              },
-            },
+          // Fetch member details to validate contact info before provisioning
+          const memberResult = await apolloClient.query({
+            query: GET_MEMBERS_QUERY,
+            fetchPolicy: 'network-only',
           });
-          console.log('[useTransactions] Member activated with new PIN.');
 
-          try {
-            await addAuditLogMutation({
+          const memberNode = memberResult.data?.membersCollection?.edges?.find(
+            (e: any) => e.node.id === transaction.memberId,
+          )?.node;
+
+          const status = computeRegistrationStatus(transaction.memberId, transactions, memberNode);
+
+          if (!status.canProvision) {
+            console.log('[useTransactions] Provisioning blocked — missing contact details.');
+
+            await addProvisioningQueueMutation({
               variables: {
                 object: {
-                  action: 'Member Activated',
-                  entity_type: 'member',
-                  entity_id: transaction.memberId,
-                  details: { reason: 'Registration threshold met', amount: totalRegistrationPaid },
+                  member_id: transaction.memberId,
+                  status: 'queued',
+                  reason: `Missing: ${status.missingFields.join(', ')}`,
+                  retry_count: 0,
+                  next_retry_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
                 },
               },
             });
-          } catch (auditErr) {
-            console.error('Failed to write audit log', auditErr);
-          }
 
-          // Fetch member details to send notification and create org email
-          try {
-            const memberResult = await apolloClient.query({
-              query: GET_MEMBERS_QUERY,
-              fetchPolicy: 'network-only',
+            try {
+              await addAuditLogMutation({
+                variables: {
+                  object: {
+                    action: 'Provisioning Blocked',
+                    entity_type: 'member',
+                    entity_id: transaction.memberId,
+                    details: {
+                      reason: 'Missing contact details',
+                      missing: status.missingFields,
+                      total_paid: totalRegistrationPaid,
+                      queued: true,
+                    },
+                  },
+                },
+              });
+            } catch (auditErr) {
+              console.error('Failed to write audit log', auditErr);
+            }
+          } else {
+            console.log('[useTransactions] Contact details valid. Activating member portal...');
+
+            const { pin: generatedPin, hashedPin } = await (async () => {
+              const p = Math.floor(100000 + Math.random() * 900000).toString();
+              return { pin: p, hashedPin: await hashPin(transaction.memberId!, p) };
+            })();
+
+            await updateMemberMutation({
+              variables: {
+                id: transaction.memberId,
+                updates: {
+                  status: 'Active',
+                  pin: hashedPin,
+                  is_portal_active: true,
+                },
+              },
             });
+            console.log('[useTransactions] Member activated with new PIN.');
 
-            const memberNode = memberResult.data?.membersCollection?.edges?.find(
-              (e: any) => e.node.id === transaction.memberId,
-            )?.node;
+            try {
+              await addAuditLogMutation({
+                variables: {
+                  object: {
+                    action: 'Member Activated',
+                    entity_type: 'member',
+                    entity_id: transaction.memberId,
+                    details: { reason: 'Registration threshold met', amount: totalRegistrationPaid },
+                  },
+                },
+              });
+            } catch (auditErr) {
+              console.error('Failed to write audit log', auditErr);
+            }
 
             if (memberNode) {
-              // --- Org Email Alias Creation ---
               const memberName = `${memberNode.first_name} ${memberNode.last_name}`.trim();
               const emailTier = memberNode.email_tier || 'member';
               let orgEmail = memberNode.org_email;
@@ -197,16 +234,14 @@ export function useTransactions() {
                 const baseEmail = generateOrgEmail(memberName, config.domain || 'hkmministries.org');
                 orgEmail = baseEmail;
 
-                // Ensure uniqueness
                 if (config.apiKey) {
                   let isUnique = false;
                   let attempts = 0;
                   while (!isUnique && attempts < 5) {
                     const checkResult = await checkAliasExists(orgEmail);
                     if (!checkResult.exists) {
-                      isUnique = true; // Not found, so it's unique
+                      isUnique = true;
                     } else {
-                      // It exists, append random 3 digits
                       const randomDigits = Math.floor(100 + Math.random() * 900);
                       const parts = baseEmail.split('@');
                       orgEmail = `${parts[0]}.${randomDigits}@${parts[1]}`;
@@ -258,7 +293,6 @@ export function useTransactions() {
                 orgEmail: orgEmail,
               });
 
-              // Log SMS result
               try {
                 await addNotificationLogMutation({
                   variables: {
@@ -275,7 +309,6 @@ export function useTransactions() {
                 console.error('Failed to log SMS notif', err);
               }
 
-              // Log Email result
               try {
                 await addNotificationLogMutation({
                   variables: {
@@ -294,8 +327,6 @@ export function useTransactions() {
             } else {
               console.warn('[useTransactions] Could not find member details for PIN notification.');
             }
-          } catch (notifErr) {
-            console.error('[useTransactions] Error sending PIN notification:', notifErr);
           }
         } else {
           console.log(

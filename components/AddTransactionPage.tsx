@@ -129,13 +129,23 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   }
 
   const isPendingFee = selectedMemberObj?.status === 'Pending Fee';
+  const registrationThreshold = 500;
   const pastRegistrationFees =
-    isPendingFee && transactions
+    transactions && memberId
       ? transactions
           .filter((t) => t.memberId === memberId && t.category === 'Registration Fee')
           .reduce((sum, t) => sum + t.amount, 0)
       : 0;
-  const registrationBalance = Math.max(0, 500 - pastRegistrationFees);
+  const currentAmount = parseFloat(amount) || 0;
+  const projectedTotal = pastRegistrationFees + currentAmount;
+  const registrationBalance = Math.max(0, registrationThreshold - pastRegistrationFees);
+  const thresholdMetOnSave = projectedTotal >= registrationThreshold;
+  const hasEmail = !!selectedMemberObj?.email;
+  const hasPhone = !!selectedMemberObj?.phone;
+  const hasContact = hasEmail || hasPhone;
+  const missingContactFields: string[] = [];
+  if (!hasEmail) missingContactFields.push('Email');
+  if (!hasPhone) missingContactFields.push('Phone');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -350,10 +360,57 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
                           }}
                           required={memberRequiredCategories.includes(category as IncomeCategory)}
                         />
-                        {isPendingFee && category === 'Registration Fee' && (
-                          <div className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded">
-                            <strong>Pending Registration:</strong> This member has paid KSH {pastRegistrationFees}.
-                            Balance remaining: KSH {registrationBalance}.
+                        {category === 'Registration Fee' && memberId && (
+                          <div className="mt-3 space-y-2">
+                            <div
+                              className={`text-sm p-3 rounded border ${
+                                isPendingFee
+                                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                                  : selectedMemberObj?.status === 'Active'
+                                    ? 'bg-green-50 border-green-200 text-green-800'
+                                    : 'bg-gray-50 border-gray-200 text-gray-700'
+                              }`}
+                            >
+                              <strong>Registration Status:</strong>
+                              <ul className="mt-1 space-y-1 list-disc list-inside">
+                                <li>
+                                  Paid: KSH {pastRegistrationFees} / KSH {registrationThreshold}
+                                </li>
+                                {currentAmount > 0 && (
+                                  <li>
+                                    After this entry: KSH {projectedTotal} / KSH {registrationThreshold}
+                                  </li>
+                                )}
+                                <li>
+                                  Contact:{' '}
+                                  {missingContactFields.length === 0
+                                    ? 'Complete'
+                                    : `Missing: ${missingContactFields.join(', ')}`}
+                                </li>
+                              </ul>
+                            </div>
+                            {thresholdMetOnSave && isPendingFee && (
+                              <div
+                                className={`text-sm p-3 rounded border ${
+                                  hasContact
+                                    ? 'bg-green-50 border-green-200 text-green-700'
+                                    : 'bg-red-50 border-red-200 text-red-700'
+                                }`}
+                              >
+                                {hasContact ? (
+                                  <span>
+                                    <strong>Ready to Activate:</strong> Threshold met and contact details present.
+                                    Portal PIN will be generated and sent to the member.
+                                  </span>
+                                ) : (
+                                  <span>
+                                    <strong>Cannot Activate:</strong> Threshold met but{' '}
+                                    {missingContactFields.join(' and ')} is missing. Update the member&apos;s profile
+                                    with {missingContactFields.join(' and ')} before saving.
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </>
