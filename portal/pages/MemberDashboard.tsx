@@ -17,7 +17,9 @@ import {
   TrendingUp,
   Shield,
   Menu,
+  Settings2,
 } from 'lucide-react';
+import AvatarEditor from '../../components/AvatarEditor';
 import { useNavigate } from 'react-router-dom';
 import { portalAuthService } from '../services/portalAuth';
 import { portalApolloClient } from '../services/portalApollo';
@@ -368,6 +370,8 @@ const MemberDashboard: React.FC = () => {
   const [profileForm, setProfileForm] = useState<Partial<MemberData>>({});
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [showAvatarEditor, setShowAvatarEditor] = useState(false);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
 
   const [ticketDepartment, setTicketDepartment] = useState('General');
   const [ticketSubject, setTicketSubject] = useState('');
@@ -540,8 +544,9 @@ const MemberDashboard: React.FC = () => {
         return;
       }
       try {
-        const compressedBase64 = await compressImage(file, 400, 400, 0.7);
-        setProfileForm((prev) => ({ ...prev, avatar: compressedBase64 }));
+        const compressedBase64 = await compressImage(file, 600, 600, 0.9); // Higher quality initial compression for the editor
+        setTempAvatarUrl(compressedBase64);
+        setShowAvatarEditor(true);
       } catch (error) {
         console.error('Error compressing image:', error);
         alert('Failed to process the image. Please try again.');
@@ -1012,9 +1017,32 @@ const MemberDashboard: React.FC = () => {
                     </div>
                     <div>
                       <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>Profile Photo</p>
-                      <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                        Click the icon to upload a new image. Max 5MB.
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 4 }}>
+                        Click the icon to upload a new image. Max 10MB.
                       </p>
+                      {(profileForm.avatar || tempAvatarUrl) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!tempAvatarUrl && profileForm.avatar) setTempAvatarUrl(profileForm.avatar);
+                            setShowAvatarEditor(true);
+                          }}
+                          style={{
+                            fontSize: '0.75rem',
+                            color: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          <Settings2 size={12} />
+                          Adjust position & zoom
+                        </button>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -1033,6 +1061,21 @@ const MemberDashboard: React.FC = () => {
                   )
                 )}
               </div>
+
+              {/* Avatar Editor Modal */}
+              {showAvatarEditor && tempAvatarUrl && (
+                <AvatarEditor
+                  imageUrl={tempAvatarUrl}
+                  onSave={(croppedImageUrl) => {
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      avatar: croppedImageUrl,
+                    }));
+                    setShowAvatarEditor(false);
+                  }}
+                  onCancel={() => setShowAvatarEditor(false)}
+                />
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px' }}>
                 {[
