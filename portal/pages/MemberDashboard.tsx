@@ -27,7 +27,8 @@ import {
   SUBMIT_HELPDESK_TICKET_MUTATION,
 } from '../services/portalQueries';
 import { generateCSV } from '../utils/giving';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface MemberData {
   id: string;
@@ -403,23 +404,58 @@ const MemberDashboard: React.FC = () => {
   };
 
   const handleDownloadStatement = () => {
-    const records = transactions.map((t) => ({
-      id: String(t.id),
-      member: currentUser?.id || '',
-      date: t.date,
-      type: t.category,
-      amount_kes: t.amount,
-      method: t.description || '',
-    }));
-    const csvStr = generateCSV(records);
-    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `giving-statement-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const doc = new jsPDF();
+    const logoUrl = 'https://admin.hkmministries.org/hkm-logo.webp';
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header styling
+    doc.setFillColor(15, 23, 42); // Dark navy
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    // Add Logo text (placeholder if we can't load image sync)
+    doc.setTextColor(212, 175, 55); // Gold
+    doc.setFontSize(16);
+    doc.text('HEAVENLY GOD KINGDOM CHURCHES', pageWidth / 2, 20, { align: 'center' });
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.text('Member Giving Statement', pageWidth / 2, 28, { align: 'center' });
+
+    // Member Details
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text(`Name: ${currentUser?.full_name || 'Member'}`, 14, 55);
+    doc.text(`Membership No: ${currentUser?.id || ''}`, 14, 62);
+    doc.text(`Date Printed: ${new Date().toLocaleDateString()}`, 14, 69);
+
+    const totalAmount = transactions
+      .filter((t) => new Date(t.date).getFullYear() === new Date().getFullYear())
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    doc.text(`YTD Total (${new Date().getFullYear()}): KES ${totalAmount.toLocaleString('en-KE')}`, 14, 76);
+
+    // Table
+    const tableData = transactions.map((t) => [
+      t.date,
+      t.category || 'Tithe',
+      `KES ${Number(t.amount).toLocaleString('en-KE')}`,
+    ]);
+
+    autoTable(doc, {
+      startY: 85,
+      head: [['Date', 'Category', 'Amount']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [15, 23, 42], textColor: [212, 175, 55] },
+      styles: { fontSize: 10, cellPadding: 6 },
+    });
+
+    // Footer
+    const finalY = (doc as any).lastAutoTable.finalY || 100;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Thank you for your faithfulness and continued support.', pageWidth / 2, finalY + 15, { align: 'center' });
+
+    doc.save(`giving-statement-${currentUser?.id || 'member'}-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const handleStartEdit = () => {
@@ -490,7 +526,7 @@ const MemberDashboard: React.FC = () => {
 
   const ytdTotal = transactions
     .filter((t) => new Date(t.date).getFullYear() === new Date().getFullYear())
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Number(t.amount), 0);
 
   // ─── Render: Dashboard ────────────────────────────────────────────────────
   const renderDashboard = () => (
