@@ -20,9 +20,10 @@ export function useUsers() {
   });
 
   const users: AppUser[] = useMemo(() => {
-    if (!queryData?.users) return [];
-    return queryData.users.map(
-      (u: { id: string; username?: string; email?: string; role?: string; avatar?: string; last_login?: string }) => ({
+    if (!queryData?.usersCollection?.edges) return [];
+    return queryData.usersCollection.edges.map((e: any) => {
+      const u = e.node;
+      return {
         id: u.id,
         username: u.username,
         email: u.email,
@@ -30,8 +31,8 @@ export function useUsers() {
         avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.username}`,
         lastLogin: u.last_login || '',
         passwordHash: 'MANAGED_BY_FIREBASE',
-      }),
-    );
+      };
+    });
   }, [queryData]);
 
   const upsertUser = async (user: Partial<AppUser>) => {
