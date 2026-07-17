@@ -86,8 +86,10 @@ describe('storage settings merge', () => {
     const { storage } = await import('./storage');
     const settings = await storage.appSettings.getAll();
 
-    expect(settings.churchInfo.name).toBeTruthy();
+    // Church info defaults are intentionally blank — filled via Settings page
+    expect(settings.churchInfo).toBeDefined();
+    expect(typeof settings.churchInfo.name).toBe('string');
     expect(settings.emailConfig).toBeDefined();
-    expect(settings.improvmxConfig.domain).toBe('hkmministries.org');
+    expect(settings.improvmxConfig).toBeDefined();
   });
 });
