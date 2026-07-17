@@ -29,5 +29,5 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "exclude": ["dist", "node_modules", "electron/dist", ".husky", "hkm-sms-backend"]
+  "exclude": ["dist", "node_modules", "electron/dist", ".husky", "hkm-sms-backend", "supabase"]
 }
