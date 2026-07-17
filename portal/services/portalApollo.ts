@@ -1,18 +1,38 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 
-// Supabase pg_graphql endpoint — same database used by the HKM CMS admin app.
-// Auth uses the Supabase anon key; Row Level Security on the `members` table
-// ensures unauthenticated reads are restricted to what the policies allow.
+import { setContext } from '@apollo/client/link/context';
+import { MemberUser } from '../types';
+
+// Supabase pg_graphql endpoint
 const httpLink = createHttpLink({
   uri: import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1',
-  headers: {
-    apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`,
-    'Content-Type': 'application/json',
-  },
+});
+
+const authLink = setContext((_, { headers }) => {
+  const sessionStr = localStorage.getItem('hkm_portal_session');
+  let token = import.meta.env.VITE_SUPABASE_ANON_KEY || ''; // Default to anon key
+
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr) as MemberUser;
+      if (session.token) {
+        token = session.token;
+      }
+    } catch (e) {
+      // ignore parse error
+    }
+  }
+
+  return {
+    headers: {
+      ...headers,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+      Authorization: `Bearer ${token}`,
+    },
+  };
 });
 
 export const portalApolloClient = new ApolloClient({
-  link: httpLink,
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });

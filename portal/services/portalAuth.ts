@@ -13,42 +13,35 @@ export const portalAuthService = {
    * is recorded. `is_portal_active` is set to true at that same moment.
    */
   async loginWithMembership(membershipNumber: string, pin: string) {
-    // Normalize: accept both "HKM004" and "HKM-004" formats
-    const normalized = membershipNumber
-      .trim()
-      .toUpperCase()
-      .replace(/^([A-Z]+)(\d+)$/, '$1-$2');
-    const hashedPin = await hashPin(normalized, pin.trim());
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-    const { data, errors } = await portalApolloClient.query({
-      query: PORTAL_LOGIN_QUERY,
-      variables: { id: normalized, pin: hashedPin },
-      fetchPolicy: 'network-only',
+    const response = await fetch(`${supabaseUrl}/functions/v1/portal-login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify({ membershipNumber, pin }),
     });
 
-    if (errors && errors.length > 0) {
-      throw new Error('Connection error. Please try again.');
-    }
-
-    const member = data?.membersCollection?.edges?.[0]?.node;
-
-    if (!member) {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        'Invalid Membership Number or PIN. If you have not paid your Registration Fee, please contact the church office.',
+        errorData.error ||
+          'Invalid Membership Number or PIN. If you have not paid your Registration Fee, please contact the church office.',
       );
     }
 
+    const { token, member } = await response.json();
+
     // Save session to localStorage
     const session: MemberUser = {
-      id: member.id,
-      email: member.email || '',
-      membership_number: member.id,
-      full_name: `${member.first_name} ${member.last_name}`.trim(),
-      phone_number: member.phone,
-      department: member.department,
-      status: member.status,
+      ...member,
+      token, // Save the token to pass to Apollo client later
       expiresAt: Date.now() + SESSION_TIMEOUT_MS,
     };
+
     localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
 
     return session;

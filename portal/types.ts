@@ -6,6 +6,7 @@ export interface MemberUser {
   phone_number?: string;
   department?: string;
   status?: string;
+  token?: string; // Supabase custom JWT for authenticated portal queries
   expiresAt?: number;
 }
 
