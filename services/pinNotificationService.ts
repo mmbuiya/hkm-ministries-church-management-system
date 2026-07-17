@@ -248,96 +248,218 @@ function buildPinEmailHtml(
   portalUrl: string,
   orgEmail?: string,
 ): string {
+  const logoUrl = 'https://admin.hkmministries.org/hkm-logo.webp';
+  const year = new Date().getFullYear();
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Your HKM Member Portal PIN</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:Georgia,'Times New Roman',serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
+<body style="margin:0;padding:0;background-color:#eef2f7;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#eef2f7;padding:40px 16px;">
     <tr>
       <td align="center">
-        <table width="540" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
 
-          <!-- Header -->
+        <!-- ── Email Card ───────────────────────────────────────── -->
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+               style="max-width:560px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;
+                      box-shadow:0 8px 40px rgba(15,23,42,0.12);">
+
+          <!-- ── Header ──────────────────────────────────────────── -->
           <tr>
-            <td style="background:linear-gradient(135deg,#16a34a,#15803d);padding:36px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:bold;letter-spacing:0.5px;">
-                HKM Ministries International
-              </h1>
-              <p style="margin:8px 0 0;color:#bbf7d0;font-size:14px;">Member Portal Access</p>
+            <td style="background:linear-gradient(160deg,#0f172a 0%,#1e1a3c 55%,#2d1a4a 100%);padding:0;text-align:center;position:relative;">
+              <!-- Gold top border -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="height:3px;background:linear-gradient(90deg,transparent,#d4af37,#f5e27e,#d4af37,transparent);"></td>
+                </tr>
+              </table>
+              <!-- Logo + Church Name -->
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:36px auto 28px;">
+                <tr>
+                  <td align="center">
+                    <img src="${logoUrl}" alt="HKM Ministries Logo" width="90" height="90"
+                         style="display:block;width:90px;height:90px;border-radius:50%;
+                                border:2px solid rgba(212,175,55,0.6);
+                                background-color:#e0f2fe;object-fit:contain;
+                                box-shadow:0 0 24px rgba(212,175,55,0.2);" />
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:16px 40px 0;">
+                    <p style="margin:0;color:#d4af37;font-family:Arial,Helvetica,sans-serif;
+                               font-size:11px;font-weight:700;letter-spacing:3px;
+                               text-transform:uppercase;">Heavenly God Kingdom Churches</p>
+                    <div style="width:48px;height:1px;background:linear-gradient(90deg,transparent,#d4af37,transparent);
+                                margin:12px auto 10px;"></div>
+                    <h1 style="margin:0;color:#ffffff;font-family:Arial,Helvetica,sans-serif;
+                                font-size:22px;font-weight:700;letter-spacing:-0.3px;">Member Portal Access</h1>
+                    <p style="margin:8px 0 0;color:rgba(255,255,255,0.45);font-family:Arial,Helvetica,sans-serif;
+                               font-size:13px;">Secure Account Activation</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- Gold bottom border -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="height:3px;background:linear-gradient(90deg,transparent,#d4af37,#f5e27e,#d4af37,transparent);"></td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Body -->
+          <!-- ── Body ────────────────────────────────────────────── -->
           <tr>
-            <td style="padding:40px;">
-              <p style="margin:0 0 20px;color:#1f2937;font-size:17px;">Dear ${memberName},</p>
-              <p style="margin:0 0 24px;color:#374151;font-size:15px;line-height:1.7;">
-                Welcome to the HKM Ministries Member Portal! Your account has been
-                activated following confirmation of your Registration Fee.
+            <td style="padding:40px 44px;">
+
+              <p style="margin:0 0 8px;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;
+                         font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">
+                Greetings,
               </p>
+              <p style="margin:0 0 20px;color:#0f172a;font-family:Arial,Helvetica,sans-serif;
+                         font-size:20px;font-weight:700;">
+                Dear ${memberName},
+              </p>
+              <p style="margin:0 0 28px;color:#475569;font-family:Arial,Helvetica,sans-serif;
+                         font-size:15px;line-height:1.75;">
+                Welcome to the <strong style="color:#0f172a;">HKM Ministries Member Portal</strong>.
+                Your account has been activated following confirmation of your Registration Fee.
+                Use the secure credentials below to sign in.
+              </p>
+
               ${
                 orgEmail
                   ? `
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ff;border:1px solid #6366f1;border-radius:12px;margin:0 0 24px;">
+              <!-- ── Church Email Box ──────────────────────────── -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8f5ff;border:1.5px solid #c4b5fd;border-radius:12px;margin:0 0 28px;">
                 <tr>
-                  <td style="padding:16px 24px;text-align:center;">
-                    <p style="margin:0 0 4px;color:#4338ca;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Your Church Email Address</p>
-                    <p style="margin:0;color:#1e1b4b;font-size:18px;font-weight:bold;">${orgEmail}</p>
-                    <p style="margin:8px 0 0;color:#4338ca;font-size:13px;">This email forwards to your personal inbox.</p>
+                  <td style="padding:20px 24px;text-align:center;">
+                    <p style="margin:0 0 6px;color:#7c3aed;font-family:Arial,Helvetica,sans-serif;
+                               font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">
+                      Your Church Email Address
+                    </p>
+                    <p style="margin:0 0 6px;color:#4c1d95;font-family:Arial,Helvetica,sans-serif;
+                               font-size:18px;font-weight:700;">
+                      ${orgEmail}
+                    </p>
+                    <p style="margin:0;color:#7c3aed;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+                      This email forwards to your personal inbox.
+                    </p>
                   </td>
                 </tr>
               </table>
               `
                   : ''
               }
-              <p style="margin:0 0 20px;color:#374151;font-size:15px;line-height:1.7;">
-                Use the details below to sign in:
-              </p>
 
-              <!-- Credentials Box -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;margin:0 0 28px;">
+              <!-- ── Credentials Box ───────────────────────────── -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     style="background:linear-gradient(160deg,#0f172a 0%,#1e1a3c 100%);
+                            border-radius:16px;margin:0 0 28px;
+                            box-shadow:0 8px 32px rgba(15,23,42,0.2);">
                 <tr>
-                  <td style="padding:28px;text-align:center;">
-                    <p style="margin:0 0 6px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;">Member ID</p>
-                    <p style="margin:0 0 20px;color:#1f2937;font-size:22px;font-weight:bold;font-family:monospace;letter-spacing:3px;">${memberId}</p>
-                    <hr style="border:none;border-top:1px solid #bbf7d0;margin:0 0 20px;" />
-                    <p style="margin:0 0 6px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;">Your PIN</p>
-                    <p style="margin:0;color:#16a34a;font-size:44px;font-weight:bold;font-family:monospace;letter-spacing:14px;">${pin}</p>
+                  <td style="padding:32px;text-align:center;">
+                    <!-- Member ID -->
+                    <p style="margin:0 0 6px;color:rgba(255,255,255,0.4);font-family:Arial,Helvetica,sans-serif;
+                               font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;">
+                      Membership ID
+                    </p>
+                    <p style="margin:0 0 24px;color:#ffffff;font-family:'Courier New',Courier,monospace;
+                               font-size:22px;font-weight:700;letter-spacing:6px;">
+                      ${memberId}
+                    </p>
+                    <!-- Gold divider -->
+                    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.5),transparent);
+                                margin:0 0 24px;"></div>
+                    <!-- PIN label -->
+                    <p style="margin:0 0 8px;color:rgba(255,255,255,0.4);font-family:Arial,Helvetica,sans-serif;
+                               font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;">
+                      Your Personal PIN
+                    </p>
+                    <!-- PIN digits -->
+                    <p style="margin:0;color:#d4af37;font-family:'Courier New',Courier,monospace;
+                               font-size:48px;font-weight:700;letter-spacing:16px;
+                               text-shadow:0 0 20px rgba(212,175,55,0.3);">
+                      ${pin}
+                    </p>
                   </td>
+                </tr>
+                <!-- Gold bottom accent -->
+                <tr>
+                  <td style="height:3px;background:linear-gradient(90deg,transparent,#d4af37,#f5e27e,#d4af37,transparent);
+                              border-radius:0 0 16px 16px;"></td>
                 </tr>
               </table>
 
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+              <!-- ── CTA Button ─────────────────────────────────── -->
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 32px;">
                 <tr>
-                  <td align="center">
+                  <td style="border-radius:10px;background:linear-gradient(135deg,#0f172a,#1e1a3c);">
                     <a href="${portalUrl}"
-                       style="display:inline-block;background:#16a34a;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:0.3px;">
-                      Sign In to Member Portal →
+                       style="display:inline-block;padding:15px 40px;color:#d4af37;font-family:Arial,Helvetica,sans-serif;
+                              font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                              text-decoration:none;border-radius:10px;
+                              border:1.5px solid rgba(212,175,55,0.4);">
+                      Sign In to Member Portal &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <div style="background:#fefce8;border:1px solid #fbbf24;border-radius:8px;padding:14px 18px;margin:0 0 24px;">
-                <p style="margin:0;color:#92400e;font-size:13px;line-height:1.6;">
-                  ⚠️ <strong>Keep your PIN private.</strong> The church office will never ask you to share it. If you did not expect this email, please contact us immediately.
-                </p>
-              </div>
+              <!-- ── Security Warning ───────────────────────────── -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#fefce8;border:1px solid #fbbf24;border-radius:10px;margin:0 0 28px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <p style="margin:0;color:#78350f;font-family:Arial,Helvetica,sans-serif;
+                               font-size:13px;line-height:1.65;">
+                      &#9888;&#65039; <strong>Keep your PIN private.</strong>
+                      HKM Ministries staff will <strong>never</strong> ask you to share your PIN or password.
+                      If you did not expect this email, please contact the church office immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
 
-              <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-              <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center;line-height:1.6;">
-                HKM Ministries International · Utawala, Mihango, Nairobi, Kenya<br />
-                <a href="https://hkmministries.org" style="color:#9ca3af;">hkmministries.org</a>
+              <!-- ── Divider ────────────────────────────────────── -->
+              <div style="height:1px;background:#e2e8f0;margin:0 0 24px;"></div>
+
+              <p style="margin:0;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;
+                         font-size:13px;line-height:1.7;">
+                Blessings,<br />
+                <strong style="color:#475569;">The HKM Ministries Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── Footer ──────────────────────────────────────────── -->
+          <tr>
+            <td style="background:#f8fafc;border-top:1px solid #e2e8f0;
+                        padding:22px 44px;text-align:center;">
+              <p style="margin:0 0 6px;color:#94a3b8;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+                &copy; ${year} Heavenly God Kingdom Churches &bull; Utawala, Mihango, Nairobi, Kenya
+              </p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+                <a href="https://hkmministries.org" style="color:#94a3b8;text-decoration:none;">hkmministries.org</a>
+                &nbsp;&bull;&nbsp;
+                <a href="${portalUrl}" style="color:#94a3b8;text-decoration:none;">Member Portal</a>
               </p>
             </td>
           </tr>
 
         </table>
+        <!-- ── End Email Card ──────────────────────────────────── -->
+
       </td>
     </tr>
   </table>
