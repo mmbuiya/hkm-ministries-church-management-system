@@ -369,7 +369,13 @@ async function sendEmailViaResend(
 
   try {
     const response = await withRetry(async () => {
-      const res = await fetch('https://api.resend.com/emails', {
+      const supabaseGraphqlUrl = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || '';
+      const supabaseBaseUrl = supabaseGraphqlUrl.replace('/graphql/v1', '');
+      const fetchUrl = supabaseBaseUrl
+        ? `${supabaseBaseUrl}/functions/v1/resend-proxy`
+        : 'https://api.resend.com/emails';
+
+      const res = await fetch(fetchUrl, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${settings.resendApiKey}`,
