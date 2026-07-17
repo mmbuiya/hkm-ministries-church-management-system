@@ -36,11 +36,11 @@ const GET_CHURCH_SETTINGS = gql`
   }
 `;
 
-const UPSERT_CHURCH_SETTINGS = gql`
-  mutation UpsertAdminChurchSettings($id: Int!, $name: String!, $address: String, $phone: String, $email: String) {
-    upsertIntochurch_settingsCollection(
-      objects: [{ id: $id, name: $name, address: $address, phone: $phone, email: $email }]
-      onConflict: { constraint: church_settings_pkey, updateColumns: [name, address, phone, email] }
+const UPDATE_CHURCH_SETTINGS = gql`
+  mutation UpdateAdminChurchSettings($name: String!, $address: String, $phone: String, $email: String) {
+    updatechurch_settingsCollection(
+      set: { name: $name, address: $address, phone: $phone, email: $email }
+      filter: { id: { eq: 1 } }
     ) {
       records {
         id
@@ -156,16 +156,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
       await storage.appSettings.save(settings);
       // 2. Persist church info to Supabase so the member portal can read it
       try {
-        await apolloClient.mutate({
-          mutation: UPSERT_CHURCH_SETTINGS,
+        const { data, errors } = await apolloClient.mutate({
+          mutation: UPDATE_CHURCH_SETTINGS,
           variables: {
-            id: 1, // singleton row
             name: settings.churchInfo.name,
             address: settings.churchInfo.address,
             phone: settings.churchInfo.phone,
             email: settings.churchInfo.email,
           },
         });
+        if (errors) {
+          console.error('[Settings] GraphQL errors:', errors);
+          throw new Error('GraphQL returned errors');
+        }
       } catch (err) {
         console.warn('[Settings] Could not sync church info to Supabase:', err);
       }
