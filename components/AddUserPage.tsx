@@ -262,7 +262,7 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
       permissionLevel: formState.role === 'Super Admin' ? 'Editor' : formState.permissionLevel,
       avatar: formState.avatar || undefined,
       avatarTransform: formState.avatarTransform,
-      assignedSections: formState.role !== 'Super Admin' ? formState.assignedSections : undefined,
+      assignedSections: ['Super Admin', 'Admin'].includes(formState.role) ? undefined : formState.assignedSections,
     };
 
     if (isEditMode && userToEdit) {
@@ -496,7 +496,7 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
           )}
 
           {/* Section Access - Shown for all roles except Super Admin */}
-          {formState.role !== 'Super Admin' && (
+          {['Data Personnel', 'Member', 'Guest'].includes(formState.role) && (
             <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg mt-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-blue-800 flex items-center">
@@ -728,13 +728,13 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
               </div>
               {formState.assignedSections.length === 0 && (
                 <p className="text-xs text-orange-600 mt-2">
-                  ⚠️ No sections assigned. Data Personnel will only have access to Dashboard and Settings.
+                  ⚠️ No sections assigned. This user will only have access to Dashboard and Settings.
                 </p>
               )}
             </div>
           )}
 
-          {formState.role !== 'Data Personnel' && (
+          {['Super Admin', 'Admin'].includes(formState.role) && (
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <p className="text-sm text-gray-600">
                 <strong>{formState.role}</strong> users have access to all sections of the system.

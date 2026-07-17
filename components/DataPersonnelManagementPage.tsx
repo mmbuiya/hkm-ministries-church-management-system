@@ -53,7 +53,7 @@ const DataPersonnelManagementPage: React.FC<DataPersonnelManagementPageProps> = 
     const updatedUser: User = {
       ...editingUser,
       role: selectedRole,
-      assignedSections: selectedRole === 'Data Personnel' ? selectedSections : undefined,
+      assignedSections: ['Super Admin', 'Admin'].includes(selectedRole) ? undefined : selectedSections,
     };
 
     onUpdateUser(updatedUser);
@@ -179,7 +179,7 @@ const DataPersonnelManagementPage: React.FC<DataPersonnelManagementPageProps> = 
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {user.role === 'Data Personnel' ? (
+                    {['Data Personnel', 'Member', 'Guest'].includes(user.role) ? (
                       <div className="flex flex-wrap gap-1">
                         {user.assignedSections && user.assignedSections.length > 0 ? (
                           user.assignedSections.map((section) => (
@@ -267,7 +267,7 @@ const DataPersonnelManagementPage: React.FC<DataPersonnelManagementPageProps> = 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">User Role</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['Super Admin', 'Admin', 'Data Personnel'] as UserRole[]).map((role) => (
+                  {(['Super Admin', 'Admin', 'Data Personnel', 'Member', 'Guest'] as UserRole[]).map((role) => (
                     <button
                       key={role}
                       onClick={() => setSelectedRole(role)}
@@ -290,13 +290,11 @@ const DataPersonnelManagementPage: React.FC<DataPersonnelManagementPageProps> = 
                 </div>
               </div>
 
-              {/* Section Assignment (only for Data Personnel) */}
-              {selectedRole === 'Data Personnel' && (
+              {/* Section Assignment (only for non-admins) */}
+              {['Data Personnel', 'Member', 'Guest'].includes(selectedRole) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Sections</label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Select which sections this data personnel can access and manage.
-                  </p>
+                  <p className="text-xs text-gray-500 mb-3">Select which sections this user can access and manage.</p>
 
                   {/* Members Module */}
                   <div className="mb-4">
@@ -506,7 +504,7 @@ const DataPersonnelManagementPage: React.FC<DataPersonnelManagementPageProps> = 
                 </div>
               )}
 
-              {selectedRole !== 'Data Personnel' && (
+              {!['Data Personnel', 'Member', 'Guest'].includes(selectedRole) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-700">
                     <strong>{selectedRole}s</strong> have access to all sections of the system.
