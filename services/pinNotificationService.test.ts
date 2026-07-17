@@ -31,7 +31,7 @@ describe('pinNotificationService', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation(async (url: string) => {
-        if (url.includes('api.resend.com')) {
+        if (url.includes('api.resend.com') || url.includes('resend-proxy')) {
           attempts++;
           if (attempts < 3) {
             return { ok: false, status: 500, json: async () => ({ message: 'Server error' }) };
@@ -75,7 +75,7 @@ describe('pinNotificationService', () => {
       'fetch',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.fn().mockImplementation(async (url: string, options?: any) => {
-        if (url.includes('api.resend.com')) {
+        if (url.includes('api.resend.com') || url.includes('resend-proxy')) {
           requestBody = JSON.parse(options.body);
           return { ok: true, status: 200, json: async () => ({ id: 'resend-id-456' }) };
         }
@@ -112,7 +112,7 @@ describe('pinNotificationService', () => {
       'fetch',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.fn().mockImplementation(async (url: string, options?: any) => {
-        if (url.includes('api.resend.com')) {
+        if (url.includes('api.resend.com') || url.includes('resend-proxy')) {
           requestBody = JSON.parse(options.body);
           return { ok: true, status: 200, json: async () => ({ id: 'resend-id-789' }) };
         }
