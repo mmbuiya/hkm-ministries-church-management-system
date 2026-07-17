@@ -145,6 +145,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   const missingContactFields: string[] = [];
   if (!hasEmail) missingContactFields.push('Email');
   if (!hasPhone) missingContactFields.push('Phone');
+  const isSaveDisabled = thresholdMetOnSave && isPendingFee && !hasContact;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +177,14 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       memberId: type === 'Income' && !isNonMember && memberId ? memberId : undefined,
       nonMemberName: type === 'Income' && isNonMember && nonMemberName ? nonMemberName.trim() : undefined,
     };
+
+    // Block save if registration threshold met but contact info missing
+    if (isSaveDisabled) {
+      alert(
+        `Cannot Activate: Threshold met but ${missingContactFields.join(' and ')} is missing. Update the member's profile with ${missingContactFields.join(' and ')} before saving.`,
+      );
+      return;
+    }
 
     // Store the transaction data and show confirmation
     if (isEditMode) {
@@ -456,7 +465,10 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-church-green-dark hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg"
+              disabled={isSaveDisabled}
+              className={`bg-church-green-dark text-white font-semibold py-2 px-6 rounded-lg ${
+                isSaveDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700'
+              }`}
             >
               {isEditMode ? 'Update' : 'Save'} Transaction
             </button>

@@ -75,7 +75,7 @@ export function useTransactions() {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
   });
   const [deleteTransactionMutation] = useMutation(DELETE_TRANSACTION_MUTATION, {
-    refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
+    refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }, { query: GET_MEMBERS_QUERY }],
   });
   const [updateMemberMutation] = useMutation(UPDATE_MEMBER_MUTATION);
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
@@ -401,7 +401,7 @@ export function useTransactions() {
     }
   };
 
-  const deleteTransaction = async (id: number) => {
+  const deleteTransaction = async (id: number, transaction?: Transaction) => {
     try {
       const result = await deleteTransactionMutation({
         variables: { id },
@@ -411,7 +411,45 @@ export function useTransactions() {
         throw new Error('Failed to delete transaction - no data returned');
       }
 
-      // Real-time subscription will update UI automatically
+      // If deleting a Registration Fee, recalculate member's registration status
+      if (transaction?.category === 'Registration Fee' && transaction?.memberId) {
+        const remainingTotal = transactions
+          .filter((t) => t.memberId === transaction.memberId! && t.category === 'Registration Fee' && t.id !== id)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        if (remainingTotal < 500) {
+          await updateMemberMutation({
+            variables: {
+              id: transaction.memberId,
+              updates: {
+                status: 'Pending Fee',
+                pin: null,
+                is_portal_active: false,
+                org_email: null,
+              },
+            },
+          });
+
+          try {
+            await addAuditLogMutation({
+              variables: {
+                object: {
+                  action: 'Registration Reverted',
+                  entity_type: 'member',
+                  entity_id: transaction.memberId,
+                  details: {
+                    reason: 'Registration Fee transaction deleted',
+                    remaining_total: remainingTotal,
+                    new_status: 'Pending Fee',
+                  },
+                },
+              },
+            });
+          } catch (auditErr) {
+            console.error('Failed to write audit log', auditErr);
+          }
+        }
+      }
     } catch (error: any) {
       console.error('Error deleting transaction:', error);
       throw new Error(error.message || 'Failed to delete transaction. Please check your connection and try again.', {

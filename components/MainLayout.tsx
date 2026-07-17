@@ -426,10 +426,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
 
   const handleDeleteTransaction = async (id: number) => {
     try {
-      await deleteTransaction(id);
+      const transactionToDelete = transactions.find((t) => t.id === id);
+      await deleteTransaction(id, transactionToDelete);
       showToast('Transaction deleted successfully.', 'success');
 
-      const transactionToDelete = transactions.find((t) => t.id === id);
       if (transactionToDelete && currentUser) {
         moveToRecycleBin('Transaction', id, transactionToDelete, currentUser.id, 'Deleted by user').catch((err) =>
           console.warn('Recycle bin entry failed (non-blocking):', err),
