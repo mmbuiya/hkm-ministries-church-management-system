@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { X, ZoomIn, ZoomOut, Move, RotateCcw, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { X, Check } from 'lucide-react';
 import { AvatarTransform } from './memberData';
 
 interface AvatarEditorProps {
@@ -9,249 +11,161 @@ interface AvatarEditorProps {
   onCancel: () => void;
 }
 
-const CROP_SIZE = 200;
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  );
+}
 
-const AvatarEditor: React.FC<AvatarEditorProps> = ({ imageUrl, initialTransform, onSave, onCancel }) => {
-  const [scale, setScale] = useState(initialTransform?.scale || 1);
-  const [positionX, setPositionX] = useState(initialTransform?.positionX || 0);
-  const [positionY, setPositionY] = useState(initialTransform?.positionY || 0);
-  const [isDragging, setIsDragging] = useState(false);
+const AvatarEditor: React.FC<AvatarEditorProps> = ({ imageUrl, onSave, onCancel }) => {
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const imgRef = useRef<HTMLImageElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - positionX, y: e.clientY - positionY });
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 1));
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const newX = Math.max(-100, Math.min(100, e.clientX - dragStart.x));
-    const newY = Math.max(-100, Math.min(100, e.clientY - dragStart.y));
-    setPositionX(newX);
-    setPositionY(newY);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setDragStart({ x: touch.clientX - positionX, y: touch.clientY - positionY });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    const newX = Math.max(-100, Math.min(100, touch.clientX - dragStart.x));
-    const newY = Math.max(-100, Math.min(100, touch.clientY - dragStart.y));
-    setPositionX(newX);
-    setPositionY(newY);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleZoomIn = () => {
-    setScale((prev) => Math.min(3, prev + 0.1));
-  };
-
-  const handleZoomOut = () => {
-    setScale((prev) => Math.max(0.5, prev - 0.1));
-  };
-
-  const handleReset = () => {
-    setScale(1);
-    setPositionX(0);
-    setPositionY(0);
-  };
-
-  const handleSave = () => {
-    const img = imageRef.current;
-    if (!img) {
-      onSave(imageUrl, { scale, positionX, positionY });
+  const handleSave = async () => {
+    if (!completedCrop || !imgRef.current) {
+      onSave(imageUrl, { scale: 1, positionX: 0, positionY: 0 });
       return;
     }
 
     setIsProcessing(true);
 
-    const canvas = document.createElement('canvas');
-    const size = CROP_SIZE * 2;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
+    try {
+      const image = imgRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        throw new Error('No 2d context');
+      }
+
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+
+      // Fixed pixel ratio of 1 to avoid massive canvas sizes on retina displays
+      const pixelRatio = 1;
+
+      const cropWidth = completedCrop.width * scaleX;
+      const cropHeight = completedCrop.height * scaleY;
+
+      // Ensure the canvas is never absurdly large (e.g. max 800x800)
+      let finalWidth = cropWidth;
+      let finalHeight = cropHeight;
+      const MAX_SIZE = 800;
+
+      if (finalWidth > MAX_SIZE) {
+        const ratio = MAX_SIZE / finalWidth;
+        finalWidth = MAX_SIZE;
+        finalHeight *= ratio;
+      }
+
+      canvas.width = finalWidth * pixelRatio;
+      canvas.height = finalHeight * pixelRatio;
+
+      ctx.scale(pixelRatio, pixelRatio);
+      ctx.imageSmoothingQuality = 'high';
+
+      const cropX = completedCrop.x * scaleX;
+      const cropY = completedCrop.y * scaleY;
+
+      ctx.drawImage(
+        image,
+        cropX,
+        cropY,
+        cropWidth, // Read original width
+        cropHeight, // Read original height
+        0,
+        0,
+        finalWidth, // Write downscaled width
+        finalHeight, // Write downscaled height
+      );
+
+      // Create circular crop mask
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.beginPath();
+      ctx.arc(finalWidth / 2, finalHeight / 2, Math.min(finalWidth, finalHeight) / 2, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Convert canvas to base64
+      // Use PNG if we are doing circular transparency mask so corners are transparent
+      // Or we can fill a background color and use JPEG. Since we already have a circular UI,
+      // PNG is better to avoid white corners on dark backgrounds.
+
+      // Wait, let's just make it a clean JPEG with a solid background matching our theme? No, PNG is safer for circles.
+      const base64Image = canvas.toDataURL('image/png');
+
+      onSave(base64Image, { scale: 1, positionX: 0, positionY: 0 });
+    } catch (e) {
+      console.error(e);
+      onSave(imageUrl, { scale: 1, positionX: 0, positionY: 0 });
+    } finally {
       setIsProcessing(false);
-      onSave(imageUrl, { scale, positionX, positionY });
-      return;
     }
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-
-    const imgSize = Math.min(img.naturalWidth, img.naturalHeight);
-    const sx = (img.naturalWidth - imgSize) / 2 + positionX * (imgSize / 200);
-    const sy = (img.naturalHeight - imgSize) / 2 + positionY * (imgSize / 200);
-    const sSize = imgSize / scale;
-
-    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
-    ctx.restore();
-
-    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    setIsProcessing(false);
-    onSave(croppedDataUrl, { scale: 1, positionX: 0, positionY: 0 });
   };
 
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('touchend', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      window.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, []);
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Adjust Profile Photo</h3>
-          <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+          <h3 className="text-lg font-semibold text-slate-800">Crop Profile Photo</h3>
+          <button onClick={onCancel} className="text-slate-500 hover:text-slate-700 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6">
-          {/* Preview Area */}
-          <div className="flex justify-center mb-6">
-            <div
-              ref={containerRef}
-              className="w-48 h-48 rounded-full overflow-hidden border-4 border-gray-200 cursor-move relative bg-white"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              <img
-                ref={imageRef}
-                src={imageUrl}
-                alt="Avatar preview"
-                className="absolute inset-0 w-full h-full select-none"
-                style={{
-                  objectFit: 'contain',
-                  transform: `scale(${scale}) translate(${positionX}px, ${positionY}px)`,
-                  transformOrigin: 'center center',
-                }}
-                draggable={false}
-              />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
-                <Move className="h-8 w-8 text-gray-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <p className="text-sm text-gray-500 text-center mb-4">Drag to reposition • Use controls to zoom</p>
-
-          {/* Zoom Controls */}
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <button
-              onClick={handleZoomOut}
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="Zoom Out"
-            >
-              <ZoomOut className="h-5 w-5 text-gray-600" />
-            </button>
-
-            <div className="flex-1 max-w-32">
-              <input
-                type="range"
-                min="50"
-                max="300"
-                value={scale * 100}
-                onChange={(e) => setScale(parseInt(e.target.value) / 100)}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-              />
-            </div>
-
-            <button
-              onClick={handleZoomIn}
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              title="Zoom In"
-            >
-              <ZoomIn className="h-5 w-5 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Zoom Percentage */}
-          <p className="text-center text-sm text-gray-500 mb-4">{Math.round(scale * 100)}%</p>
-
-          {/* Position Sliders */}
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 w-20">Horizontal</span>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={positionX}
-                onChange={(e) => setPositionX(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 w-20">Vertical</span>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={positionY}
-                onChange={(e) => setPositionY(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-              />
-            </div>
-          </div>
+        <div className="p-4 flex-1 overflow-auto flex justify-center items-center bg-slate-100">
+          <ReactCrop
+            crop={crop}
+            onChange={(_, percentCrop) => setCrop(percentCrop)}
+            onComplete={(c) => setCompletedCrop(c)}
+            aspect={1}
+            circularCrop
+          >
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt="Crop me"
+              onLoad={onImageLoad}
+              style={{ maxHeight: '60vh', width: 'auto' }}
+            />
+          </ReactCrop>
         </div>
 
-        {/* Action Buttons */}
-        <div className="p-4 border-t bg-gray-50 flex justify-between">
-          <button onClick={handleReset} className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </button>
-          <div className="flex gap-2">
+        <div className="p-4 border-t bg-slate-50 flex justify-between items-center">
+          <p className="text-sm text-slate-500">Drag the frame to crop</p>
+          <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isProcessing}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {isProcessing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Processing...
-                </>
+                'Saving...'
               ) : (
                 <>
-                  <Check className="h-4 w-4" />
-                  Apply
+                  <Check className="h-4 w-4" /> Save Photo
                 </>
               )}
             </button>
@@ -262,80 +176,16 @@ const AvatarEditor: React.FC<AvatarEditorProps> = ({ imageUrl, initialTransform,
   );
 };
 
-export default AvatarEditor;
-
-// Helper component to display avatar with transform applied
 export const TransformedAvatar: React.FC<{
-  src: string;
+  src?: string;
   transform?: AvatarTransform;
   className?: string;
   alt?: string;
-  onClick?: () => void;
-}> = ({ src, transform, className = '', alt = 'Avatar', onClick }) => {
-  const [imgError, setImgError] = React.useState(false);
-
-  const style = transform
-    ? {
-        transform: `scale(${transform.scale}) translate(${transform.positionX}px, ${transform.positionY}px)`,
-        transformOrigin: 'center center',
-      }
-    : {};
-
-  // Generate initials from alt text for fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Generate a consistent color based on the name
-  const getColor = (name: string) => {
-    const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-      'bg-orange-500',
-      'bg-red-500',
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  };
-
-  if (imgError || !src) {
-    return (
-      <div
-        className={`${className} ${getColor(alt)} flex items-center justify-center text-white font-semibold ${onClick ? 'cursor-pointer' : ''}`}
-        onClick={onClick}
-      >
-        {getInitials(alt)}
-      </div>
-    );
-  }
-
+}> = ({ src, className, alt }) => {
+  if (!src) return null;
   return (
-    <div
-      className={`overflow-hidden ${className} ${onClick ? 'cursor-pointer' : ''} relative bg-gray-100`}
-      onClick={onClick}
-    >
-      <img
-        src={src}
-        alt={alt}
-        className="absolute inset-0 w-full h-full"
-        style={{
-          objectFit: transform ? 'contain' : 'cover',
-          ...style,
-        }}
-        onError={() => setImgError(true)}
-      />
-    </div>
+    <img src={src} className={className} alt={alt || 'Avatar'} style={{ objectFit: 'cover', borderRadius: '50%' }} />
   );
 };
+
+export default AvatarEditor;
