@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { useMemo } from 'react';
 import { User as AppUser } from '../components/userData';
 import { GET_USERS_QUERY, UPSERT_USER_MUTATION, DELETE_USER_MUTATION } from '../services/graphql/users';
+import { toTitleCase } from '../utils/stringFormatter';
 
 export function useUsers() {
   const {
@@ -27,7 +28,7 @@ export function useUsers() {
         id: u.id,
         username: u.username,
         email: u.email,
-        role: u.role,
+        role: toTitleCase(u.role || 'Data Personnel'),
         avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.username}`,
         lastLogin: u.last_login || '',
         passwordHash: 'MANAGED_BY_FIREBASE',
@@ -44,7 +45,7 @@ export function useUsers() {
           id: user.id,
           username: user.username || user.email.split('@')[0],
           email: user.email,
-          role: user.role || 'Data Personnel',
+          role: toTitleCase(user.role || 'Data Personnel'),
           avatar: user.avatar,
           last_login: user.lastLogin || new Date().toISOString(),
           updated_at: new Date().toISOString(),
