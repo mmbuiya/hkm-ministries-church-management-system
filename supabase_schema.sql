@@ -61,18 +61,25 @@ create table if not exists members (
   joined_at        date default current_date,
   occupation       text,
   marital_status   text,
-  pin              text,
-  is_portal_active boolean default false,
-  email_tier       text not null default 'member',
-  org_email        text,
-  created_at       timestamptz default now(),
-  updated_at       timestamptz default now()
+  pin                   text,
+  password_hash         text,
+  password_set_at       timestamptz,
+  must_change_password  boolean default true,
+  is_portal_active      boolean default false,
+  email_tier            text not null default 'member',
+  org_email             text,
+  created_at            timestamptz default now(),
+  updated_at            timestamptz default now()
 );
 alter table members enable row level security;
 create policy "Authenticated users can read members" on members for select using (auth.role() = 'authenticated');
 create policy "Authenticated users can insert members" on members for insert with check (auth.role() = 'authenticated');
 create policy "Authenticated users can update members" on members for update using (auth.role() = 'authenticated');
 create policy "Authenticated users can delete members" on members for delete using (auth.role() = 'authenticated');
+
+-- Index for password lookup
+create index if not exists members_password_hash_idx on members(password_hash)
+  where password_hash is not null;
 
 -- ─── BRANCHES ───────────────────────────────────────────────
 create table if not exists branches (

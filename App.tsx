@@ -19,6 +19,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import { ApolloProvider } from '@apollo/client';
 import { portalApolloClient } from './portal/services/portalApollo';
 import PortalLogin from './portal/pages/PortalLogin';
+import SetPassword from './portal/pages/SetPassword';
 import MemberDashboard from './portal/pages/MemberDashboard';
 import PortalAuthGuard from './portal/components/PortalAuthGuard';
 
@@ -203,6 +204,14 @@ const App: React.FC = () => {
               element={
                 <ApolloProvider client={portalApolloClient}>
                   <PortalLogin />
+                </ApolloProvider>
+              }
+            />
+            <Route
+              path="/portal/set-password"
+              element={
+                <ApolloProvider client={portalApolloClient}>
+                  <SetPassword />
                 </ApolloProvider>
               }
             />

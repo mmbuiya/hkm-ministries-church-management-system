@@ -8,6 +8,7 @@ export interface MemberUser {
   status?: string;
   token?: string; // Supabase custom JWT for authenticated portal queries
   expiresAt?: number;
+  needsPasswordSetup?: boolean; // Flag from server: member must set a password
 }
 
 export interface GivingRecord {

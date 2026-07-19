@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, AlertCircle, CheckCircle, ArrowRight, Shield } from 'lucide-react';
+import { Lock, User, AlertCircle, CheckCircle, ArrowRight, Shield, KeyRound } from 'lucide-react';
 import { portalAuthService } from '../services/portalAuth';
+
+type LoginMode = 'pin' | 'password';
 
 const PortalLogin: React.FC = () => {
   const [membershipNumber, setMembershipNumber] = useState('');
   const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRequestingPin, setIsRequestingPin] = useState(false);
   const [pinRequested, setPinRequested] = useState(false);
+  const [loginMode, setLoginMode] = useState<LoginMode>('pin');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,13 +24,33 @@ const PortalLogin: React.FC = () => {
       if (isRequestingPin) {
         await portalAuthService.requestPin(membershipNumber);
         setPinRequested(true);
+      } else if (loginMode === 'pin') {
+        const session = await portalAuthService.loginWithMembership(membershipNumber, pin);
+        if (session.needsPasswordSetup) {
+          navigate('/portal/set-password');
+        } else {
+          navigate('/portal/dashboard');
+        }
       } else {
-        await portalAuthService.loginWithMembership(membershipNumber, pin);
+        await portalAuthService.loginWithPassword(membershipNumber, password);
         navigate('/portal/dashboard');
       }
     } catch (err: unknown) {
-      setError((err as Error).message || 'Invalid membership number or PIN. Please try again.');
-      if (!isRequestingPin) setPin('');
+      const msg = (err as Error).message || 'Invalid credentials. Please try again.';
+      setError(msg);
+      if (loginMode === 'pin') {
+        setPin('');
+        // If server says they need to use password, switch mode
+        if (msg.toLowerCase().includes('password')) {
+          setLoginMode('password');
+        }
+      } else {
+        setPassword('');
+        // If server says no password set, switch to PIN mode
+        if (msg.toLowerCase().includes('pin')) {
+          setLoginMode('pin');
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +78,7 @@ const PortalLogin: React.FC = () => {
             <p className="portal-hint">
               {isRequestingPin
                 ? 'Enter your membership number to receive a new PIN.'
-                : 'Sign in with your membership number and PIN.'}
+                : 'Sign in to access your member dashboard.'}
             </p>
           </div>
 
@@ -87,6 +111,34 @@ const PortalLogin: React.FC = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="portal-form">
+                {/* Mode toggle */}
+                {!isRequestingPin && (
+                  <div className="portal-mode-toggle">
+                    <button
+                      type="button"
+                      className={`portal-mode-btn ${loginMode === 'pin' ? 'active' : ''}`}
+                      onClick={() => {
+                        setLoginMode('pin');
+                        setError('');
+                      }}
+                    >
+                      <KeyRound size={14} />
+                      Use PIN
+                    </button>
+                    <button
+                      type="button"
+                      className={`portal-mode-btn ${loginMode === 'password' ? 'active' : ''}`}
+                      onClick={() => {
+                        setLoginMode('password');
+                        setError('');
+                      }}
+                    >
+                      <Lock size={14} />
+                      Use Password
+                    </button>
+                  </div>
+                )}
+
                 {/* Membership Number */}
                 <div className="portal-field">
                   <label htmlFor="membership-number" className="portal-label">
@@ -107,19 +159,19 @@ const PortalLogin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* PIN */}
-                {!isRequestingPin && (
+                {/* PIN field (PIN mode) */}
+                {!isRequestingPin && loginMode === 'pin' && (
                   <div className="portal-field">
                     <label htmlFor="pin" className="portal-label">
                       Personal PIN
                     </label>
                     <div className="portal-input-wrap">
-                      <Lock size={16} className="portal-input-icon" />
+                      <KeyRound size={16} className="portal-input-icon" />
                       <input
                         id="pin"
                         type="password"
-                        required={!isRequestingPin}
-                        autoComplete="current-password"
+                        required={loginMode === 'pin'}
+                        autoComplete="off"
                         placeholder="Enter your PIN"
                         className="portal-input"
                         value={pin}
@@ -129,8 +181,30 @@ const PortalLogin: React.FC = () => {
                   </div>
                 )}
 
+                {/* Password field (password mode) */}
+                {!isRequestingPin && loginMode === 'password' && (
+                  <div className="portal-field">
+                    <label htmlFor="login-password" className="portal-label">
+                      Password
+                    </label>
+                    <div className="portal-input-wrap">
+                      <Lock size={16} className="portal-input-icon" />
+                      <input
+                        id="login-password"
+                        type="password"
+                        required={loginMode === 'password'}
+                        autoComplete="current-password"
+                        placeholder="Enter your password"
+                        className="portal-input"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Forgot PIN */}
-                {!isRequestingPin && (
+                {!isRequestingPin && loginMode === 'pin' && (
                   <div className="portal-forgot">
                     <button
                       type="button"
@@ -152,7 +226,11 @@ const PortalLogin: React.FC = () => {
                   ) : (
                     <>
                       <Shield size={16} />
-                      {isRequestingPin ? 'Request My PIN' : 'Sign In Securely'}
+                      {isRequestingPin
+                        ? 'Request My PIN'
+                        : loginMode === 'pin'
+                          ? 'Sign In with PIN'
+                          : 'Sign In with Password'}
                     </>
                   )}
                 </button>
@@ -248,6 +326,39 @@ const PortalLogin: React.FC = () => {
             inset 0 1px 0 rgba(255,255,255,0.9);
         }
 
+        /* ── Mode toggle ─────────────────────────────────── */
+        .portal-mode-toggle {
+          display: flex;
+          gap: 0;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1.5px solid #e5e7eb;
+          background: #f3f4f6;
+        }
+        .portal-mode-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 0.6rem;
+          border: none;
+          cursor: pointer;
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: #6b7280;
+          background: transparent;
+          transition: all 0.2s;
+        }
+        .portal-mode-btn.active {
+          background: #fff;
+          color: #1e1a3c;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .portal-mode-btn:hover:not(.active) {
+          color: #374151;
+        }
+
         /* ── Header ─────────────────────────────────────────── */
         .portal-header {
           background: linear-gradient(160deg, #0f172a 0%, #1e1a3c 60%, #2d1a4a 100%);
@@ -269,7 +380,7 @@ const PortalLogin: React.FC = () => {
           height: 110px;
           margin: 0 auto 1rem;
           border-radius: 50%;
-          background: #e0f2fe; /* Light sky blue to make the logo pop */
+          background: #e0f2fe;
           border: 2px solid rgba(212, 175, 55, 0.5);
           padding: 6px;
           display: flex;
