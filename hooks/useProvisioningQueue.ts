@@ -7,8 +7,8 @@ import {
 } from '../services/graphql/provisioning';
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
 import { ADD_AUDIT_LOG_MUTATION, ADD_NOTIFICATION_LOG_MUTATION } from '../services/graphql/transactions';
-import { hashPin } from '../utils/hashPin';
 import { sendPinNotification } from '../services/pinNotificationService';
+import { generateMemberPin } from '../services/provisioning';
 import { generateOrgEmail, createAlias, checkAliasExists, loadImprovMXConfig } from '../services/improvmxService';
 
 interface QueueItem {
@@ -139,8 +139,7 @@ export function useProvisioningQueue() {
           continue;
         }
 
-        const generatedPin = Math.floor(100000 + Math.random() * 900000).toString();
-        const hashedPin = await hashPin(item.member_id, generatedPin);
+        const { pin: generatedPin, hashedPin } = await generateMemberPin(item.member_id);
 
         await updateMember({
           variables: {

@@ -8,6 +8,7 @@ import {
   UPDATE_MEMBER_MUTATION,
   DELETE_MEMBER_MUTATION,
 } from '../services/graphql/members';
+import { ADD_AUDIT_LOG_MUTATION } from '../services/graphql/transactions';
 import { updateAlias, deleteAlias } from '../services/improvmxService';
 
 interface SupabaseMember {
@@ -94,6 +95,7 @@ export function useMembers() {
   const [deleteMemberMutation] = useMutation(DELETE_MEMBER_MUTATION, {
     refetchQueries: [{ query: GET_MEMBERS_QUERY }],
   });
+  const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
 
   const members: Member[] = useMemo(() => {
     // Supabase pg_graphql wraps results in membersCollection.edges[].node
@@ -194,7 +196,13 @@ export function useMembers() {
     if (updates.email !== undefined) SupabaseUpdates.email = formatEmail(updates.email) || null;
     if (updates.phone !== undefined) SupabaseUpdates.phone = updates.phone || null;
     if (updates.department !== undefined) SupabaseUpdates.department = toTitleCase(updates.department);
-    if (updates.status !== undefined) SupabaseUpdates.status = updates.status;
+    if (updates.status !== undefined) {
+      SupabaseUpdates.status = updates.status;
+      if (updates.status === 'Inactive' || updates.status === 'Transferred') {
+        SupabaseUpdates.pin = null;
+        SupabaseUpdates.is_portal_active = false;
+      }
+    }
     if (updates.dob !== undefined) SupabaseUpdates.dob = updates.dob || null; // empty string -> null (Postgres date rejects "")
     if (updates.gender !== undefined) SupabaseUpdates.gender = updates.gender;
     if (updates.avatar !== undefined) SupabaseUpdates.avatar = updates.avatar || null;
@@ -231,6 +239,28 @@ export function useMembers() {
         if (updates.status === 'Inactive' || updates.status === 'Transferred') {
           deleteAlias(currentMember.org_email).catch((err) => console.error('Failed to delete alias:', err));
         }
+      }
+    }
+
+    // Audit log for status changes
+    if (updates.status !== undefined && currentMember && updates.status !== currentMember.status) {
+      try {
+        await addAuditLogMutation({
+          variables: {
+            object: {
+              action: 'Member Status Changed',
+              entity_type: 'member',
+              entity_id: id,
+              details: {
+                from: currentMember.status,
+                to: updates.status,
+                changes: SupabaseUpdates,
+              },
+            },
+          },
+        });
+      } catch (auditErr) {
+        console.error('Failed to write audit log for status change:', auditErr);
       }
     }
 

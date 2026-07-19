@@ -11,11 +11,10 @@ import {
   ADD_NOTIFICATION_LOG_MUTATION,
 } from '../services/graphql/transactions';
 import { UPDATE_MEMBER_MUTATION, GET_MEMBERS_QUERY } from '../services/graphql/members';
-import { ADD_PROVISIONING_QUEUE_MUTATION } from '../services/graphql/provisioning';
+import { ADD_PROVISIONING_QUEUE_MUTATION, GET_PROVISIONING_QUEUE_QUERY } from '../services/graphql/provisioning';
 import { sendPinNotification } from '../services/pinNotificationService';
-import { hashPin } from '../utils/hashPin';
 import { generateOrgEmail, createAlias, loadImprovMXConfig, checkAliasExists } from '../services/improvmxService';
-import { computeRegistrationStatus, MemberContact } from '../services/provisioning';
+import { computeRegistrationStatus, generateMemberPin, MemberContact } from '../services/provisioning';
 interface SupabaseMember {
   id: string;
   first_name: string;
@@ -164,17 +163,31 @@ export function useTransactions() {
           if (!status.canProvision) {
             console.warn('[useTransactions] Provisioning blocked — missing contact details.');
 
-            await addProvisioningQueueMutation({
-              variables: {
-                object: {
-                  member_id: transaction.memberId,
-                  status: 'queued',
-                  reason: `Missing: ${status.missingFields.join(', ')}`,
-                  retry_count: 0,
-                  next_retry_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                },
-              },
+            // Deduplicate: check if a queued entry already exists for this member
+            const existingQueue = await apolloClient.query({
+              query: GET_PROVISIONING_QUEUE_QUERY,
+              fetchPolicy: 'network-only',
             });
+            const existingEntries = existingQueue.data?.provisioning_queueCollection?.edges?.filter(
+              (e: { node: { member_id: string; status: string } }) =>
+                e.node.member_id === transaction.memberId && e.node.status === 'queued',
+            );
+
+            if (!existingEntries || existingEntries.length === 0) {
+              await addProvisioningQueueMutation({
+                variables: {
+                  object: {
+                    member_id: transaction.memberId,
+                    status: 'queued',
+                    reason: `Missing: ${status.missingFields.join(', ')}`,
+                    retry_count: 0,
+                    next_retry_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                  },
+                },
+              });
+            } else {
+              console.warn('[useTransactions] Queue entry already exists for member — skipping deduplicate insert.');
+            }
 
             try {
               await addAuditLogMutation({
@@ -198,10 +211,7 @@ export function useTransactions() {
           } else {
             console.warn('[useTransactions] Contact details valid. Activating member portal...');
 
-            const { pin: generatedPin, hashedPin } = await (async () => {
-              const p = Math.floor(100000 + Math.random() * 900000).toString();
-              return { pin: p, hashedPin: await hashPin(transaction.memberId!, p) };
-            })();
+            const { pin: generatedPin, hashedPin } = await generateMemberPin(transaction.memberId!);
 
             console.warn('[useTransactions] Executing updateMemberMutation for top-up...', {
               id: transaction.memberId,
