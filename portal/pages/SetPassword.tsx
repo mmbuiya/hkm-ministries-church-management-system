@@ -18,6 +18,8 @@ const REQUIREMENTS: Requirement[] = [
   { label: 'One special character (@$!%*?&)', test: (pw) => /[@$!%*?&]/.test(pw) },
 ];
 
+import '../portal.css';
+
 const SetPassword: React.FC = () => {
   const navigate = useNavigate();
   const currentUser = portalAuthService.getCurrentUser();
@@ -240,77 +242,6 @@ const SetPassword: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .portal-info-box {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          padding: 0.75rem 1rem;
-          background: #f0f4ff;
-          border: 1px solid #c7d2fe;
-          border-radius: 10px;
-          font-size: 0.82rem;
-          color: #4338ca;
-          line-height: 1.5;
-        }
-        .portal-toggle-vis {
-          position: absolute;
-          right: 0.7rem;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: #9ca3af;
-          cursor: pointer;
-          padding: 4px;
-        }
-        .portal-toggle-vis:hover { color: #6b7280; }
-        .portal-requirements {
-          display: flex;
-          flex-direction: column;
-          gap: 0.35rem;
-          padding: 0.75rem 1rem;
-          background: #f9fafb;
-          border-radius: 10px;
-          border: 1px solid #e5e7eb;
-        }
-        .portal-req-title {
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #6b7280;
-          margin: 0 0 0.2rem;
-        }
-        .portal-req-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.78rem;
-          color: #9ca3af;
-          transition: color 0.2s;
-        }
-        .portal-req-item.met { color: #15803d; }
-        .portal-req-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #d1d5db;
-          flex-shrink: 0;
-        }
-        .portal-req-item.met svg { flex-shrink: 0; }
-        .portal-strength {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .portal-strength-bar {
-          flex: 1;
-          height: 6px;
-          background: #e5e7eb;
-          border-radius: 999px;
-          overflow: hidden;
-        }
-      `}</style>
     </div>
   );
 };
