@@ -69,7 +69,7 @@ serve(async (req) => {
   }
 
   try {
-    const { membershipNumber, pin, password } = await req.json();
+    const { membershipNumber, pin, password, isReset } = await req.json();
 
     if (!membershipNumber) {
       return new Response(JSON.stringify({ error: 'Membership Number is required' }), {
@@ -190,8 +190,8 @@ serve(async (req) => {
       });
     }
 
-    // Check if password is already set — if so, tell user to use password
-    if (member.password_hash) {
+    // Check if password is already set — if so, tell user to use password unless this is a reset request
+    if (member.password_hash && !isReset) {
       return new Response(
         JSON.stringify({
           error: 'A password is already set for this account. Please login with your password instead.',

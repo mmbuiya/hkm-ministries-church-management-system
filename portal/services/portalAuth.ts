@@ -43,8 +43,8 @@ export const portalAuthService = {
    * LOGIN WITH PIN — First-time login. Validates Member ID + PIN.
    * If member has no password_hash set, server returns needsPasswordSetup: true.
    */
-  async loginWithMembership(membershipNumber: string, pin: string) {
-    const response = await callEdgeFunction('portal-login', { membershipNumber, pin });
+  async loginWithMembership(membershipNumber: string, pin: string, isReset = false) {
+    const response = await callEdgeFunction('portal-login', { membershipNumber, pin, isReset });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -185,5 +185,18 @@ export const portalAuthService = {
     throw new Error(
       'To request a new PIN, please contact the church office. Your PIN is automatically sent when you pay your Registration Fee.',
     );
+  },
+
+  /**
+   * CHECK MEMBER STATUS — Returns whether the member has an active portal account and password set.
+   */
+  async checkMemberStatus(membershipNumber: string) {
+    const response = await callEdgeFunction('portal-check-member', { membershipNumber });
+
+    if (!response.ok) {
+      return { exists: false, hasPassword: false, isActive: false };
+    }
+
+    return await response.json().catch(() => ({ exists: false, hasPassword: false, isActive: false }));
   },
 };

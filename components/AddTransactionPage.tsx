@@ -3,7 +3,7 @@ import { ArrowLeftIcon } from './Icons';
 import { InputField, SelectField, TextAreaField } from './FormControls';
 import { Member } from './memberData';
 import { Transaction, IncomeCategory, ExpenseCategory } from './financeData';
-import { CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
+import { CheckCircle, AlertTriangle, DollarSign, Loader2 } from 'lucide-react';
 
 interface AddTransactionPageProps {
   onBack: () => void;
@@ -67,6 +67,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   const [isNonMember, setIsNonMember] = useState(false);
   const [nonMemberName, setNonMemberName] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingTransactionData, setPendingTransactionData] = useState<
     (Omit<Transaction, 'id'> & { id?: number }) | null
   >(null);
@@ -204,11 +205,13 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
 
   const handleConfirmSave = async () => {
     if (pendingTransactionData) {
+      setIsSubmitting(true);
       try {
         await onSave(pendingTransactionData);
       } catch (err) {
         console.error('[Save] onSave failed:', err);
       } finally {
+        setIsSubmitting(false);
         setShowConfirmation(false);
         setPendingTransactionData(null);
       }
@@ -684,20 +687,35 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
             <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl">
               <button
                 onClick={handleCancelConfirmation}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
+                disabled={isSubmitting}
+                className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmSave}
+                disabled={isSubmitting}
                 className={`px-4 py-2 text-white rounded-lg font-medium flex items-center gap-2 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                } ${
                   pendingTransactionData.type === 'Income'
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
-                <CheckCircle className="w-4 h-4" />
-                {isEditMode ? 'Update Transaction' : 'Add Transaction'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    {isEditMode ? 'Update Transaction' : 'Add Transaction'}
+                  </>
+                )}
               </button>
             </div>
           </div>

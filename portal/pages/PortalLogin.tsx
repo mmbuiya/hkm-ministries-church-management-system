@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, AlertCircle, CheckCircle, ArrowRight, Shield, KeyRound } from 'lucide-react';
 import { portalAuthService } from '../services/portalAuth';
@@ -12,10 +12,43 @@ const PortalLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const [isRequestingPin, setIsRequestingPin] = useState(false);
   const [pinRequested, setPinRequested] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
   const [loginMode, setLoginMode] = useState<LoginMode>('pin');
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!membershipNumber || membershipNumber.length < 3) {
+      setHasPassword(null);
+      if (!isResettingPassword) setIsResettingPassword(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const status = await portalAuthService.checkMemberStatus(membershipNumber);
+        if (status.exists) {
+          setHasPassword(status.hasPassword);
+          if (status.hasPassword && !isResettingPassword) {
+            setLoginMode('password');
+          } else if (!status.hasPassword) {
+            setLoginMode('pin');
+          }
+        } else {
+          setHasPassword(null);
+        }
+      } catch (e) {
+        // ignore errors silently for this background check
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [membershipNumber, isResettingPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +58,13 @@ const PortalLogin: React.FC = () => {
       if (isRequestingPin) {
         await portalAuthService.requestPin(membershipNumber);
         setPinRequested(true);
+      } else if (isResettingPassword) {
+        const session = await portalAuthService.loginWithMembership(membershipNumber, pin, true);
+        if (session.needsPasswordSetup) {
+          navigate('/portal/set-password');
+        } else {
+          navigate('/portal/dashboard');
+        }
       } else if (loginMode === 'pin') {
         const session = await portalAuthService.loginWithMembership(membershipNumber, pin);
         if (session.needsPasswordSetup) {
@@ -39,17 +79,21 @@ const PortalLogin: React.FC = () => {
     } catch (err: unknown) {
       const msg = (err as Error).message || 'Invalid credentials. Please try again.';
       setError(msg);
-      if (loginMode === 'pin') {
+      if (isResettingPassword) {
+        setPin('');
+      } else if (loginMode === 'pin') {
         setPin('');
         // If server says they need to use password, switch mode
         if (msg.toLowerCase().includes('password')) {
           setLoginMode('password');
+          setHasPassword(true);
         }
       } else {
         setPassword('');
         // If server says no password set, switch to PIN mode
         if (msg.toLowerCase().includes('pin')) {
           setLoginMode('pin');
+          setHasPassword(false);
         }
       }
     } finally {
@@ -75,11 +119,13 @@ const PortalLogin: React.FC = () => {
             </div>
             <h1 className="portal-church-name">Heavenly God Kingdom Churches</h1>
             <div className="portal-divider" />
-            <p className="portal-subtitle">Member Portal</p>
+            <p className="portal-subtitle">{isResettingPassword ? 'Reset Password' : 'Member Portal'}</p>
             <p className="portal-hint">
               {isRequestingPin
                 ? 'Enter your membership number to receive a new PIN.'
-                : 'Sign in to access your member dashboard.'}
+                : isResettingPassword
+                  ? 'Enter your PIN to verify your identity and reset your password.'
+                  : 'Sign in to access your member dashboard.'}
             </p>
           </div>
 
@@ -113,15 +159,20 @@ const PortalLogin: React.FC = () => {
             ) : (
               <form onSubmit={handleSubmit} className="portal-form">
                 {/* Mode toggle */}
-                {!isRequestingPin && (
+                {!isRequestingPin && !isResettingPassword && (
                   <div className="portal-mode-toggle">
                     <button
                       type="button"
-                      className={`portal-mode-btn ${loginMode === 'pin' ? 'active' : ''}`}
+                      disabled={hasPassword === true}
+                      className={`portal-mode-btn ${loginMode === 'pin' ? 'active' : ''} ${
+                        hasPassword === true ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                       onClick={() => {
+                        if (hasPassword === true) return;
                         setLoginMode('pin');
                         setError('');
                       }}
+                      title={hasPassword === true ? 'You have already set a password' : ''}
                     >
                       <KeyRound size={14} />
                       Use PIN
@@ -160,8 +211,8 @@ const PortalLogin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* PIN field (PIN mode) */}
-                {!isRequestingPin && loginMode === 'pin' && (
+                {/* PIN field (PIN mode or Reset Password mode) */}
+                {!isRequestingPin && (loginMode === 'pin' || isResettingPassword) && (
                   <div className="portal-field">
                     <label htmlFor="pin" className="portal-label">
                       Personal PIN
@@ -171,7 +222,7 @@ const PortalLogin: React.FC = () => {
                       <input
                         id="pin"
                         type="password"
-                        required={loginMode === 'pin'}
+                        required={loginMode === 'pin' || isResettingPassword}
                         autoComplete="off"
                         placeholder="Enter your PIN"
                         className="portal-input"
@@ -183,7 +234,7 @@ const PortalLogin: React.FC = () => {
                 )}
 
                 {/* Password field (password mode) */}
-                {!isRequestingPin && loginMode === 'password' && (
+                {!isRequestingPin && !isResettingPassword && loginMode === 'password' && (
                   <div className="portal-field">
                     <label htmlFor="login-password" className="portal-label">
                       Password
@@ -204,19 +255,32 @@ const PortalLogin: React.FC = () => {
                   </div>
                 )}
 
-                {/* Forgot PIN */}
-                {!isRequestingPin && loginMode === 'pin' && (
+                {/* Forgot PIN / Forgot Password */}
+                {!isRequestingPin && !isResettingPassword && (
                   <div className="portal-forgot">
-                    <button
-                      type="button"
-                      className="portal-link-btn"
-                      onClick={() => {
-                        setIsRequestingPin(true);
-                        setError('');
-                      }}
-                    >
-                      Don't have a PIN?
-                    </button>
+                    {loginMode === 'pin' ? (
+                      <button
+                        type="button"
+                        className="portal-link-btn"
+                        onClick={() => {
+                          setIsRequestingPin(true);
+                          setError('');
+                        }}
+                      >
+                        Don't have a PIN?
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="portal-link-btn"
+                        onClick={() => {
+                          setIsResettingPassword(true);
+                          setError('');
+                        }}
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -229,20 +293,23 @@ const PortalLogin: React.FC = () => {
                       <Shield size={16} />
                       {isRequestingPin
                         ? 'Request My PIN'
-                        : loginMode === 'pin'
-                          ? 'Sign In with PIN'
-                          : 'Sign In with Password'}
+                        : isResettingPassword
+                          ? 'Verify PIN to Reset Password'
+                          : loginMode === 'pin'
+                            ? 'Sign In with PIN'
+                            : 'Sign In with Password'}
                     </>
                   )}
                 </button>
 
-                {/* Cancel request */}
-                {isRequestingPin && (
+                {/* Cancel request / Back to login */}
+                {(isRequestingPin || isResettingPassword) && (
                   <button
                     type="button"
                     className="portal-cancel-btn"
                     onClick={() => {
                       setIsRequestingPin(false);
+                      setIsResettingPassword(false);
                       setError('');
                     }}
                   >
@@ -253,7 +320,7 @@ const PortalLogin: React.FC = () => {
             )}
 
             {/* Info note */}
-            {!isRequestingPin && !pinRequested && (
+            {!isRequestingPin && !isResettingPassword && !pinRequested && (
               <p className="portal-note">
                 Access is restricted to registered HKM members. Visit the church office to register.
               </p>
