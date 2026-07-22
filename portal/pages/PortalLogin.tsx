@@ -42,7 +42,7 @@ const PortalLogin: React.FC = () => {
         } else {
           setHasPassword(null);
         }
-      } catch (e) {
+      } catch {
         // ignore errors silently for this background check
       }
     }, 600);

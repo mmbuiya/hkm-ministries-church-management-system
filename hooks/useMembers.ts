@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMutation, useQuery, useApolloClient } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { toTitleCase, formatEmail } from '../utils/stringFormatter';
 import { Member, EmailTier } from '../components/memberData';
 import {

@@ -30,6 +30,7 @@ export function useUsers() {
 
   const users: AppUser[] = useMemo(() => {
     if (!queryData?.usersCollection?.edges) return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return queryData.usersCollection.edges.map((e: any) => {
       const u = e.node;
       return {

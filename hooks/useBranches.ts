@@ -104,7 +104,7 @@ export function useBranches() {
   };
 
   const updateBranch = async (id: string, branch: Partial<Branch>) => {
-    const SupabaseUpdates: any = {};
+    const SupabaseUpdates: Record<string, unknown> = {};
     if (branch.name !== undefined) SupabaseUpdates.name = toTitleCase(branch.name);
     if (branch.address !== undefined) SupabaseUpdates.location = toTitleCase(branch.address);
     if (branch.phone !== undefined) SupabaseUpdates.phone = branch.phone;

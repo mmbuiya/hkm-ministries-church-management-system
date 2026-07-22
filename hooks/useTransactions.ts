@@ -400,7 +400,7 @@ export function useTransactions() {
 
   const updateTransaction = async (id: number, updates: Partial<Transaction>) => {
     try {
-      const payload: Record<string, any> = {};
+      const payload: Record<string, unknown> = {};
       if (updates.date !== undefined) payload.date = updates.date;
       if (updates.category !== undefined) payload.category = updates.category;
       if (updates.type !== undefined) payload.type = updates.type;

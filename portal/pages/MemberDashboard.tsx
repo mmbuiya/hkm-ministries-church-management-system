@@ -29,7 +29,6 @@ import {
   SUBMIT_HELPDESK_TICKET_MUTATION,
   GET_CHURCH_SETTINGS_QUERY,
 } from '../services/portalQueries';
-import { generateCSV } from '../utils/giving';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { compressImage } from '../../utils/imageUtils';
@@ -435,7 +434,6 @@ const MemberDashboard: React.FC = () => {
 
   const handleDownloadStatement = () => {
     const doc = new jsPDF();
-    const logoUrl = 'https://admin.hkmministries.org/hkm-logo.webp';
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Header styling
@@ -486,6 +484,7 @@ const MemberDashboard: React.FC = () => {
     });
 
     // Footer
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalY = (doc as any).lastAutoTable.finalY || 100;
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);

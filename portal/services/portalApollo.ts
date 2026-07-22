@@ -18,7 +18,7 @@ const authLink = setContext((_, { headers }) => {
       if (session.token) {
         token = session.token;
       }
-    } catch (e) {
+    } catch {
       // ignore parse error
     }
   }

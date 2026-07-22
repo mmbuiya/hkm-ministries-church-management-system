@@ -156,7 +156,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
       await storage.appSettings.save(settings);
       // 2. Persist church info to Supabase so the member portal can read it
       try {
-        const { data, errors } = await apolloClient.mutate({
+        const { errors } = await apolloClient.mutate({
           mutation: UPDATE_CHURCH_SETTINGS,
           variables: {
             name: settings.churchInfo.name,
