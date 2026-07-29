@@ -73,7 +73,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Real-time data hooks
-  const { data: members, loading: membersLoading, addMember, updateMember, deleteMember } = useMembers();
+  const {
+    data: members,
+    loading: membersLoading,
+    totalCount: memberTotalCount,
+    addMember,
+    updateMember,
+    deleteMember,
+  } = useMembers();
   const {
     data: visitors,
     loading: visitorsLoading,
@@ -713,6 +720,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           <DashboardPage
             setActivePage={setActivePage}
             members={members}
+            totalMembersCount={memberTotalCount}
             transactions={transactions}
             onAddTransaction={() => {
               setTransactionToEdit(null);
@@ -978,6 +986,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           <DashboardPage
             setActivePage={setActivePage}
             members={members}
+            totalMembersCount={memberTotalCount}
             transactions={transactions}
             onAddTransaction={() => {
               setTransactionToEdit(null);

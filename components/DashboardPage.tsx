@@ -55,6 +55,7 @@ const StatCard: React.FC<{
 interface DashboardPageProps {
   setActivePage: (page: string) => void;
   members: Member[];
+  totalMembersCount?: number;
   transactions: Transaction[];
   onAddTransaction: () => void;
   currentUser: User | null;
@@ -63,12 +64,13 @@ interface DashboardPageProps {
 const DashboardPage: React.FC<DashboardPageProps> = ({
   setActivePage,
   members,
+  totalMembersCount,
   transactions,
   onAddTransaction,
   currentUser,
 }) => {
   const { modeColors } = useTheme();
-  const totalMembers = members.length;
+  const totalMembers = totalMembersCount ?? members.length;
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

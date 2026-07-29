@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { useAuth } from '@clerk/clerk-react';
 import { toTitleCase, formatEmail } from '../utils/stringFormatter';
 import { Member, EmailTier } from '../components/memberData';
 import {
@@ -10,6 +11,26 @@ import {
 } from '../services/graphql/members';
 import { ADD_AUDIT_LOG_MUTATION } from '../services/graphql/transactions';
 import { updateAlias, deleteAlias } from '../services/improvmxService';
+
+const DEFAULT_SUPABASE_URL = 'https://tkzxzriivbbzdvjgrdhk.supabase.co';
+const GRAPHQL_SUFFIX = '/graphql/v1';
+
+function getSupabaseRestUrl() {
+  const explicitUrl = import.meta.env.VITE_SUPABASE_URL;
+  const graphQlUrl = import.meta.env.VITE_SUPABASE_GRAPHQL_URL;
+  const baseUrl = explicitUrl || (graphQlUrl ? graphQlUrl.replace(GRAPHQL_SUFFIX, '') : DEFAULT_SUPABASE_URL);
+  return `${baseUrl}/rest/v1`;
+}
+
+function parseCountHeader(contentRange: string | null): number | null {
+  if (!contentRange) return null;
+
+  const total = contentRange.split('/').pop();
+  if (!total || total === '*') return null;
+
+  const parsed = Number.parseInt(total, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 interface SupabaseMember {
   id: string;
@@ -81,10 +102,13 @@ function transformMember(SupabaseMember: SupabaseMember): Member {
 }
 
 export function useMembers() {
+  const { getToken } = useAuth();
   const { data, loading, error } = useQuery(GET_MEMBERS_QUERY, {
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [totalCountLoading, setTotalCountLoading] = useState(true);
 
   const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION, {
     refetchQueries: [{ query: GET_MEMBERS_QUERY }],
@@ -96,6 +120,42 @@ export function useMembers() {
     refetchQueries: [{ query: GET_MEMBERS_QUERY }],
   });
   const [addAuditLogMutation] = useMutation(ADD_AUDIT_LOG_MUTATION);
+
+  const refreshTotalCount = useCallback(async () => {
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    if (!anonKey) {
+      setTotalCountLoading(false);
+      return;
+    }
+
+    setTotalCountLoading(true);
+
+    try {
+      const token = await getToken({ template: 'supabase' });
+      const response = await fetch(`${getSupabaseRestUrl()}/members?select=id&limit=1`, {
+        method: 'HEAD',
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${token || anonKey}`,
+          Prefer: 'count=exact',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch members count (${response.status})`);
+      }
+
+      setTotalCount(parseCountHeader(response.headers.get('content-range')));
+    } catch (countError) {
+      console.warn('Failed to fetch exact members count:', countError);
+    } finally {
+      setTotalCountLoading(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    void refreshTotalCount();
+  }, [refreshTotalCount]);
 
   const members: Member[] = useMemo(() => {
     // Supabase pg_graphql wraps results in membersCollection.edges[].node
@@ -155,6 +215,8 @@ export function useMembers() {
           object: memberData,
         },
       });
+
+      await refreshTotalCount();
 
       // Real-time subscription will update UI automatically
     } catch (error) {
@@ -222,6 +284,8 @@ export function useMembers() {
       },
     });
 
+    await refreshTotalCount();
+
     // Handle ImprovMX alias updates and deletions
     const currentMember = members.find((member) => member.id === id);
     if (currentMember?.org_email && currentMember?.email_tier === 'member') {
@@ -275,6 +339,8 @@ export function useMembers() {
     if (!result.data?.deleteFrommembersCollection?.records?.length) {
       throw new Error('Failed to delete member - no data returned');
     }
+
+    await refreshTotalCount();
   };
 
   return {
@@ -284,6 +350,9 @@ export function useMembers() {
     },
     loading,
     error,
+    totalCount: totalCount ?? members.length,
+    totalCountLoading,
+    refreshTotalCount,
     addMember,
     updateMember,
     deleteMember,
