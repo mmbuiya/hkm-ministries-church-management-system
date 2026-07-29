@@ -1,0 +1,101 @@
+name: Supabase Keep-Alive Ping
+
+# Supabase free tier pauses projects after 7 days of inactivity.
+# This workflow pings the Supabase REST API every 3 days to prevent that,
+# giving a comfortable 4-day buffer before the 7-day pause threshold.
+#
+# HOW IT WORKS:
+#   - Runs on a schedule (every 3 days at 00:00 UTC)
+#   - Makes a lightweight HEAD request to the members REST endpoint
+#     with count=exact — this is a single DB round-trip, no data returned
+#   - Reports the live member count so you know the DB is healthy
+#   - Can also be triggered manually via the GitHub Actions UI
+#
+# REQUIRED SECRETS (already set for deploy.yml — no new secrets needed):
+#   - VITE_SUPABASE_ANON_KEY  →  your Supabase anon/public key
+#
+# REQUIRED VARS (already set for deploy.yml):
+#   - VITE_SUPABASE_GRAPHQL_URL  →  used to derive the REST base URL
+
+on:
+  schedule:
+    # Every 3 days at 00:00 UTC  (day 1, 4, 7, 10, 13, ...)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual ping'
+        required: false
+        default: 'Manual keep-alive trigger'
+
+jobs:
+  keep-alive:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Derive REST base URL from GraphQL URL
+        id: urls
+        env:
+          GRAPHQL_URL: ${{ vars.VITE_SUPABASE_GRAPHQL_URL }}
+        run: |
+          # Strip the /graphql/v1 suffix to get the base URL
+          REST_URL="${GRAPHQL_URL%/graphql/v1}/rest/v1"
+          echo "REST_URL=$REST_URL" >> "$GITHUB_OUTPUT"
+          echo "Derived REST URL: $REST_URL"
+
+      - name: Ping members table (HEAD + count=exact)
+        id: ping
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          REST_URL: ${{ steps.urls.outputs.REST_URL }}
+        run: |
+          echo "Pinging: $REST_URL/members"
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            -X HEAD \
+            "$REST_URL/members?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Prefer: count=exact")
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "http_status=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::error::Supabase ping returned HTTP $HTTP_STATUS — project may be paused or unreachable."
+            exit 1
+          fi
+
+      - name: Fetch live member count
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          REST_URL: ${{ steps.urls.outputs.REST_URL }}
+        run: |
+          # GET the Content-Range header which carries total count
+          CONTENT_RANGE=$(curl -s -I \
+            --max-time 30 \
+            "$REST_URL/members?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Prefer: count=exact" \
+            | grep -i "content-range:" | tr -d '\r')
+
+          echo "Content-Range: $CONTENT_RANGE"
+
+          # Extract total  e.g.  "content-range: 0-0/42"  →  42
+          TOTAL=$(echo "$CONTENT_RANGE" | sed 's|.*\/||')
+          echo "✅ Supabase is awake — live member count: $TOTAL"
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "::notice::✅ Supabase keep-alive ping succeeded at $(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "::error::❌ Supabase keep-alive ping FAILED. Check if the project is paused at:"
+          echo "::error::   https://supabase.com/dashboard/project/tkzxzriivbbzdvjgrdhk"
