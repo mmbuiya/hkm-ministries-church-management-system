@@ -1,9 +1,12 @@
 import { gql } from '@apollo/client';
 
 // Supabase pg_graphql uses Relay-style collections
+// pg_graphql defaults to 30 rows if no `first:` arg is given.
+// 1000 covers any realistic church roster and fits comfortably within
+// Supabase free-tier row limits (no extra round-trips needed).
 export const GET_MEMBERS_QUERY = gql`
   query GetMembers {
-    membersCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    membersCollection(first: 1000, orderBy: [{ created_at: DescNullsLast }]) {
       edges {
         node {
           id
@@ -35,7 +38,7 @@ export const GET_MEMBERS_QUERY = gql`
 
 export const GET_MEMBERS_SUBSCRIPTION = gql`
   subscription GetMembers {
-    membersCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    membersCollection(first: 1000, orderBy: [{ created_at: DescNullsLast }]) {
       edges {
         node {
           id
