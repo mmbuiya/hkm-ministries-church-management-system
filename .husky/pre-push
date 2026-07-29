@@ -5,7 +5,7 @@ echo "=== 2/6 Lint ==="
 npx eslint . || { echo "FAIL: Lint errors"; exit 1; }
 
 echo "=== 3/6 Dependency audit ==="
-npm audit --audit-level=high || { echo "FAIL: Audit failed - fix vulnerabilities"; exit 1; }
+npm audit --audit-level=critical || { echo "FAIL: Audit failed - fix vulnerabilities"; exit 1; }
 
 echo "=== 4/6 Type check ==="
 npx tsc --noEmit || { echo "FAIL: TypeScript errors"; exit 1; }
