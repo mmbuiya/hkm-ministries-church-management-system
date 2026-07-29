@@ -1,0 +1,15 @@
+-- ============================================================
+-- HKM Ministries: Raise pg_graphql max_rows on members table
+-- Run this script in your Supabase SQL Editor:
+-- https://supabase.com/dashboard/project/tkzxzriivbbzdvjgrdhk/sql
+-- ============================================================
+--
+-- Problem: pg_graphql defaults to max_rows = 30 per collection.
+-- The client-side `first:` argument is silently capped at this value,
+-- so even with `first: 1000` in the query only 30 rows are returned.
+--
+-- Fix: Set max_rows to 1000 on the members table via a pg_graphql
+-- comment directive. This is the documented, official approach.
+-- 1000 covers any realistic church roster well within free-tier limits.
+--
+COMMENT ON TABLE members IS e'@graphql({"max_rows": 1000})';
