@@ -65,6 +65,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [isNonMember, setIsNonMember] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [nonMemberName, setNonMemberName] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,6 +82,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       setDate(transactionToEdit.date);
       setDescription(transactionToEdit.description);
       setIsNonMember(!!transactionToEdit.nonMemberName);
+      setIsAnonymous(!!transactionToEdit.isAnonymous);
       setNonMemberName(transactionToEdit.nonMemberName || '');
 
       console.warn('Edit mode - loaded transaction with memberId:', transactionToEdit.memberId);
@@ -94,14 +96,21 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   useEffect(() => {
     if (isNonMember) {
       setMemberId('');
-    } else {
-      setNonMemberName('');
+      setIsAnonymous(false);
     }
   }, [isNonMember]);
 
   useEffect(() => {
+    if (isAnonymous) {
+      setMemberId('');
+      setNonMemberName('');
+    }
+  }, [isAnonymous]);
+
+  useEffect(() => {
     if (type === 'Expense') {
       setIsNonMember(false);
+      setIsAnonymous(false);
       setNonMemberName('');
       setMemberId('');
     }
@@ -111,6 +120,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   useEffect(() => {
     if (category === 'Registration Fee') {
       setIsNonMember(false);
+      setIsAnonymous(false);
       setNonMemberName('');
     }
   }, [category]);
@@ -170,7 +180,10 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
     }
 
     const isMemberRequired =
-      type === 'Income' && !isNonMember && memberRequiredCategories.includes(category as IncomeCategory);
+      type === 'Income' &&
+      !isNonMember &&
+      !isAnonymous &&
+      memberRequiredCategories.includes(category as IncomeCategory);
     if (isMemberRequired && !memberId) {
       alert('Please select a member for this transaction category.');
       return;
@@ -182,8 +195,9 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
       amount: parsedAmount,
       date,
       description,
-      memberId: type === 'Income' && !isNonMember && memberId ? memberId : undefined,
+      memberId: type === 'Income' && !isNonMember && !isAnonymous && memberId ? memberId : undefined,
       nonMemberName: type === 'Income' && isNonMember && nonMemberName ? nonMemberName.trim() : undefined,
+      isAnonymous: type === 'Income' && isAnonymous ? true : undefined,
     };
 
     // Block save if registration threshold met but contact info missing
@@ -309,26 +323,62 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
 
             {type === 'Income' ? (
               <div>
-                <div className="flex items-center mb-1 h-6">
-                  <input
-                    type="checkbox"
-                    id="isNonMember"
-                    checked={isNonMember}
-                    onChange={(e) => setIsNonMember(e.target.checked)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                    disabled={category === 'Registration Fee'}
-                  />
-                  <label
-                    htmlFor="isNonMember"
-                    className={`ml-2 text-sm font-medium ${category === 'Registration Fee' ? 'text-gray-400' : 'text-gray-700'}`}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contributor</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNonMember(false);
+                      setIsAnonymous(false);
+                    }}
+                    className={`px-3 py-1.5 text-sm rounded-lg font-medium border transition-colors ${
+                      !isNonMember && !isAnonymous
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
                   >
-                    From Non-Member{' '}
-                    {category === 'Registration Fee' && (
-                      <span className="text-xs text-orange-600">(N/A for Registration Fee)</span>
-                    )}
-                  </label>
+                    Member
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNonMember(true);
+                      setIsAnonymous(false);
+                    }}
+                    className={`px-3 py-1.5 text-sm rounded-lg font-medium border transition-colors ${
+                      isNonMember
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    } ${category === 'Registration Fee' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={category === 'Registration Fee'}
+                  >
+                    Non-Member
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAnonymous(true);
+                      setIsNonMember(false);
+                    }}
+                    className={`px-3 py-1.5 text-sm rounded-lg font-medium border transition-colors ${
+                      isAnonymous
+                        ? 'bg-green-600 text-white border-green-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    } ${category === 'Registration Fee' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={category === 'Registration Fee'}
+                  >
+                    Anonymous
+                  </button>
                 </div>
-                {isNonMember ? (
+
+                {isAnonymous ? (
+                  <div className="p-3 border border-purple-200 rounded-lg bg-purple-50">
+                    <p className="text-sm text-purple-700">
+                      <span className="font-medium">Anonymous Gift</span> — The contributor&apos;s identity will not be
+                      recorded.
+                    </p>
+                  </div>
+                ) : isNonMember ? (
                   <InputField
                     name="nonMemberName"
                     label="Non-Member Name"
@@ -347,7 +397,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
                         <div className="p-3 border border-orange-300 rounded-lg bg-orange-50">
                           <p className="text-sm text-orange-700">
                             No active members with valid data found. Please ensure members have both names and email
-                            addresses, or use the "From Non-Member" option above.
+                            addresses, or use the "Non-Member" or "Anonymous" option above.
                           </p>
                         </div>
                       </div>
@@ -640,6 +690,11 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
                       {pendingTransactionData.nonMemberName && (
                         <p>
                           <strong>Non-Member:</strong> {pendingTransactionData.nonMemberName}
+                        </p>
+                      )}
+                      {pendingTransactionData.isAnonymous && (
+                        <p>
+                          <strong>Contributor:</strong> Anonymous
                         </p>
                       )}
                       {pendingTransactionData.description && (

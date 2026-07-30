@@ -42,6 +42,9 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
       if (transaction.contributorName) {
         return transaction.contributorName;
       }
+      if (transaction.isAnonymous) {
+        return 'Anonymous';
+      }
       if (transaction.memberId) {
         const member = members.find((m) => m.id === transaction.memberId);
         return member ? member.name : 'Unknown Member';

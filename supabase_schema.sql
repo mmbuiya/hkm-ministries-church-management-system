@@ -121,6 +121,7 @@ create table if not exists transactions (
   description      text,
   member_id        text references members(id) on delete set null,
   non_member_name  text,
+  is_anonymous     boolean default false,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );

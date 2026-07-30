@@ -13,6 +13,7 @@ export const GET_TRANSACTIONS_QUERY = gql`
           description
           member_id
           non_member_name
+          is_anonymous
           created_at
           updated_at
         }
@@ -34,6 +35,7 @@ export const GET_TRANSACTIONS_SUBSCRIPTION = gql`
           description
           member_id
           non_member_name
+          is_anonymous
           created_at
           updated_at
         }

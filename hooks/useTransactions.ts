@@ -34,6 +34,7 @@ interface SupabaseTransaction {
   description?: string;
   member_id?: string;
   non_member_name?: string;
+  is_anonymous?: boolean;
   member?: SupabaseMember | null;
 }
 
@@ -41,7 +42,9 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
   let contributorName: string | undefined;
   let contributorPhone: string | undefined;
 
-  if (SupabaseTx.member) {
+  if (SupabaseTx.is_anonymous) {
+    contributorName = 'Anonymous';
+  } else if (SupabaseTx.member) {
     contributorName = `${SupabaseTx.member.first_name} ${SupabaseTx.member.last_name}`.trim();
     contributorPhone = SupabaseTx.member.phone;
   } else if (SupabaseTx.non_member_name) {
@@ -57,6 +60,7 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
     description: SupabaseTx.description || '',
     memberId: SupabaseTx.member_id,
     nonMemberName: SupabaseTx.non_member_name,
+    isAnonymous: SupabaseTx.is_anonymous || false,
     contributorName,
     contributorPhone,
   };
@@ -118,6 +122,7 @@ export function useTransactions() {
             description: toTitleCase(transaction.description),
             member_id: transaction.memberId || null,
             non_member_name: toTitleCase(transaction.nonMemberName) || null,
+            is_anonymous: transaction.isAnonymous || false,
           },
         },
       });
@@ -408,6 +413,7 @@ export function useTransactions() {
       if (updates.description !== undefined) payload.description = toTitleCase(updates.description);
       if (updates.memberId !== undefined) payload.member_id = updates.memberId || null;
       if (updates.nonMemberName !== undefined) payload.non_member_name = toTitleCase(updates.nonMemberName) || null;
+      if (updates.isAnonymous !== undefined) payload.is_anonymous = updates.isAnonymous;
 
       const result = await updateTransactionMutation({
         variables: {
