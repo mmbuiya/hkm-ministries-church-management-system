@@ -268,6 +268,38 @@ const MarkAttendancePage: React.FC<MarkAttendancePageProps> = ({
 
         {/* Right Member List */}
         <div className="w-full lg:w-3/4">
+          {/* ── Attendance Summary Indicator ── */}
+          {(() => {
+            const presentCount = Object.values(attendance).filter((s) => s === 'Present').length;
+            const lateCount = Object.values(attendance).filter((s) => s === 'Late').length;
+            const absentCount = Object.values(attendance).filter((s) => s === 'Absent').length;
+            const totalCount = Object.keys(attendance).length;
+            return (
+              <div className="grid grid-cols-4 rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-4">
+                {/* Present */}
+                <div className="bg-green-50 px-4 py-3 border-r border-gray-200">
+                  <p className="text-xs font-semibold tracking-widest text-green-700 uppercase">Present</p>
+                  <p className="text-3xl font-bold text-green-600 mt-1">{presentCount}</p>
+                </div>
+                {/* Late */}
+                <div className="bg-amber-50 px-4 py-3 border-r border-gray-200">
+                  <p className="text-xs font-semibold tracking-widest text-amber-600 uppercase">Late</p>
+                  <p className="text-3xl font-bold text-amber-500 mt-1">{lateCount}</p>
+                </div>
+                {/* Absent */}
+                <div className="bg-red-50 px-4 py-3 border-r border-gray-200">
+                  <p className="text-xs font-semibold tracking-widest text-red-600 uppercase">Absent</p>
+                  <p className="text-3xl font-bold text-red-500 mt-1">{absentCount}</p>
+                </div>
+                {/* Total Class */}
+                <div className="bg-indigo-50 px-4 py-3">
+                  <p className="text-xs font-semibold tracking-widest text-indigo-600 uppercase">Total Class</p>
+                  <p className="text-3xl font-bold text-indigo-500 mt-1">{totalCount}</p>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4 border-b space-y-3">
               <div className="flex justify-between items-center">
