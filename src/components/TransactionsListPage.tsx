@@ -4,7 +4,6 @@ import { Transaction } from './financeData';
 import { Member } from './memberData';
 import ActionButtons from './ActionButtons';
 import PaginationControls from './PaginationControls';
-import { useDebounce } from '../hooks/useDebounce';
 
 interface TransactionsListPageProps {
   setActiveView: (view: string) => void;
@@ -29,13 +28,17 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
   const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  // Distinct transaction categories for the search dropdown
+  const categories = useMemo(() => {
+    const unique = new Set(transactions.map((t) => t.category));
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [transactions]);
 
   const getContributorName = useCallback(
     (transaction: Transaction) => {
@@ -79,20 +82,13 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((t) => {
-        const contributorName = getContributorName(t);
-
         const matchesType = filterType === 'All' || t.type === filterType;
 
         const transactionDate = new Date(t.date);
         const matchesStartDate = !startDate || transactionDate >= new Date(startDate);
         const matchesEndDate = !endDate || transactionDate <= new Date(new Date(endDate).setHours(23, 59, 59, 999));
 
-        const matchesSearch =
-          debouncedSearch === '' ||
-          t.category.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-          t.description.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-          contributorName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-          t.amount.toString().includes(debouncedSearch);
+        const matchesSearch = selectedCategory === '' || t.category === selectedCategory;
 
         return matchesType && matchesStartDate && matchesEndDate && matchesSearch;
       })
@@ -119,7 +115,7 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
     filterType,
     startDate,
     endDate,
-    debouncedSearch,
+    selectedCategory,
     members,
     sortField,
     sortDirection,
@@ -136,7 +132,7 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
     setFilterType('All');
     setStartDate('');
     setEndDate('');
-    setSearchTerm('');
+    setSelectedCategory('');
     setCurrentPage(1);
     setSortField('date');
     setSortDirection('desc');
@@ -176,24 +172,29 @@ const TransactionsListPage: React.FC<TransactionsListPageProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
           <div className="md:col-span-2">
             <label className="text-xs font-medium text-gray-500" htmlFor="transaction-search">
-              Search
+              Search by Category
             </label>
             <div className="relative mt-1">
-              <SearchIcon className="h-5 w-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2" />
-              <input
+              <SearchIcon className="h-5 w-5 text-gray-400 absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
+              <select
                 id="transaction-search"
-                type="text"
-                placeholder="Category, member, amount..."
-                value={searchTerm}
+                value={selectedCategory}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                  setSelectedCategory(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 aria-describedby="search-help"
-              />
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
               <span id="search-help" className="sr-only">
-                Search transactions by category, contributor name, or amount
+                Filter transactions by category
               </span>
             </div>
           </div>

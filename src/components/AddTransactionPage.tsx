@@ -3,7 +3,8 @@ import { ArrowLeftIcon } from './Icons';
 import { InputField, SelectField, TextAreaField } from './FormControls';
 import { Member } from './memberData';
 import { Transaction, IncomeCategory, ExpenseCategory } from './financeData';
-import { CheckCircle, AlertTriangle, DollarSign, Loader2 } from 'lucide-react';
+import TransactionConfirmModal, { PendingTransaction } from './transaction/TransactionConfirmModal';
+import RegistrationFeeStatus from './transaction/RegistrationFeeStatus';
 
 interface AddTransactionPageProps {
   onBack: () => void;
@@ -69,9 +70,7 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
   const [nonMemberName, setNonMemberName] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingTransactionData, setPendingTransactionData] = useState<
-    (Omit<Transaction, 'id'> & { id?: number }) | null
-  >(null);
+  const [pendingTransactionData, setPendingTransactionData] = useState<PendingTransaction | null>(null);
 
   useEffect(() => {
     if (isEditMode && transactionToEdit) {
@@ -429,127 +428,16 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
                           required={memberRequiredCategories.includes(category as IncomeCategory)}
                         />
                         {category === 'Registration Fee' && memberId && (
-                          <div className="mt-3 space-y-2">
-                            <div
-                              className={`text-sm p-3 rounded border ${
-                                isPendingFee
-                                  ? 'bg-amber-50 border-amber-200 text-amber-800'
-                                  : selectedMemberObj?.status === 'Active'
-                                    ? 'bg-green-50 border-green-200 text-green-800'
-                                    : 'bg-gray-50 border-gray-200 text-gray-700'
-                              }`}
-                            >
-                              <strong>Registration Status:</strong>
-                              <ul className="mt-2 space-y-2 list-none">
-                                {/* Paid status */}
-                                <li className="flex items-center gap-2">
-                                  {pastRegistrationFees >= registrationThreshold ? (
-                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                                      <svg
-                                        className="w-3 h-3 text-white"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth={3}
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    </span>
-                                  ) : (
-                                    <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                    </span>
-                                  )}
-                                  <span
-                                    className={
-                                      pastRegistrationFees >= registrationThreshold ? 'text-green-700 font-medium' : ''
-                                    }
-                                  >
-                                    Paid: KSH {pastRegistrationFees} / KSH {registrationThreshold}
-                                  </span>
-                                </li>
-                                {/* After this entry */}
-                                {currentAmount > 0 && (
-                                  <li className="flex items-center gap-2">
-                                    {projectedTotal >= registrationThreshold ? (
-                                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                                        <svg
-                                          className="w-3 h-3 text-white"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                          stroke="currentColor"
-                                          strokeWidth={3}
-                                        >
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </span>
-                                    ) : (
-                                      <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                      </span>
-                                    )}
-                                    <span
-                                      className={
-                                        projectedTotal >= registrationThreshold ? 'text-green-700 font-medium' : ''
-                                      }
-                                    >
-                                      After this entry: KSH {projectedTotal} / KSH {registrationThreshold}
-                                    </span>
-                                  </li>
-                                )}
-                                {/* Contact status */}
-                                <li className="flex items-center gap-2">
-                                  {missingContactFields.length === 0 ? (
-                                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                                      <svg
-                                        className="w-3 h-3 text-white"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth={3}
-                                      >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    </span>
-                                  ) : (
-                                    <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-amber-400 bg-amber-100 flex items-center justify-center">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                    </span>
-                                  )}
-                                  <span
-                                    className={missingContactFields.length === 0 ? 'text-green-700 font-medium' : ''}
-                                  >
-                                    Contact:{' '}
-                                    {missingContactFields.length === 0
-                                      ? 'Complete'
-                                      : `Missing: ${missingContactFields.join(', ')}`}
-                                  </span>
-                                </li>
-                              </ul>
-                            </div>
-                            {thresholdMetOnSave && isPendingFee && (
-                              <div
-                                className={`text-sm p-3 rounded border ${
-                                  hasContact
-                                    ? 'bg-green-50 border-green-200 text-green-700'
-                                    : 'bg-red-50 border-red-200 text-red-700'
-                                }`}
-                              >
-                                {hasContact ? (
-                                  <span>
-                                    <strong>Ready to Activate:</strong> Threshold met and contact details present.
-                                    Portal PIN will be generated and sent to the member.
-                                  </span>
-                                ) : (
-                                  <span>
-                                    <strong>Cannot Activate:</strong> Threshold met but{' '}
-                                    {missingContactFields.join(' and ')} is missing. Update the member&apos;s profile
-                                    with {missingContactFields.join(' and ')} before saving.
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          <RegistrationFeeStatus
+                            pastRegistrationFees={pastRegistrationFees}
+                            registrationThreshold={registrationThreshold}
+                            currentAmount={currentAmount}
+                            projectedTotal={projectedTotal}
+                            missingContactFields={missingContactFields}
+                            hasContact={hasContact}
+                            thresholdMetOnSave={thresholdMetOnSave}
+                            isPendingFee={isPendingFee}
+                          />
                         )}
                       </>
                     )}
@@ -618,163 +506,14 @@ const AddTransactionPage: React.FC<AddTransactionPageProps> = ({
 
       {/* Confirmation Modal */}
       {showConfirmation && pendingTransactionData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            {/* Header */}
-            <div
-              className={`p-4 border-b text-white rounded-t-xl ${
-                pendingTransactionData.type === 'Income'
-                  ? 'bg-gradient-to-r from-green-600 to-green-700'
-                  : 'bg-gradient-to-r from-red-600 to-red-700'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-6 h-6" />
-                <h2 className="text-lg font-bold">
-                  {isEditMode ? 'Confirm Transaction Update' : 'Confirm Transaction Addition'}
-                </h2>
-              </div>
-              <p
-                className={`text-sm mt-1 ${
-                  pendingTransactionData.type === 'Income' ? 'text-green-100' : 'text-red-100'
-                }`}
-              >
-                Please review the transaction details before saving
-              </p>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              <div
-                className={`border rounded-lg p-4 ${
-                  pendingTransactionData.type === 'Income' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <DollarSign
-                    className={`w-5 h-5 mt-0.5 ${
-                      pendingTransactionData.type === 'Income' ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <p
-                      className={`text-sm font-medium mb-2 ${
-                        pendingTransactionData.type === 'Income' ? 'text-green-800' : 'text-red-800'
-                      }`}
-                    >
-                      Transaction Details:
-                    </p>
-                    <div
-                      className={`space-y-1 text-sm ${
-                        pendingTransactionData.type === 'Income' ? 'text-green-700' : 'text-red-700'
-                      }`}
-                    >
-                      <p>
-                        <strong>Type:</strong> {pendingTransactionData.type}
-                      </p>
-                      <p>
-                        <strong>Category:</strong> {pendingTransactionData.category}
-                      </p>
-                      <p>
-                        <strong>Amount:</strong> KSH {pendingTransactionData.amount.toLocaleString()}
-                      </p>
-                      <p>
-                        <strong>Date:</strong> {new Date(pendingTransactionData.date).toLocaleDateString()}
-                      </p>
-                      {pendingTransactionData.memberId && (
-                        <p>
-                          <strong>Member:</strong>{' '}
-                          {validMembers.find((m) => m.id === pendingTransactionData.memberId)?.name}
-                        </p>
-                      )}
-                      {pendingTransactionData.nonMemberName && (
-                        <p>
-                          <strong>Non-Member:</strong> {pendingTransactionData.nonMemberName}
-                        </p>
-                      )}
-                      {pendingTransactionData.isAnonymous && (
-                        <p>
-                          <strong>Contributor:</strong> Anonymous
-                        </p>
-                      )}
-                      {pendingTransactionData.description && (
-                        <p>
-                          <strong>Description:</strong> {pendingTransactionData.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration Fee special notice */}
-              {pendingTransactionData.category === 'Registration Fee' && pendingTransactionData.memberId && (
-                <div className="bg-amber-50 border border-amber-300 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-amber-800">
-                      <p className="font-semibold">Portal Activation Will Trigger:</p>
-                      <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs">
-                        <li>
-                          Member status set to <strong>Active</strong>
-                        </li>
-                        <li>A unique 6-digit PIN will be auto-generated</li>
-                        <li>Member portal access will be enabled</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-blue-600" />
-                  <p className="text-sm text-blue-700">
-                    {isEditMode
-                      ? 'This will update the existing transaction record.'
-                      : `This will record a new ${pendingTransactionData.type.toLowerCase()} transaction.`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl">
-              <button
-                onClick={handleCancelConfirmation}
-                disabled={isSubmitting}
-                className={`px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSave}
-                disabled={isSubmitting}
-                className={`px-4 py-2 text-white rounded-lg font-medium flex items-center gap-2 ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
-                } ${
-                  pendingTransactionData.type === 'Income'
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    {isEditMode ? 'Update Transaction' : 'Add Transaction'}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <TransactionConfirmModal
+          pendingTransactionData={pendingTransactionData}
+          isEditMode={isEditMode}
+          isSubmitting={isSubmitting}
+          validMembers={validMembers}
+          onConfirm={handleConfirmSave}
+          onCancel={handleCancelConfirmation}
+        />
       )}
     </div>
   );

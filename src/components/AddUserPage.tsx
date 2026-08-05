@@ -17,6 +17,7 @@ import {
   CameraIcon,
 } from './Icons';
 import { Settings2, CheckCircle, AlertTriangle } from 'lucide-react';
+import UserConfirmModal from './user/UserConfirmModal';
 
 const allAccessibleSections: AccessibleSection[] = [
   // Members Module
@@ -781,77 +782,12 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
 
       {/* Confirmation Modal */}
       {showConfirmation && pendingUserData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            {/* Header */}
-            <div className="p-4 border-b bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-t-xl">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-6 h-6" />
-                <h2 className="text-lg font-bold">{isEditMode ? 'Confirm User Update' : 'Confirm User Creation'}</h2>
-              </div>
-              <p className="text-purple-100 text-sm mt-1">Please review the user details before saving</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <UserIcon className="w-5 h-5 text-purple-600 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-purple-800 mb-2">User Details:</p>
-                    <div className="space-y-1 text-sm text-purple-700">
-                      <p>
-                        <strong>Username:</strong> {pendingUserData.username}
-                      </p>
-                      <p>
-                        <strong>Email:</strong> {pendingUserData.email}
-                      </p>
-                      <p>
-                        <strong>Role:</strong> {pendingUserData.role}
-                      </p>
-                      <p>
-                        <strong>Permission Level:</strong> {pendingUserData.permissionLevel}
-                      </p>
-                      {pendingUserData.assignedSections && pendingUserData.assignedSections.length > 0 && (
-                        <p>
-                          <strong>Assigned Sections:</strong> {pendingUserData.assignedSections.length} sections
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-blue-600" />
-                  <p className="text-sm text-blue-700">
-                    {isEditMode
-                      ? 'This will update the existing user account.'
-                      : 'This will create a new user account in the system.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl">
-              <button
-                onClick={handleCancelConfirmation}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSave}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                {isEditMode ? 'Update User' : 'Create User'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <UserConfirmModal
+          pendingUserData={pendingUserData}
+          isEditMode={isEditMode}
+          onConfirm={handleConfirmSave}
+          onCancel={handleCancelConfirmation}
+        />
       )}
     </div>
   );

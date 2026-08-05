@@ -30,6 +30,7 @@ import RecycleBinPage from './RecycleBinPage';
 import PermissionRequestsPage from './PermissionRequestsPage';
 // REMOVED: SuperAdminLogin import (dead code — component was never rendered)
 import UserSessionMonitor from './UserSessionMonitor';
+import AppRouter from './layout/AppRouter';
 import { AttendanceStatus } from './attendanceData';
 import { Transaction } from './financeData';
 import { Member } from './memberData';
@@ -735,291 +736,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     );
   }
 
-  const renderPage = () => {
-    switch (activePage) {
-      case 'Dashboard':
-        return (
-          <DashboardPage
-            setActivePage={setActivePage}
-            members={members}
-            totalMembersCount={memberTotalCount}
-            transactions={transactions}
-            onAddTransaction={() => {
-              setTransactionToEdit(null);
-              setActivePage('Add Transaction');
-            }}
-            currentUser={currentUser}
-          />
-        );
-      case 'Members':
-        return (
-          <MembersPage
-            setActivePage={setActivePage}
-            members={members}
-            onDeleteMember={handleDeleteMember}
-            onEditMember={handleStartEditMember}
-            onViewMember={handleStartViewMember}
-          />
-        );
-      case 'Add Member':
-        return (
-          <AddMemberPage
-            onBack={() => {
-              setMemberToEdit(null);
-              setActivePage('Members');
-            }}
-            onSave={handleSaveOrUpdateMember}
-            memberToEdit={memberToEdit}
-          />
-        );
-      case 'Member Details':
-        if (memberToView) {
-          return (
-            <MemberDetailsPage
-              member={memberToView}
-              onBack={() => {
-                setMemberToView(null);
-                setActivePage('Members');
-              }}
-              onEdit={handleStartEditMember}
-              onDelete={handleDeleteMember}
-              transactions={transactions}
-              attendanceRecords={attendanceRecords}
-            />
-          );
-        }
-        return (
-          <MembersPage
-            setActivePage={setActivePage}
-            members={members}
-            onDeleteMember={handleDeleteMember}
-            onEditMember={handleStartEditMember}
-            onViewMember={handleStartViewMember}
-          />
-        );
-      case 'Manage Groups':
-        return (
-          <GroupsManagementPage
-            onBack={() => setActivePage('Members')}
-            members={members}
-            groups={groups}
-            onSaveGroup={handleSaveOrUpdateGroup}
-            onDeleteGroup={handleDeleteGroup}
-            onEditGroup={handleStartEditGroup}
-            groupToEdit={groupToEdit}
-            setGroupToEdit={setGroupToEdit}
-          />
-        );
-      case 'Birthdays':
-        return <BirthdaysPage members={members} />;
-      case 'Attendance':
-        return (
-          <AttendanceModule
-            setActivePage={setActivePage}
-            members={members}
-            editContext={editContext}
-            setEditContext={setEditContext}
-            attendanceRecords={attendanceRecords}
-            onEditAttendanceRecord={handleEditAttendanceRecord}
-            onDeleteAttendanceRecord={handleDeleteAttendanceRecord}
-          />
-        );
-      case 'Mark Attendance':
-        return (
-          <MarkAttendancePage
-            onBack={() => {
-              setEditContext(null);
-              setActivePage('Attendance');
-            }}
-            onSave={handleSaveAttendance}
-            editContext={editContext}
-            allAttendanceRecords={attendanceRecords}
-            members={members}
-          />
-        );
-      case 'Finance':
-        return (
-          <FinancePage
-            currentUser={currentUser}
-            transactions={transactions}
-            members={members}
-            onEditTransaction={handleStartEditTransaction}
-            onDeleteTransaction={handleDeleteTransaction}
-            setActivePage={setActivePage}
-          />
-        );
-      case 'Add Transaction':
-        return (
-          <AddTransactionPage
-            onBack={() => {
-              setTransactionToEdit(null);
-              setActivePage('Finance');
-            }}
-            onSave={handleSaveOrUpdateTransaction}
-            transactionToEdit={transactionToEdit}
-            members={members}
-            transactions={transactions}
-          />
-        );
-      case 'SMS Broadcast':
-        return (
-          <SmsBroadcastPage
-            members={members}
-            groups={groups}
-            smsRecords={smsRecords}
-            onLogSms={addSmsRecord}
-            onDeleteSms={deleteSmsRecord}
-            onLoadMoreSms={loadMoreSms}
-            smsMonthsBack={smsMonthsBack}
-          />
-        );
-      case 'Equipment':
-        return (
-          <EquipmentPage
-            setActivePage={setActivePage}
-            equipment={equipment}
-            onEdit={handleStartEditEquipment}
-            onDelete={handleDeleteEquipment}
-            maintenanceRecords={maintenanceRecords}
-            onEditMaintenance={handleStartEditMaintenance}
-            onDeleteMaintenance={handleDeleteMaintenance}
-          />
-        );
-      case 'Add Equipment':
-        return (
-          <AddEquipmentPage
-            onBack={() => {
-              setEquipmentToEdit(null);
-              setActivePage('Equipment');
-            }}
-            onSave={handleSaveOrUpdateEquipment}
-            equipmentToEdit={equipmentToEdit}
-          />
-        );
-      case 'Add Maintenance':
-        return (
-          <AddMaintenancePage
-            onBack={() => {
-              setMaintenanceToEdit(null);
-              setActivePage('Equipment');
-            }}
-            onSave={handleSaveOrUpdateMaintenance}
-            recordToEdit={maintenanceToEdit}
-            equipment={equipment}
-          />
-        );
-      case 'Visitors':
-        return (
-          <VisitorsModule
-            visitors={visitors}
-            onSaveVisitor={handleSaveOrUpdateVisitor}
-            onUpdateVisitor={handleSaveOrUpdateVisitor}
-            onDeleteVisitor={handleDeleteVisitor}
-            onConvertToMember={handleConvertToMember}
-            onSaveFollowUp={handleSaveFollowUp}
-            onDeleteFollowUp={handleDeleteFollowUp}
-            members={members}
-          />
-        );
-      case 'Reports':
-        return <ReportsModule members={members} transactions={transactions} attendanceRecords={attendanceRecords} />;
-      case 'Users':
-        return (
-          <UsersPage
-            users={allUsers}
-            setActivePage={setActivePage}
-            onDeleteUser={onDeleteUser}
-            onEditUser={handleStartEditUser}
-          />
-        );
-      case 'Add User':
-        return (
-          <AddUserPage
-            onBack={() => {
-              setUserToEdit(null);
-              setActivePage('Users');
-            }}
-            onSave={handleSaveUser}
-            userToEdit={userToEdit}
-          />
-        );
-      case 'Settings':
-        return <SettingsPage currentUser={currentUser} />;
-      case 'AI Features':
-        return <AiFeaturesPage />;
-      case 'Helpdesk':
-        return <HelpdeskPage />;
-      case 'Branches':
-        return (
-          <BranchesPage
-            branches={branches}
-            onAddBranch={() => {
-              setBranchToEdit(null);
-              setActivePage('Add Branch');
-            }}
-            onEditBranch={handleStartEditBranch}
-            onDeleteBranch={handleDeleteBranch}
-            onViewBranch={handleViewBranch}
-            canEdit={currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin'}
-          />
-        );
-      case 'Add Branch':
-        return (
-          <AddBranchPage
-            onBack={() => {
-              setBranchToEdit(null);
-              setActivePage('Branches');
-            }}
-            onSave={handleSaveBranch}
-            branchToEdit={branchToEdit}
-          />
-        );
-      case 'Data Personnel Management':
-        return currentUser ? (
-          <DataPersonnelManagementPage
-            users={allUsers}
-            currentUser={currentUser}
-            onUpdateUser={onSaveOrUpdateUser}
-            onDeleteUser={onDeleteUser}
-          />
-        ) : null;
-      case 'Recycle Bin':
-        return (
-          <RecycleBinPage
-            currentUser={currentUser!}
-            recycleBinItems={recycleBinItems}
-            onRestore={handleRestoreFromRecycleBin}
-            onPermanentlyDelete={removeFromRecycleBin}
-            onEmptyBin={handleEmptyRecycleBin}
-          />
-        );
-      case 'Permission Requests':
-        return (
-          <PermissionRequestsPage
-            currentUser={currentUser!}
-            permissionRequests={permissionRequests}
-            onReview={handleReviewPermissionRequest}
-          />
-        );
-      case 'User Session Monitor':
-        return currentUser ? <UserSessionMonitor currentUser={currentUser} /> : null;
-      default:
-        return (
-          <DashboardPage
-            setActivePage={setActivePage}
-            members={members}
-            totalMembersCount={memberTotalCount}
-            transactions={transactions}
-            onAddTransaction={() => {
-              setTransactionToEdit(null);
-              setActivePage('Add Transaction');
-            }}
-            currentUser={currentUser}
-          />
-        );
-    }
-  };
-
   return (
     <div className={`flex h-screen ${modeColors.bg} ${modeColors.text}`}>
       {/* Mobile Sidebar Overlay */}
@@ -1052,7 +768,82 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
           onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
         <main className={`flex-1 overflow-x-hidden overflow-y-auto ${modeColors.bgSecondary} p-3 sm:p-4 lg:p-6`}>
-          {renderPage()}
+          <AppRouter
+            activePage={activePage}
+            setActivePage={setActivePage}
+            currentUser={currentUser}
+            members={members}
+            memberTotalCount={memberTotalCount}
+            memberToEdit={memberToEdit}
+            setMemberToEdit={setMemberToEdit}
+            memberToView={memberToView}
+            setMemberToView={setMemberToView}
+            handleSaveOrUpdateMember={handleSaveOrUpdateMember}
+            handleDeleteMember={handleDeleteMember}
+            handleStartEditMember={handleStartEditMember}
+            handleStartViewMember={handleStartViewMember}
+            groups={groups}
+            groupToEdit={groupToEdit}
+            setGroupToEdit={setGroupToEdit}
+            handleSaveOrUpdateGroup={handleSaveOrUpdateGroup}
+            handleDeleteGroup={handleDeleteGroup}
+            handleStartEditGroup={handleStartEditGroup}
+            attendanceRecords={attendanceRecords}
+            editContext={editContext}
+            setEditContext={setEditContext}
+            handleSaveAttendance={handleSaveAttendance}
+            handleEditAttendanceRecord={handleEditAttendanceRecord}
+            handleDeleteAttendanceRecord={handleDeleteAttendanceRecord}
+            transactions={transactions}
+            transactionToEdit={transactionToEdit}
+            setTransactionToEdit={setTransactionToEdit}
+            handleSaveOrUpdateTransaction={handleSaveOrUpdateTransaction}
+            handleDeleteTransaction={handleDeleteTransaction}
+            handleStartEditTransaction={handleStartEditTransaction}
+            smsRecords={smsRecords}
+            addSmsRecord={addSmsRecord}
+            deleteSmsRecord={deleteSmsRecord}
+            loadMoreSms={loadMoreSms}
+            smsMonthsBack={smsMonthsBack}
+            equipment={equipment}
+            maintenanceRecords={maintenanceRecords}
+            equipmentToEdit={equipmentToEdit}
+            setEquipmentToEdit={setEquipmentToEdit}
+            maintenanceToEdit={maintenanceToEdit}
+            setMaintenanceToEdit={setMaintenanceToEdit}
+            handleSaveOrUpdateEquipment={handleSaveOrUpdateEquipment}
+            handleDeleteEquipment={handleDeleteEquipment}
+            handleStartEditEquipment={handleStartEditEquipment}
+            handleSaveOrUpdateMaintenance={handleSaveOrUpdateMaintenance}
+            handleDeleteMaintenance={handleDeleteMaintenance}
+            handleStartEditMaintenance={handleStartEditMaintenance}
+            visitors={visitors}
+            handleSaveOrUpdateVisitor={handleSaveOrUpdateVisitor}
+            handleDeleteVisitor={handleDeleteVisitor}
+            handleConvertToMember={handleConvertToMember}
+            handleSaveFollowUp={handleSaveFollowUp}
+            handleDeleteFollowUp={handleDeleteFollowUp}
+            allUsers={allUsers}
+            userToEdit={userToEdit}
+            setUserToEdit={setUserToEdit}
+            onSaveOrUpdateUser={onSaveOrUpdateUser}
+            onDeleteUser={onDeleteUser}
+            handleStartEditUser={handleStartEditUser}
+            handleSaveUser={handleSaveUser}
+            branches={branches}
+            branchToEdit={branchToEdit}
+            setBranchToEdit={setBranchToEdit}
+            handleSaveBranch={handleSaveBranch}
+            handleDeleteBranch={handleDeleteBranch}
+            handleStartEditBranch={handleStartEditBranch}
+            handleViewBranch={handleViewBranch}
+            recycleBinItems={recycleBinItems}
+            handleRestoreFromRecycleBin={handleRestoreFromRecycleBin}
+            removeFromRecycleBin={removeFromRecycleBin}
+            handleEmptyRecycleBin={handleEmptyRecycleBin}
+            permissionRequests={permissionRequests}
+            handleReviewPermissionRequest={handleReviewPermissionRequest}
+          />
         </main>
       </div>
     </div>
