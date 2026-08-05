@@ -104,13 +104,24 @@ function transformMember(SupabaseMember: SupabaseMember): Member {
 
 export function useMembers() {
   const { getToken } = useAuth();
-  const { data, loading, error } = useQuery(GET_MEMBERS_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(GET_MEMBERS_QUERY, {
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [exactTotal, setExactTotal] = useState<number | null>(null);
   const [totalCountLoading, setTotalCountLoading] = useState(false);
+
+  const pageInfo = data?.membersCollection?.pageInfo;
+  const hasNextPage = !!pageInfo?.hasNextPage;
+  const fetchNextPage = useCallback(async () => {
+    if (!hasNextPage || !pageInfo?.endCursor) return;
+    await fetchMore({
+      variables: {
+        after: pageInfo.endCursor,
+      },
+    });
+  }, [fetchMore, hasNextPage, pageInfo?.endCursor]);
 
   const [addMemberMutation] = useMutation(ADD_MEMBER_MUTATION, {
     refetchQueries: [{ query: GET_MEMBERS_QUERY }],
@@ -353,6 +364,8 @@ export function useMembers() {
     totalCount: exactTotal ?? members.length,
     totalCountLoading,
     refreshTotalCount,
+    hasNextPage,
+    fetchNextPage,
     addMember,
     updateMember,
     deleteMember,

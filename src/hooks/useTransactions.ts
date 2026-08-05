@@ -67,11 +67,22 @@ function transformTransaction(SupabaseTx: SupabaseTransaction): Transaction {
 }
 
 export function useTransactions() {
-  const { data, loading, error } = useQuery(GET_TRANSACTIONS_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(GET_TRANSACTIONS_QUERY, {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-and-network',
     errorPolicy: 'all',
   });
+
+  const pageInfo = data?.transactionsCollection?.pageInfo;
+  const hasNextPage = !!pageInfo?.hasNextPage;
+  const fetchNextPage = async () => {
+    if (!hasNextPage || !pageInfo?.endCursor) return;
+    await fetchMore({
+      variables: {
+        after: pageInfo.endCursor,
+      },
+    });
+  };
   const apolloClient = useApolloClient();
   const [addTransactionMutation] = useMutation(ADD_TRANSACTION_MUTATION, {
     refetchQueries: [{ query: GET_TRANSACTIONS_QUERY }],
@@ -537,6 +548,8 @@ export function useTransactions() {
     },
     loading,
     error: error || connectionError,
+    hasNextPage,
+    fetchNextPage,
     addTransaction,
     updateTransaction,
     deleteTransaction,

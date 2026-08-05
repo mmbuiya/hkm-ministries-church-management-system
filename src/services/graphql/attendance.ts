@@ -1,9 +1,16 @@
 import { gql } from '@apollo/client';
 
 export const GET_ATTENDANCE_QUERY = gql`
-  query GetAttendance {
-    attendance_recordsCollection(first: 10000, orderBy: [{ date: DescNullsLast }]) {
+  query GetAttendance($first: Int = 10000, $after: Cursor) {
+    attendance_recordsCollection(first: $first, after: $after, orderBy: [{ date: DescNullsLast }]) {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
+        cursor
         node {
           id
           date

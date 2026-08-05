@@ -6,9 +6,16 @@ import { gql } from '@apollo/client';
 // dataset in a single round-trip so the dashboard and directory show
 // every member in the database.
 export const GET_MEMBERS_QUERY = gql`
-  query GetMembers {
-    membersCollection(first: 10000, orderBy: [{ created_at: DescNullsLast }]) {
+  query GetMembers($first: Int = 10000, $after: Cursor) {
+    membersCollection(first: $first, after: $after, orderBy: [{ created_at: DescNullsLast }]) {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
+        cursor
         node {
           id
           first_name

@@ -10,11 +10,22 @@ import {
 import { Member } from '../components/memberData';
 
 export function useAttendance(members: Member[] = []) {
-  const { data, loading, error } = useQuery(GET_ATTENDANCE_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(GET_ATTENDANCE_QUERY, {
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
+
+  const pageInfo = data?.attendance_recordsCollection?.pageInfo;
+  const hasNextPage = !!pageInfo?.hasNextPage;
+  const fetchNextPage = async () => {
+    if (!hasNextPage || !pageInfo?.endCursor) return;
+    await fetchMore({
+      variables: {
+        after: pageInfo.endCursor,
+      },
+    });
+  };
 
   const [addAttendanceMutation] = useMutation(ADD_ATTENDANCE_MUTATION, {
     refetchQueries: [{ query: GET_ATTENDANCE_QUERY }],
@@ -121,6 +132,8 @@ export function useAttendance(members: Member[] = []) {
     data: attendanceRecords,
     loading,
     error,
+    hasNextPage,
+    fetchNextPage,
     batchSaveAttendance,
     deleteAttendanceRecord,
   };

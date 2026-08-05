@@ -1,9 +1,16 @@
 import { gql } from '@apollo/client';
 
 export const GET_TRANSACTIONS_QUERY = gql`
-  query GetTransactions {
-    transactionsCollection(first: 10000, orderBy: [{ created_at: DescNullsLast }]) {
+  query GetTransactions($first: Int = 10000, $after: Cursor) {
+    transactionsCollection(first: $first, after: $after, orderBy: [{ created_at: DescNullsLast }]) {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
+        cursor
         node {
           id
           date

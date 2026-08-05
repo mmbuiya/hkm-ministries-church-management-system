@@ -2,11 +2,14 @@
   "name": "hkm-church-management",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
-  "main": "electron/main.js",
+  "workspaces": [
+    "hkm-sms-backend"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:sms": "npm run build --workspace=hkm-sms-backend",
+    "build:all": "npm run build && npm run build:sms",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
