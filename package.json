@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:sms": "npm run build --workspace=hkm-sms-backend",
+    "build:sms": "npm --prefix hkm-sms-backend run build",
+    "dev:sms": "npm --prefix hkm-sms-backend run start:dev",
+    "install:sms": "npm --prefix hkm-sms-backend install",
     "build:all": "npm run build && npm run build:sms",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
