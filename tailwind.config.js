@@ -1,5 +1,5 @@
 export default {
-  content: ['./index.html', './index.tsx', './App.tsx', './components/**/*.{ts,tsx}'],
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {

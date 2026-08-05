@@ -13,13 +13,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['services/**/*.ts', 'hooks/**/*.ts', 'components/**/*.tsx', 'App.tsx'],
+      include: ['src/services/**/*.ts', 'src/hooks/**/*.ts', 'src/components/**/*.tsx', 'src/App.tsx'],
       exclude: ['**/*.test.*', '**/*.spec.*', 'node_modules', 'dist'],
     },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });
