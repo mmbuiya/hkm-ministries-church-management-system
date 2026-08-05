@@ -142,7 +142,7 @@ const SmsDashboard: React.FC<SmsDashboardProps> = ({ smsRecords, setActiveView }
         </div>
       </div>
       <footer className="text-center text-sm text-gray-500 mt-8 pt-4">
-        © 2025 All rights reserved. Church Management System
+        © {new Date().getFullYear()} All rights reserved. Church Management System
       </footer>
     </div>
   );

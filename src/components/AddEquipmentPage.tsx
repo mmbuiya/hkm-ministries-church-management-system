@@ -176,7 +176,7 @@ const AddEquipmentPage: React.FC<AddEquipmentPageProps> = ({ onBack, onSave, equ
           </div>
         </form>
         <footer className="text-center text-sm text-gray-500 mt-8 pt-4 border-t">
-          © 2025 All rights reserved. Church Management System
+          © {new Date().getFullYear()} All rights reserved. Church Management System
         </footer>
       </div>
 

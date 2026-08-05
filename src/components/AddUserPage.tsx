@@ -767,7 +767,7 @@ const AddUserPage: React.FC<AddUserPageProps> = ({ onBack, onSave, userToEdit })
         </form>
       </div>
       <footer className="text-center text-sm text-gray-500 mt-8">
-        © 2025 All rights reserved. Church Management System
+        © {new Date().getFullYear()} All rights reserved. Church Management System
       </footer>
 
       {/* Avatar Editor Modal */}
