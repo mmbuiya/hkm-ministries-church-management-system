@@ -68,9 +68,9 @@ export function useUserSessions() {
   const [endSessionMutation] = useMutation(END_USER_SESSION_MUTATION);
 
   const sessions: UserSession[] = useMemo(() => {
-    const raw = queryData?.user_sessions;
-    if (!raw) return [];
-    return raw.map(mapSession);
+    const edges = queryData?.user_sessionsCollection?.edges;
+    if (!edges) return [];
+    return edges.map((e: { node: Parameters<typeof mapSession>[0] }) => mapSession(e.node));
   }, [queryData]);
 
   const loadMoreSessions = () => setDaysBack((prev) => prev + 30);
@@ -158,28 +158,33 @@ export function useLoginAttempts() {
   const [addAttemptMutation] = useMutation(ADD_LOGIN_ATTEMPT_MUTATION);
 
   const attempts: LoginAttempt[] = useMemo(() => {
-    const raw = queryData?.login_attempts;
-    if (!raw) return [];
-    return raw.map(
-      (a: {
-        id: string;
-        email?: string;
-        timestamp?: string;
-        success?: boolean;
-        failure_reason?: string;
-        ip_address?: string;
-        user_agent?: string;
-        location?: string;
-      }) => ({
-        id: a.id,
-        email: a.email,
-        timestamp: a.timestamp,
-        success: a.success,
-        failureReason: a.failure_reason,
-        ipAddress: a.ip_address,
-        userAgent: a.user_agent,
-        location: a.location,
-      }),
+    const edges = queryData?.login_attemptsCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (e: {
+        node: {
+          id: string;
+          email?: string;
+          timestamp?: string;
+          success?: boolean;
+          failure_reason?: string;
+          ip_address?: string;
+          user_agent?: string;
+          location?: string;
+        };
+      }) => {
+        const a = e.node;
+        return {
+          id: a.id,
+          email: a.email,
+          timestamp: a.timestamp,
+          success: a.success,
+          failureReason: a.failure_reason,
+          ipAddress: a.ip_address,
+          userAgent: a.user_agent,
+          location: a.location,
+        };
+      },
     );
   }, [queryData]);
 

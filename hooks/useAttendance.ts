@@ -27,21 +27,29 @@ export function useAttendance(members: Member[] = []) {
   });
 
   const attendanceRecords: AttendanceRecord[] = useMemo(() => {
-    if (!data?.attendance_records) return [];
-    return data.attendance_records.map(
-      (record: {
-        id: number;
-        date: string;
-        service: string;
-        member?: { first_name?: string; last_name?: string } | null;
-        status: string;
-      }) => ({
-        id: record.id,
-        date: record.date,
-        service: record.service,
-        memberName: `${record.member?.first_name || ''} ${record.member?.last_name || ''}`.trim() || 'Unknown Member',
-        status: record.status as AttendanceStatus,
-      }),
+    const edges = data?.attendance_recordsCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (edge: {
+        node: {
+          id: number;
+          date: string;
+          service: string;
+          member?: { first_name?: string; last_name?: string } | null;
+          members?: { first_name?: string; last_name?: string } | null;
+          status: string;
+        };
+      }) => {
+        const record = edge.node;
+        const member = record.member || record.members;
+        return {
+          id: record.id,
+          date: record.date,
+          service: record.service,
+          memberName: `${member?.first_name || ''} ${member?.last_name || ''}`.trim() || 'Unknown Member',
+          status: record.status as AttendanceStatus,
+        };
+      },
     );
   }, [data]);
 

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_LOGIN_ATTEMPTS_QUERY, ADD_LOGIN_ATTEMPT_MUTATION } from '../services/graphql/cleanup';
+import { LoginAttempt } from '../components/userSessionData';
 
 let cachedIp: string | null = null;
 
@@ -71,8 +72,39 @@ export function useLoginAttempts() {
 
   const loadMoreAttempts = () => setDaysBack((prev) => prev + 30);
 
+  const attempts: LoginAttempt[] = useMemo(() => {
+    const edges = queryData?.login_attemptsCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (e: {
+        node: {
+          id: string;
+          email?: string;
+          timestamp?: string;
+          success?: boolean;
+          failure_reason?: string;
+          ip_address?: string;
+          user_agent?: string;
+          location?: string;
+        };
+      }) => {
+        const a = e.node;
+        return {
+          id: a.id,
+          email: a.email || '',
+          timestamp: a.timestamp || '',
+          success: a.success || false,
+          failureReason: a.failure_reason,
+          ipAddress: a.ip_address,
+          userAgent: a.user_agent,
+          location: a.location,
+        };
+      },
+    );
+  }, [queryData]);
+
   return {
-    attempts: queryData?.login_attempts || [],
+    attempts,
     loading: queryLoading && !queryData,
     error,
     daysBack,

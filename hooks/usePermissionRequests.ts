@@ -23,42 +23,47 @@ export function usePermissionRequests() {
   const [deleteMutation] = useMutation(DELETE_PERMISSION_REQUEST_MUTATION);
 
   const requests: PermissionRequest[] = useMemo(() => {
-    const raw = queryData?.permission_requests;
-    if (!raw) return [];
-    return raw.map(
-      (r: {
-        id: string;
-        requester_id: string;
-        requester_name: string;
-        requester_email: string;
-        request_type: string;
-        data_type: string;
-        data_id: string;
-        data_name: string;
-        reason: string;
-        requested_at: string;
-        status: string;
-        reviewed_by?: string;
-        reviewed_at?: string;
-        review_notes?: string;
-        expires_at?: string;
-      }) => ({
-        id: r.id,
-        requesterId: r.requester_id,
-        requesterName: r.requester_name,
-        requesterEmail: r.requester_email,
-        requestType: r.request_type,
-        dataType: r.data_type,
-        dataId: r.data_id,
-        dataName: r.data_name,
-        reason: r.reason,
-        requestedAt: r.requested_at,
-        status: r.status,
-        reviewedBy: r.reviewed_by,
-        reviewedAt: r.reviewed_at,
-        reviewNotes: r.review_notes,
-        expiresAt: r.expires_at,
-      }),
+    const edges = queryData?.permission_requestsCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (edge: {
+        node: {
+          id: string;
+          requester_id: string;
+          requester_name: string;
+          requester_email: string;
+          request_type: string;
+          data_type: string;
+          data_id: string;
+          data_name: string;
+          reason: string;
+          requested_at: string;
+          status: string;
+          reviewed_by?: string;
+          reviewed_at?: string;
+          review_notes?: string;
+          expires_at?: string;
+        };
+      }) => {
+        const r = edge.node;
+        return {
+          id: r.id,
+          requesterId: r.requester_id,
+          requesterName: r.requester_name,
+          requesterEmail: r.requester_email,
+          requestType: r.request_type,
+          dataType: r.data_type,
+          dataId: r.data_id,
+          dataName: r.data_name,
+          reason: r.reason,
+          requestedAt: r.requested_at,
+          status: r.status,
+          reviewedBy: r.reviewed_by,
+          reviewedAt: r.reviewed_at,
+          reviewNotes: r.review_notes,
+          expiresAt: r.expires_at,
+        };
+      },
     );
   }, [queryData]);
 

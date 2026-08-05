@@ -21,25 +21,30 @@ export function useGroups(members: Member[] = []) {
   const [deleteGroupMutation] = useMutation(DELETE_GROUP_MUTATION, { refetchQueries: [{ query: GET_GROUPS_QUERY }] });
 
   const groups: Group[] = useMemo(() => {
-    const raw = data?.groups;
-    if (!raw) return [];
-    return raw.map(
-      (g: {
-        id: number;
-        name: string;
-        leader?: { email?: string } | null;
-        leader_id?: string;
-        member_count?: number;
-        created_at?: string;
-        category?: string;
-      }) => ({
-        id: g.id,
-        name: g.name,
-        leader: g.leader?.email || g.leader_id || '',
-        members: g.member_count || 0,
-        created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
-        category: g.category || 'General',
-      }),
+    const edges = data?.groupsCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (edge: {
+        node: {
+          id: number;
+          name: string;
+          leader?: { email?: string } | null;
+          leader_id?: string;
+          member_count?: number;
+          created_at?: string;
+          category?: string;
+        };
+      }) => {
+        const g = edge.node;
+        return {
+          id: g.id,
+          name: g.name,
+          leader: g.leader?.email || g.leader_id || '',
+          members: g.member_count || 0,
+          created: g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : '',
+          category: g.category || 'General',
+        };
+      },
     );
   }, [data]);
 

@@ -57,9 +57,6 @@ import { useProvisioningQueue } from '../hooks/useProvisioningQueue';
 
 interface MainLayoutProps {
   currentUser: User | null;
-  users: User[];
-  onSaveOrUpdateUser: (userData: Partial<User>) => void;
-  onDeleteUser: (id: string) => void;
   onLogout: () => void;
 }
 
@@ -125,12 +122,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   } = useSms();
   const { data: branches, loading: branchesLoading, addBranch, updateBranch, deleteBranch } = useBranches();
   const { data: recycleBinItems, moveToRecycleBin, removeFromRecycleBin, loading: recycleBinLoading } = useRecycleBin();
-  const {
-    users: allUsers,
-    loading: usersLoading,
-    upsertUser: onSaveOrUpdateUser,
-    deleteUser: onDeleteUser,
-  } = useUsers();
+  const { users: allUsers, upsertUser: onSaveOrUpdateUser, deleteUser: onDeleteUser } = useUsers();
   const { data: permissionRequests, updateRequest, loading: permissionRequestsLoading } = usePermissionRequests();
 
   const { processRetries } = useProvisioningQueue();
@@ -171,7 +163,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
   // Only block the loading screen on data that the Dashboard actually needs.
   // All other hooks (SMS, Equipment, Recycle Bin, etc.) use cache-and-network
   // and will populate their pages lazily after the initial render.
-  const networkLoading = membersLoading || usersLoading;
+  const networkLoading = membersLoading;
 
   // Safety timeout: never show the loading screen for more than 3 seconds.
   // With cache-and-network, cached data resolves instantly. On first visit,

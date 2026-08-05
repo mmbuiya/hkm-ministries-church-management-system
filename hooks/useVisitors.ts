@@ -36,9 +36,9 @@ export function useVisitors() {
   });
 
   const visitors: Visitor[] = useMemo(() => {
-    if (!data?.visitors) return [];
-    return data.visitors.map(
-      (v: {
+    if (!data?.visitorsCollection?.edges) return [];
+    return data.visitorsCollection.edges.map((edge: { node: Record<string, unknown> }): Visitor => {
+      const v = edge.node as {
         id: number;
         name: string;
         initials?: string;
@@ -48,28 +48,9 @@ export function useVisitors() {
         first_visit?: string;
         registered_date?: string;
         status: string;
-        follow_ups?: Array<{
-          id: number;
-          visitor_id: number;
-          date: string;
-          interaction_type: string;
-          notes?: string;
-          next_follow_up_date?: string;
-          outcome?: string;
-        }>;
-      }) => ({
-        id: v.id,
-        name: v.name,
-        initials: v.initials || '',
-        phone: v.phone,
-        email: v.email || undefined,
-        heardFrom: v.heard_from || '',
-        firstVisit: v.first_visit || '',
-        registeredDate: v.registered_date || '',
-        status: v.status as VisitorStatus,
-        followUps:
-          v.follow_ups?.map(
-            (f: {
+        follow_upsCollection?: {
+          edges?: Array<{
+            node: {
               id: number;
               visitor_id: number;
               date: string;
@@ -77,18 +58,35 @@ export function useVisitors() {
               notes?: string;
               next_follow_up_date?: string;
               outcome?: string;
-            }) => ({
+            };
+          }>;
+        };
+      };
+      return {
+        id: v.id,
+        name: v.name,
+        initials: v.initials || '',
+        phone: v.phone || '',
+        email: v.email || undefined,
+        heardFrom: v.heard_from || '',
+        firstVisit: v.first_visit || '',
+        registeredDate: v.registered_date || '',
+        status: v.status as VisitorStatus,
+        followUps:
+          v.follow_upsCollection?.edges?.map((fe) => {
+            const f = fe.node;
+            return {
               id: f.id,
               visitorId: f.visitor_id,
               date: f.date,
-              interactionType: f.interaction_type,
+              interactionType: f.interaction_type as FollowUp['interactionType'],
               notes: f.notes || '',
               nextFollowUpDate: f.next_follow_up_date || undefined,
               outcome: f.outcome || '',
-            }),
-          ) || [],
-      }),
-    );
+            };
+          }) || [],
+      };
+    });
   }, [data]);
 
   const addVisitor = async (visitor: Partial<Visitor>) => {

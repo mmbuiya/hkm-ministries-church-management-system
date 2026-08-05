@@ -39,48 +39,62 @@ export function useEquipment() {
   });
 
   const equipment: Equipment[] = useMemo(() => {
-    if (!data?.equipment) return [];
-    return data.equipment.map(
-      (e: {
-        id: number;
-        name: string;
-        category?: string;
-        purchase_date?: string;
-        purchase_price?: number;
-        condition: string;
-        location?: string;
-        description?: string;
-      }) => ({
-        id: e.id,
-        name: e.name,
-        category: e.category || 'Other',
-        purchaseDate: e.purchase_date || undefined,
-        purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
-        condition: e.condition as EquipmentCondition,
-        location: e.location || '',
-        description: e.description || '',
-      }),
+    const edges = data?.equipmentCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (edge: {
+        node: {
+          id: number;
+          name: string;
+          category?: string;
+          purchase_date?: string;
+          purchase_price?: number;
+          condition: string;
+          location?: string;
+          description?: string;
+        };
+      }) => {
+        const e = edge.node;
+        return {
+          id: e.id,
+          name: e.name,
+          category: e.category || 'Other',
+          purchaseDate: e.purchase_date || undefined,
+          purchasePrice: e.purchase_price ? Number(e.purchase_price) : undefined,
+          condition: e.condition as EquipmentCondition,
+          location: e.location || '',
+          description: e.description || '',
+        };
+      },
     );
   }, [data]);
 
   const maintenanceRecords: MaintenanceRecord[] = useMemo(() => {
-    if (!data?.equipment) return [];
+    const edges = data?.equipmentCollection?.edges;
+    if (!edges) return [];
     const allRecords: MaintenanceRecord[] = [];
-    data.equipment.forEach(
-      (e: {
-        maintenance_records?: Array<{
-          id: number;
-          equipment_id: number;
-          date: string;
-          type: string;
-          cost?: number;
-          description?: string;
-          status: string;
-        }>;
+    edges.forEach(
+      (edge: {
+        node: {
+          maintenance_recordsCollection?: {
+            edges?: Array<{
+              node: {
+                id: number;
+                equipment_id: number;
+                date: string;
+                type: string;
+                cost?: number;
+                description?: string;
+                status: string;
+              };
+            }>;
+          };
+        };
       }) => {
-        if (e.maintenance_records) {
-          e.maintenance_records.forEach(
-            (m: {
+        const e = edge.node;
+        e.maintenance_recordsCollection?.edges?.forEach(
+          (me: {
+            node: {
               id: number;
               equipment_id: number;
               date: string;
@@ -88,19 +102,20 @@ export function useEquipment() {
               cost?: number;
               description?: string;
               status: string;
-            }) => {
-              allRecords.push({
-                id: m.id,
-                equipmentId: m.equipment_id,
-                date: m.date,
-                type: m.type as MaintenanceType,
-                cost: m.cost ? Number(m.cost) : 0,
-                description: m.description || '',
-                status: m.status as MaintenanceStatus,
-              });
-            },
-          );
-        }
+            };
+          }) => {
+            const m = me.node;
+            allRecords.push({
+              id: m.id,
+              equipmentId: m.equipment_id,
+              date: m.date,
+              type: m.type as MaintenanceType,
+              cost: m.cost ? Number(m.cost) : 0,
+              description: m.description || '',
+              status: m.status as MaintenanceStatus,
+            });
+          },
+        );
       },
     );
     return allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

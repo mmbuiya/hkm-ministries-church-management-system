@@ -41,18 +41,22 @@ export function useMessages() {
   const [deleteMessageMutation] = useMutation(DELETE_MESSAGE_MUTATION);
 
   const messages: Message[] = useMemo(() => {
-    if (!data?.messages) return [];
-    return data.messages.map((msg: SupabaseMessage) => ({
-      id: msg.id,
-      senderId: msg.sender_id,
-      receiverId: msg.receiver_id,
-      department: msg.department,
-      subject: msg.subject,
-      body: msg.body,
-      status: msg.status as Message['status'],
-      createdAt: msg.created_at,
-      updatedAt: msg.updated_at,
-    }));
+    const edges = data?.messagesCollection?.edges;
+    if (!edges) return [];
+    return edges.map((e: { node: SupabaseMessage }) => {
+      const msg = e.node;
+      return {
+        id: msg.id,
+        senderId: msg.sender_id,
+        receiverId: msg.receiver_id,
+        department: msg.department,
+        subject: msg.subject,
+        body: msg.body,
+        status: msg.status as Message['status'],
+        createdAt: msg.created_at,
+        updatedAt: msg.updated_at,
+      };
+    });
   }, [data]);
 
   const addMessage = async (msg: Omit<Message, 'id' | 'createdAt' | 'updatedAt'>) => {

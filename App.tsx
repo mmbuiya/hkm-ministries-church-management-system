@@ -6,12 +6,9 @@ import { ToastProvider } from './components/ToastContext';
 import { ThemeProvider } from './components/ThemeContext';
 import { useAuth } from './components/AuthContext';
 import { useUser } from '@clerk/clerk-react';
-import { gql } from '@apollo/client';
-import { client } from './components/AuthorizedApolloProvider';
 import { UserSession, createSessionId } from './components/userSessionData';
 import { useUserSessions } from './hooks/useUserSessions';
 import { useLoginAttempts } from './hooks/useLoginAttempts';
-import { UPSERT_USER_MUTATION } from './services/graphql/users';
 import ClerkAuthPage from './components/ClerkAuthPage';
 import OfflineIndicator from './components/OfflineIndicator';
 
@@ -30,7 +27,6 @@ const AdminApp: React.FC = () => {
   const { addSession } = useUserSessions();
   const { logLoginAttempt } = useLoginAttempts();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     if (authUser) {
@@ -49,29 +45,6 @@ const AdminApp: React.FC = () => {
         userAgent: navigator.userAgent,
         location: 'Unknown',
       }).catch(() => {});
-
-      client
-        .query({
-          query: gql`
-            query GetUsers {
-              usersCollection(orderBy: [{ username: AscNullsLast }]) {
-                edges {
-                  node {
-                    id
-                    username
-                    email
-                    role
-                    avatar
-                    last_login
-                  }
-                }
-              }
-            }
-          `,
-          fetchPolicy: 'network-only',
-        })
-        .then(({ data }) => setUsers(data?.usersCollection?.edges?.map((e: { node: unknown }) => e.node) ?? []))
-        .catch(console.error);
     } else {
       setCurrentUser(null);
     }
@@ -102,71 +75,6 @@ const AdminApp: React.FC = () => {
   const handleLogout = async () => {
     await authLogout();
     setCurrentUser(null);
-    setUsers([]);
-  };
-
-  const handleSaveOrUpdateUser = async (userData: Partial<User>) => {
-    try {
-      let updatedUser: User;
-      if (userData.id) {
-        const existing = users.find((u) => u.id === userData.id);
-        if (!existing) return;
-        updatedUser = { ...existing, ...userData } as User;
-        setUsers((prev) => prev.map((u) => (u.id === userData.id ? updatedUser : u)));
-        await client.mutate({
-          mutation: UPSERT_USER_MUTATION,
-          variables: {
-            object: {
-              id: updatedUser.id,
-              username: updatedUser.username,
-              email: updatedUser.email,
-              role: updatedUser.role,
-              avatar: updatedUser.avatar,
-              last_login: updatedUser.lastLogin,
-            },
-          },
-        });
-      } else {
-        const id = Date.now().toString();
-        updatedUser = {
-          id,
-          username: userData.username!,
-          email: userData.email!,
-          role: userData.role || 'Guest',
-          permissionLevel: userData.permissionLevel || 'Viewer',
-          avatar: userData.avatar || `https://ui-avatars.com/api/?name=${userData.email}`,
-          lastLogin: 'Never',
-          assignedSections: userData.assignedSections || [],
-          isActive: true,
-        };
-        setUsers((prev) => [updatedUser, ...prev]);
-        await client.mutate({
-          mutation: UPSERT_USER_MUTATION,
-          variables: {
-            object: {
-              id: updatedUser.id,
-              username: updatedUser.username,
-              email: updatedUser.email,
-              role: updatedUser.role,
-              avatar: updatedUser.avatar,
-              last_login: new Date().toISOString(),
-            },
-          },
-        });
-      }
-    } catch (e) {
-      console.error('Error saving user', e);
-    }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        setUsers((prev) => prev.filter((u) => u.id !== id));
-      } catch (e) {
-        console.error('Error deleting user', e);
-      }
-    }
   };
 
   if (!isLoaded) return null;
@@ -177,13 +85,7 @@ const AdminApp: React.FC = () => {
         <ClerkAuthPage />
       ) : (
         <>
-          <MainLayout
-            currentUser={currentUser}
-            users={users}
-            onSaveOrUpdateUser={handleSaveOrUpdateUser}
-            onDeleteUser={handleDeleteUser}
-            onLogout={handleLogout}
-          />
+          <MainLayout currentUser={currentUser} onLogout={handleLogout} />
           <OfflineIndicator />
         </>
       )}

@@ -24,19 +24,23 @@ export function useBranches() {
   });
 
   const branches: Branch[] = useMemo(() => {
-    if (!data?.branches) return [];
-    return data.branches.map(
-      (b: {
-        id: string;
-        name: string;
-        location?: string;
-        phone?: string;
-        email?: string;
-        is_active?: boolean;
-        manager_id?: string;
-        created_at?: string;
-        updated_at?: string;
+    const edges = data?.branchesCollection?.edges;
+    if (!edges) return [];
+    return edges.map(
+      (edge: {
+        node: {
+          id: string;
+          name: string;
+          location?: string;
+          phone?: string;
+          email?: string;
+          is_active?: boolean;
+          manager_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
       }) => {
+        const b = edge.node;
         // Generate realistic member counts (since we don't have real relationships yet)
         const memberCount = {
           male: Math.floor(Math.random() * 50) + 10,
