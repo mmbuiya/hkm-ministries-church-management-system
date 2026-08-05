@@ -11,5 +11,7 @@
 -- Fix: Set max_rows to 1000 on the members table via a pg_graphql
 -- comment directive. This is the documented, official approach.
 -- 1000 covers any realistic church roster well within free-tier limits.
+-- (Superceded by 20260805_raise_graphql_max_rows_all_tables.sql, which
+-- raises members to 10000 and sets max_rows on every other table too.)
 --
 COMMENT ON TABLE members IS e'@graphql({"max_rows": 1000})';
