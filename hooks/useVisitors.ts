@@ -14,7 +14,8 @@ import {
 
 export function useVisitors() {
   const { data, loading, error } = useQuery(GET_VISITORS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [addVisitorMutation] = useMutation(ADD_VISITOR_MUTATION, { refetchQueries: [{ query: GET_VISITORS_QUERY }] });

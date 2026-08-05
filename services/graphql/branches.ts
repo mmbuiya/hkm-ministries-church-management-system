@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_BRANCHES_QUERY = gql`
   query GetBranches {
-    branchesCollection(orderBy: [{ name: AscNullsLast }]) {
+    branchesCollection(first: 10000, orderBy: [{ name: AscNullsLast }]) {
       edges {
         node {
           id

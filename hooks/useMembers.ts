@@ -104,7 +104,8 @@ function transformMember(SupabaseMember: SupabaseMember): Member {
 export function useMembers() {
   const { getToken } = useAuth();
   const { data, loading, error } = useQuery(GET_MEMBERS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [totalCount, setTotalCount] = useState<number | null>(null);

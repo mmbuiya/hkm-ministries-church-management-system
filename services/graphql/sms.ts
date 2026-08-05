@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_SMS_QUERY = gql`
   query GetSmsRecords($startDate: Date!) {
-    sms_recordsCollection(filter: { date: { gte: $startDate } }, orderBy: [{ date: DescNullsLast }]) {
+    sms_recordsCollection(filter: { date: { gte: $startDate } }, first: 10000, orderBy: [{ date: DescNullsLast }]) {
       edges {
         node {
           id

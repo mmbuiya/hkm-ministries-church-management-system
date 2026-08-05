@@ -14,7 +14,8 @@ export function usePermissionRequests() {
     loading: queryLoading,
     error,
   } = useQuery(GET_PERMISSION_REQUESTS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [addMutation] = useMutation(ADD_PERMISSION_REQUEST_MUTATION);

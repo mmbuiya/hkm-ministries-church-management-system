@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_MESSAGES_QUERY = gql`
   query GetMessages {
-    messagesCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    messagesCollection(first: 10000, orderBy: [{ created_at: DescNullsLast }]) {
       edges {
         node {
           id

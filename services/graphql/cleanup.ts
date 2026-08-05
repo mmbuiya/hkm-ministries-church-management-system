@@ -3,7 +3,7 @@ import { gql } from '@apollo/client';
 // ─── Recycle Bin ────────────────────────────────────────────────
 export const GET_RECYCLE_BIN_QUERY = gql`
   query GetRecycleBin {
-    recycle_binCollection(orderBy: [{ deleted_at: DescNullsLast }]) {
+    recycle_binCollection(first: 10000, orderBy: [{ deleted_at: DescNullsLast }]) {
       edges {
         node {
           id
@@ -60,7 +60,7 @@ export const DELETE_RECYCLE_BIN_MUTATION = gql`
 // ─── Permission Requests ────────────────────────────────────────
 export const GET_PERMISSION_REQUESTS_QUERY = gql`
   query GetPermissionRequests {
-    permission_requestsCollection(orderBy: [{ requested_at: DescNullsLast }]) {
+    permission_requestsCollection(first: 10000, orderBy: [{ requested_at: DescNullsLast }]) {
       edges {
         node {
           id
@@ -143,7 +143,11 @@ export const DELETE_PERMISSION_REQUEST_MUTATION = gql`
 // ─── User Sessions ──────────────────────────────────────────────
 export const GET_USER_SESSIONS_QUERY = gql`
   query GetUserSessions($startDate: Datetime!) {
-    user_sessionsCollection(filter: { login_time: { gte: $startDate } }, orderBy: [{ login_time: DescNullsLast }]) {
+    user_sessionsCollection(
+      filter: { login_time: { gte: $startDate } }
+      first: 10000
+      orderBy: [{ login_time: DescNullsLast }]
+    ) {
       edges {
         node {
           id
@@ -222,7 +226,11 @@ export const END_USER_SESSION_MUTATION = gql`
 // ─── Login Attempts ─────────────────────────────────────────────
 export const GET_LOGIN_ATTEMPTS_QUERY = gql`
   query GetLoginAttempts($startDate: Datetime!) {
-    login_attemptsCollection(filter: { timestamp: { gte: $startDate } }, orderBy: [{ timestamp: DescNullsLast }]) {
+    login_attemptsCollection(
+      filter: { timestamp: { gte: $startDate } }
+      first: 10000
+      orderBy: [{ timestamp: DescNullsLast }]
+    ) {
       edges {
         node {
           id

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_USERS_QUERY = gql`
   query GetUsers {
-    usersCollection(orderBy: [{ username: AscNullsLast }]) {
+    usersCollection(first: 10000, orderBy: [{ username: AscNullsLast }]) {
       edges {
         node {
           id

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_ATTENDANCE_QUERY = gql`
   query GetAttendance {
-    attendance_recordsCollection(orderBy: [{ date: DescNullsLast }]) {
+    attendance_recordsCollection(first: 10000, orderBy: [{ date: DescNullsLast }]) {
       edges {
         node {
           id

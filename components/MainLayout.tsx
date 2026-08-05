@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Shield } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -155,19 +155,42 @@ const MainLayout: React.FC<MainLayoutProps> = ({ currentUser, onLogout }) => {
     run();
   }, []);
 
-  // Combined loading state
-  const isLoading =
-    membersLoading ||
-    visitorsLoading ||
-    groupsLoading ||
-    attendanceLoading ||
-    transactionsLoading ||
-    equipmentLoading ||
-    smsLoading ||
-    branchesLoading ||
-    recycleBinLoading ||
-    permissionRequestsLoading ||
-    usersLoading;
+  // Listen for Clerk JWT template errors
+  useEffect(() => {
+    const handleClerkError = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      showToast(
+        `Database connection failed: Missing Supabase JWT Template in Clerk Dashboard. Error: ${customEvent.detail}`,
+        'error',
+      );
+    };
+    window.addEventListener('clerk-jwt-error', handleClerkError);
+    return () => window.removeEventListener('clerk-jwt-error', handleClerkError);
+  }, [showToast]);
+
+  // Only block the loading screen on data that the Dashboard actually needs.
+  // All other hooks (SMS, Equipment, Recycle Bin, etc.) use cache-and-network
+  // and will populate their pages lazily after the initial render.
+  const networkLoading = membersLoading || usersLoading;
+
+  // Safety timeout: never show the loading screen for more than 3 seconds.
+  // With cache-and-network, cached data resolves instantly. On first visit,
+  // this ensures a slow network doesn't trap the user on the loading screen.
+  const [timedOut, setTimedOut] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (networkLoading) {
+      timeoutRef.current = setTimeout(() => setTimedOut(true), 3000);
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setTimedOut(false);
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [networkLoading]);
+
+  const isLoading = networkLoading && !timedOut;
 
   // Edit/View Context States
   const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);

@@ -15,7 +15,8 @@ export function useUsers() {
     loading,
     error,
   } = useQuery(GET_USERS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [upsertUserMutation] = useMutation(UPSERT_USER_MUTATION, {

@@ -18,7 +18,8 @@ export function useSms() {
     error,
   } = useQuery(GET_SMS_QUERY, {
     variables: { startDate },
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
 

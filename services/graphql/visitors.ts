@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_VISITORS_QUERY = gql`
   query GetVisitors {
-    visitorsCollection(orderBy: [{ registered_date: DescNullsLast }]) {
+    visitorsCollection(first: 10000, orderBy: [{ registered_date: DescNullsLast }]) {
       edges {
         node {
           id

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_TRANSACTIONS_QUERY = gql`
   query GetTransactions {
-    transactionsCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    transactionsCollection(first: 10000, orderBy: [{ created_at: DescNullsLast }]) {
       edges {
         node {
           id

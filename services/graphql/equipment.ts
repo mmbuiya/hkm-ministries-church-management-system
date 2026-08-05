@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_EQUIPMENT_QUERY = gql`
   query GetEquipment {
-    equipmentCollection(orderBy: [{ name: AscNullsLast }]) {
+    equipmentCollection(first: 10000, orderBy: [{ name: AscNullsLast }]) {
       edges {
         node {
           id

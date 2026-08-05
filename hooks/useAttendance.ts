@@ -11,7 +11,8 @@ import { Member } from '../components/memberData';
 
 export function useAttendance(members: Member[] = []) {
   const { data, loading, error } = useQuery(GET_ATTENDANCE_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
 

@@ -12,7 +12,8 @@ import { Member } from '../components/memberData';
 
 export function useGroups(members: Member[] = []) {
   const { data, loading, error } = useQuery(GET_GROUPS_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
   const [addGroupMutation] = useMutation(ADD_GROUP_MUTATION, { refetchQueries: [{ query: GET_GROUPS_QUERY }] });

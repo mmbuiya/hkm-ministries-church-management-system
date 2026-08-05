@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_PROVISIONING_QUEUE_QUERY = gql`
   query GetProvisioningQueue {
-    provisioning_queueCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    provisioning_queueCollection(first: 10000, orderBy: [{ created_at: DescNullsLast }]) {
       edges {
         node {
           id

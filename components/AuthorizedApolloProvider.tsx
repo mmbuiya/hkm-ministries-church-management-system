@@ -9,7 +9,8 @@ import { useAuth } from '@clerk/clerk-react';
 const httpUri = import.meta.env.VITE_SUPABASE_GRAPHQL_URL || 'https://tkzxzriivbbzdvjgrdhk.supabase.co/graphql/v1';
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''; // Must be a valid JWT starting with eyJ...
 
-if (!anonKey || !anonKey.startsWith('eyJ')) {
+const isValidKey = anonKey && (anonKey.startsWith('eyJ') || anonKey.startsWith('sb_publishable_'));
+if (!isValidKey) {
   console.warn('⚠️ Invalid or missing VITE_SUPABASE_ANON_KEY. Supabase requests will fail with 401 Unauthorized.');
 }
 
@@ -32,11 +33,33 @@ const authLink = setContext(async (_, { headers }) => {
   };
 });
 
-const cache = new InMemoryCache();
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        // Tell Apollo how to handle Supabase's Relay-style paginated collections
+        // so cached pages are merged rather than replaced on refetch.
+        membersCollection: { merge: true },
+        visitorsCollection: { merge: true },
+        transactionsCollection: { merge: true },
+        attendance_records: { merge: true },
+        groupsCollection: { merge: true },
+        equipmentCollection: { merge: true },
+        sms_recordsCollection: { merge: true },
+        branchesCollection: { merge: true },
+        recycle_binCollection: { merge: true },
+        usersCollection: { merge: true },
+        permission_requestsCollection: { merge: true },
+      },
+    },
+  },
+});
 
 export const client = new ApolloClient({
   link: authLink.concat(httpLink),
   cache,
+  // Disable DevTools in production to avoid overhead
+  connectToDevTools: import.meta.env.DEV,
 });
 
 export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,7 +67,22 @@ export const AuthorizedApolloProvider: React.FC<{ children: React.ReactNode }> =
 
   useEffect(() => {
     // 'supabase' is the Clerk JWT template name for Supabase integration
-    setTokenProvider(() => getToken({ template: 'supabase' }));
+    setTokenProvider(async () => {
+      try {
+        const token = await getToken({ template: 'supabase' });
+        if (!token) {
+          console.error(
+            'CLERK JWT ERROR: Supabase template returned null. Is the template created in Clerk Dashboard?',
+          );
+          window.dispatchEvent(new CustomEvent('clerk-jwt-error', { detail: 'Template missing or returned null' }));
+        }
+        return token;
+      } catch (err) {
+        console.error('CLERK JWT ERROR: Failed to get Supabase token.', err);
+        window.dispatchEvent(new CustomEvent('clerk-jwt-error', { detail: (err as Error).message }));
+        return null;
+      }
+    });
   }, [getToken]);
 
   return <ApolloProvider client={client}>{children}</ApolloProvider>;

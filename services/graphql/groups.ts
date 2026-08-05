@@ -2,7 +2,7 @@ import { gql } from '@apollo/client';
 
 export const GET_GROUPS_QUERY = gql`
   query GetGroups {
-    groupsCollection(orderBy: [{ name: AscNullsLast }]) {
+    groupsCollection(first: 10000, orderBy: [{ name: AscNullsLast }]) {
       edges {
         node {
           id

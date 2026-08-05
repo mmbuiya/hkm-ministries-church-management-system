@@ -9,7 +9,8 @@ import {
 
 export function useRecycleBin() {
   const { data, loading, error } = useQuery(GET_RECYCLE_BIN_QUERY, {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: false,
     errorPolicy: 'all',
   });
 
